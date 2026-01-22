@@ -7,6 +7,7 @@ desktop.ini
 *.tmp
 *.bak
 *~
+*.old
 
 # Dossiers IDE
 .vscode/
@@ -15,3 +16,7 @@ desktop.ini
 
 # Logs
 *.log
+
+# Configuration et données sensibles
+admin/config.php
+admin/backups/
