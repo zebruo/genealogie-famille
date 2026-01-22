@@ -1,0 +1,198 @@
+/* ========== SYSTÈME DE MODALES UNIFIÉES ========== */
+
+/* Animations communes */
+@keyframes fadeInOverlay {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutOverlay {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes scaleOut {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+}
+
+/* Overlay commun */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10001;
+  animation: fadeInOverlay 0.3s ease;
+}
+
+/* Dialog commun */
+.modal-dialog {
+  background: white;
+  border-radius: 12px;
+  padding: 0;
+  max-width: 450px;
+  width: 90%;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  animation: scaleIn 0.3s ease;
+}
+
+/* Header commun */
+.modal-header {
+  padding: 20px 24px;
+  border-radius: 12px 12px 0 0;
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.modal-header i {
+  font-size: 24px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Types de header */
+.modal-header.type-success {
+  background: #28a745;
+}
+
+.modal-header.type-error {
+  background: #dc3545;
+}
+
+.modal-header.type-warning {
+  background: #ffc107;
+  color: #333;
+}
+
+.modal-header.type-info {
+  background: #3b82f6;
+}
+
+/* Body commun */
+/*.modal-body {
+  padding: 24px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #333;
+}*/
+
+/* Footer commun */
+.modal-footer {
+  padding: 16px 24px;
+  /*border-top: 1px solid #e5e7eb;*/
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Boutons communs */
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.modal-btn i {
+  font-size: 14px;
+}
+
+.modal-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modal-btn:active {
+  transform: translateY(0);
+}
+
+/* Bouton OK (vert) */
+.modal-btn-ok {
+  background: #2e7d32;
+  color: white;
+}
+
+.modal-btn-ok:hover {
+  background: #218838;
+}
+
+/* Bouton Annuler (gris) */
+.modal-btn-cancel {
+  background-color: var(--bg-tertiary);
+  color: white;
+}
+
+.modal-btn-cancel:hover {
+  background-color: var(--bg-secondary);
+}
+
+/* Bouton Confirmer (bleu) */
+.modal-btn-confirm {
+  background: #3b82f6;
+  color: white;
+}
+
+.modal-btn-confirm:hover {
+  background: #2563eb;
+}
+
+/* Bouton Supprimer (rouge) */
+.modal-btn-danger {
+  background: #f44336;
+  color: white;
+}
+
+.modal-btn-danger:hover {
+  background: #d32f2f;
+}
+
+/* Mise en valeur du nom de personne dans les confirmations */
+.modal-person-name {
+  /*font-weight: 600;*/
+  display: block;
+  color: var(--text-secondary);
+}

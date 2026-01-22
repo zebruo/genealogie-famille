@@ -1,0 +1,1381 @@
+<?php
+// Désactiver l'affichage des erreurs pour éviter de casser le JSON
+ini_set('display_errors', 0);
+error_reporting(E_ALL);
+
+// Capturer toutes les erreurs et les transformer en JSON
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+require_once 'config.php';
+require_once 'mariage_manager.php';
+
+class FamilyTreeAPI {
+    private $pdo;
+    private $mariageManager;
+    private $uploadDir = '../uploads/documents/'; // Répertoire pour les fichiers PDF
+
+    public function __construct() {
+        $this->pdo = getConnection();
+        $this->mariageManager = new MariageManager($this->pdo);
+        header('Content-Type: application/json');
+        header('Cache-Control: no-cache, must-revalidate');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        
+        // Créer le répertoire d'upload s'il n'existe pas
+        if (!file_exists($this->uploadDir)) {
+            mkdir($this->uploadDir, 0755, true);
+        }
+    }
+
+    // Request handling
+    public function handleRequest() {
+        $action = $_POST['action'] ?? $_GET['action'] ?? '';
+
+        try {
+            switch ($action) {
+                case 'getMembres':
+                    echo json_encode($this->getMembres());
+                    break;
+
+                case 'getRelations':
+                    echo json_encode($this->getRelations());
+                    break;
+
+                case 'getFamilyData':
+                    echo json_encode($this->getFamilyData());
+                    break;
+
+                case 'saveMembre':
+                    echo json_encode($this->saveMember());
+                    break;
+
+                case 'saveRelation':
+                    echo json_encode($this->saveRelation());
+                    break;
+
+                case 'deleteMembre':
+                    echo json_encode($this->deleteMember());
+                    break;
+
+                case 'deleteRelation':
+                    echo json_encode($this->deleteRelation());
+                    break;
+
+                // ============================================
+                // ACTIONS POUR LES MARIAGES
+                // ============================================
+                case 'addMariage':
+                    echo json_encode($this->addMariage());
+                    break;
+
+                case 'updateMariage':
+                    echo json_encode($this->updateMariage());
+                    break;
+
+                case 'deleteMariage':
+                    echo json_encode($this->deleteMariage());
+                    break;
+
+                case 'getMariagesPersonne':
+                    echo json_encode($this->getMariagesPersonne());
+                    break;
+
+                case 'getMariageDetails':
+                    echo json_encode($this->getMariageDetails());
+                    break;
+
+                case 'updateMariageOrder':
+                    echo json_encode($this->updateMariageOrder());
+                    break;
+
+                // ============================================
+                // ACTIONS POUR LA GESTION DES LIEUX
+                // ============================================
+                case 'getLieux':
+                    echo json_encode(['success' => true, 'lieux' => $this->getLieuxUniques()]);
+                    break;
+
+                case 'updateLieu':
+                    $ancien = $_POST['ancien_lieu'] ?? '';
+                    $nouveau = $_POST['nouveau_lieu'] ?? '';
+                    if (empty($ancien) || empty($nouveau)) {
+                        throw new Exception('Lieux manquants');
+                    }
+                    echo json_encode($this->mettreAJourLieu($ancien, $nouveau));
+                    break;
+
+                case 'deleteLieu':
+                    $lieu = $_POST['lieu'] ?? '';
+                    if (empty($lieu)) {
+                        throw new Exception('Lieu manquant');
+                    }
+                    echo json_encode($this->supprimerLieu($lieu));
+                    break;
+
+                case 'getDetails':
+                    $lieu = $_GET['lieu'] ?? '';
+                    if (empty($lieu)) {
+                        throw new Exception('Lieu manquant');
+                    }
+                    echo json_encode(['success' => true, 'details' => $this->getDetailsLieu($lieu)]);
+                    break;
+
+                case 'rechercher':
+                    $terme = $_GET['terme'] ?? '';
+                    echo json_encode(['success' => true, 'lieux' => $this->rechercherLieux($terme)]);
+                    break;
+
+                // ============================================
+                // ACTIONS POUR LA GESTION DOCUMENTAIRE
+                // ============================================
+                case 'getDocuments':
+                    echo json_encode($this->getDocuments());
+                    break;
+
+                case 'addDocument':
+                    echo json_encode($this->addDocument());
+                    break;
+
+                case 'updateDocument':
+                    echo json_encode($this->updateDocument());
+                    break;
+
+                case 'deleteDocument':
+                    echo json_encode($this->deleteDocument());
+                    break;
+
+                case 'getTousMariages':
+                    echo json_encode($this->mariageManager->getTousMariages());
+                    break;
+                    
+                case 'getAllDocumentCounts':
+                    echo json_encode($this->getAllDocumentCounts());
+                    break;
+
+                default:
+                    throw new Exception('Action non trouvée');
+            }
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+    }
+
+    // ============================================
+    // MÉTHODES POUR LA GESTION DOCUMENTAIRE
+    // ============================================
+
+    /**
+     * Récupérer tous les documents d'une personne
+     */
+    private function getDocuments() {
+        $personId = $_GET['person_id'] ?? 0;
+        
+        if (!$personId) {
+            throw new Exception('ID de personne manquant');
+        }
+
+        // Récupérer les notes de la table membres
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                'note' as type,
+                'membre' as source,
+                'Sources' as source_label,
+                notes as content,
+                'Note du membre' as title,
+                NULL as file_name,
+                NULL as file_path,
+                NULL as file_size,
+                NULL as description,
+                id as original_id,
+                NULL as mariage_id
+            FROM membres 
+            WHERE id = :person_id AND notes IS NOT NULL AND notes != ''
+        ");
+        $stmt->execute(['person_id' => $personId]);
+        $memberNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Récupérer les notes des mariages
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                'note' as type,
+                CONCAT('mariage_', m.id) as source,
+                CONCAT('Mariage avec ', 
+                    CASE 
+                        WHEN m.epoux_id = :person_id THEN CONCAT(e2.prenom, ' ', e2.nom)
+                        ELSE CONCAT(e1.prenom, ' ', e1.nom)
+                    END
+                ) as source_label,
+                m.notes as content,
+                CONCAT('Mariage avec - ', 
+                    CASE 
+                        WHEN m.epoux_id = :person_id THEN CONCAT(e2.prenom, ' ', e2.nom)
+                        ELSE CONCAT(e1.prenom, ' ', e1.nom)
+                    END
+                ) as title,
+                NULL as file_name,
+                NULL as file_path,
+                NULL as file_size,
+                NULL as description,
+                m.id as original_id,
+                m.id as mariage_id
+            FROM mariages m
+            LEFT JOIN membres e1 ON m.epoux_id = e1.id
+            LEFT JOIN membres e2 ON m.epouse_id = e2.id
+            WHERE (m.epoux_id = :person_id OR m.epouse_id = :person_id)
+            AND m.notes IS NOT NULL AND m.notes != ''
+        ");
+        $stmt->execute(['person_id' => $personId]);
+        $mariageNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Récupérer les documents de la table documents
+        $stmt = $this->pdo->prepare("
+            SELECT 
+                d.id,
+                d.type,
+                d.source,
+                d.title,
+                d.content,
+                d.file_name,
+                d.file_path,
+                d.file_size,
+                d.description,
+                d.created_at,
+                d.updated_at,
+                CASE 
+                    WHEN d.source = 'membre' THEN 'Informations générales'
+                    WHEN d.source LIKE 'mariage_%' THEN (
+                        SELECT CONCAT('Mariage avec ',
+                            CASE 
+                                WHEN m.epoux_id = :person_id THEN CONCAT(e2.prenom, ' ', e2.nom)
+                                ELSE CONCAT(e1.prenom, ' ', e1.nom)
+                            END
+                        )
+                        FROM mariages m
+                        LEFT JOIN membres e1 ON m.epoux_id = e1.id
+                        LEFT JOIN membres e2 ON m.epouse_id = e2.id
+                        WHERE m.id = CAST(SUBSTRING(d.source, 9) AS UNSIGNED)
+                    )
+                    ELSE ''
+                END as source_label
+            FROM documents d
+            WHERE d.person_id = :person_id
+            ORDER BY d.created_at DESC
+        ");
+        $stmt->execute(['person_id' => $personId]);
+        $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Fusionner toutes les données
+        $allDocuments = array_merge($documents, $memberNotes, $mariageNotes);
+
+        // Ajouter un ID unique pour les notes venant de membres/mariages
+        foreach ($allDocuments as &$doc) {
+            if (!isset($doc['id'])) {
+                $doc['id'] = 'temp_' . $doc['source'] . '_' . ($doc['original_id'] ?? rand());
+            }
+            if (!isset($doc['created_at'])) {
+                $doc['created_at'] = date('Y-m-d H:i:s');
+            }
+        }
+
+        return [
+            'success' => true,
+            'documents' => $allDocuments
+        ];
+    }
+
+    /**
+     * Ajouter un nouveau document
+     */
+    private function addDocument() {
+        $personId = $_POST['person_id'] ?? 0;
+        $type = $_POST['type'] ?? '';
+        $source = $_POST['source'] ?? '';
+
+        if (!$personId || !$type || !$source) {
+            throw new Exception('Données manquantes');
+        }
+
+        // Si c'est une modification d'une note existante dans membres ou mariages
+        if ($source === 'membre' && $type === 'note') {
+            $content = $_POST['content'] ?? '';
+            $stmt = $this->pdo->prepare("UPDATE membres SET notes = :notes WHERE id = :id");
+            $stmt->execute([
+                'notes' => $content,
+                'id' => $personId
+            ]);
+            
+            return [
+                'success' => true,
+                'message' => 'Note du membre mise à jour'
+            ];
+        } elseif (strpos($source, 'mariage_') === 0 && $type === 'note') {
+            $mariageId = str_replace('mariage_', '', $source);
+            $content = $_POST['content'] ?? '';
+            
+            $stmt = $this->pdo->prepare("UPDATE mariages SET notes = :notes WHERE id = :id");
+            $stmt->execute([
+                'notes' => $content,
+                'id' => $mariageId
+            ]);
+            
+            return [
+                'success' => true,
+                'message' => 'Note du mariage mise à jour'
+            ];
+        }
+
+        // Sinon, créer un nouveau document dans la table documents
+        $this->pdo->beginTransaction();
+
+        try {
+            if ($type === 'note') {
+                $title = $_POST['title'] ?? '';
+                $content = $_POST['content'] ?? '';
+                $description = $_POST['description'] ?? '';
+                
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO documents (person_id, type, source, title, content, description, created_at, updated_at)
+                    VALUES (:person_id, :type, :source, :title, :content, :description, NOW(), NOW())
+                ");
+                
+                $stmt->execute([
+                    'person_id' => $personId,
+                    'type' => $type,
+                    'source' => $source,
+                    'title' => $title,
+                    'content' => $content,
+                    'description' => $description
+                ]);
+            } elseif ($type === 'pdf') {
+                if (!isset($_FILES['pdf_file']) || $_FILES['pdf_file']['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception('Erreur lors de l\'upload du fichier');
+                }
+
+                $file = $_FILES['pdf_file'];
+                
+                // Vérifier le type MIME
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $file['tmp_name']);
+                
+                if ($mimeType !== 'application/pdf') {
+                    throw new Exception('Le fichier doit être un PDF');
+                }
+
+                // Vérifier la taille (10 Mo max)
+                if ($file['size'] > 10 * 1024 * 1024) {
+                    throw new Exception('Le fichier ne doit pas dépasser 10 Mo');
+                }
+
+                // Générer un nom de fichier unique
+                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $fileName = uniqid('doc_') . '_' . time() . '.' . $extension;
+                $filePath = $this->uploadDir . $fileName;
+
+                // Déplacer le fichier
+                if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+                    throw new Exception('Erreur lors de l\'enregistrement du fichier');
+                }
+
+                $title = $_POST['title'] ?? '';
+                $description = $_POST['description'] ?? '';
+                
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO documents (person_id, type, source, title, description, file_name, file_path, file_size, created_at, updated_at)
+                    VALUES (:person_id, :type, :source, :title, :description, :file_name, :file_path, :file_size, NOW(), NOW())
+                ");
+                
+                $stmt->execute([
+                    'person_id' => $personId,
+                    'type' => $type,
+                    'source' => $source,
+                    'title' => $title,
+                    'description' => $description,
+                    'file_name' => $file['name'],
+                    'file_path' => $filePath,
+                    'file_size' => $file['size']
+                ]);
+            } elseif ($type === 'photo') {
+                if (!isset($_FILES['photo_file']) || $_FILES['photo_file']['error'] !== UPLOAD_ERR_OK) {
+                    throw new Exception('Erreur lors de l\'upload de la photo');
+                }
+
+                $file = $_FILES['photo_file'];
+                
+                // Vérifier le type MIME
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $mimeType = finfo_file($finfo, $file['tmp_name']);
+                
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                if (!in_array($mimeType, $allowedTypes)) {
+                    throw new Exception('Format de photo non supporté. Formats acceptés: JPG, PNG, GIF, WEBP');
+                }
+
+                // Vérifier la taille (5 Mo max)
+                if ($file['size'] > 5 * 1024 * 1024) {
+                    throw new Exception('La photo est trop volumineuse (max 5 Mo)');
+                }
+
+                // Créer le répertoire si nécessaire
+                $photoUploadDir = '../uploads/photos/';
+                if (!file_exists($photoUploadDir)) {
+                    mkdir($photoUploadDir, 0755, true);
+                }
+
+                // Générer un nom de fichier unique
+                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $fileName = uniqid('photo_') . '_' . time() . '.' . $extension;
+                $filePath = $photoUploadDir . $fileName;
+
+                // Déplacer le fichier
+                if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+                    throw new Exception('Erreur lors de l\'enregistrement de la photo');
+                }
+
+                $title = $_POST['title'] ?? '';
+                $description = $_POST['description'] ?? '';
+                
+                $stmt = $this->pdo->prepare("
+                    INSERT INTO documents (person_id, type, source, title, description, file_name, file_path, file_size, created_at, updated_at)
+                    VALUES (:person_id, :type, :source, :title, :description, :file_name, :file_path, :file_size, NOW(), NOW())
+                ");
+                
+                $stmt->execute([
+                    'person_id' => $personId,
+                    'type' => $type,
+                    'source' => $source,
+                    'title' => $title,
+                    'description' => $description,
+                    'file_name' => $file['name'],
+                    'file_path' => $filePath,
+                    'file_size' => $file['size']
+                ]);
+            }
+            $this->pdo->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Document ajouté avec succès',
+                'id' => $this->pdo->lastInsertId()
+            ];
+
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            
+            // Supprimer le fichier si l'insertion a échoué
+            if (isset($filePath) && file_exists($filePath)) {
+                unlink($filePath);
+            }
+            
+            throw $e;
+        }
+    }
+
+    /**
+     * Méthode utilitaire pour mettre à jour les champs d'un document
+     */
+    private function updateDocumentFields($documentId, $personId, $updateFields) {
+        $setParts = [];
+        foreach ($updateFields as $key => $value) {
+            $setParts[] = "$key = :$key";
+        }
+        $setParts[] = "updated_at = NOW()";
+        
+        $sql = "UPDATE documents SET " . implode(', ', $setParts) . " WHERE id = :id AND person_id = :person_id";
+        
+        $stmt = $this->pdo->prepare($sql);
+        $updateFields['id'] = $documentId;
+        $updateFields['person_id'] = $personId;
+        $stmt->execute($updateFields);
+    }
+
+    /**
+     * Mettre à jour un document
+     */
+    private function updateDocument() {
+        $documentId = $_POST['document_id'] ?? '';
+        $personId = $_POST['person_id'] ?? 0;
+        $type = $_POST['type'] ?? '';
+        $source = $_POST['source'] ?? '';
+
+        if (!$type || !$source) {
+            throw new Exception('Données manquantes');
+        }
+
+        // Si c'est une note dans membres ou mariages (ID temporaire)
+        if (strpos($documentId, 'temp_') === 0) {
+            // Pour les documents temporaires, person_id est obligatoire
+            if (!$personId) {
+                throw new Exception('ID de personne manquant pour document temporaire');
+            }
+            
+            if ($source === 'membre' && $type === 'note') {
+                $content = $_POST['content'] ?? '';
+                $stmt = $this->pdo->prepare("UPDATE membres SET notes = :notes WHERE id = :id");
+                $stmt->execute([
+                    'notes' => $content,
+                    'id' => $personId
+                ]);
+                
+                return [
+                    'success' => true,
+                    'message' => 'Note du membre mise à jour'
+                ];
+            } elseif (strpos($source, 'mariage_') === 0 && $type === 'note') {
+                $mariageId = str_replace('mariage_', '', $source);
+                $content = $_POST['content'] ?? '';
+                
+                $stmt = $this->pdo->prepare("UPDATE mariages SET notes = :notes WHERE id = :id");
+                $stmt->execute([
+                    'notes' => $content,
+                    'id' => $mariageId
+                ]);
+                
+                return [
+                    'success' => true,
+                    'message' => 'Note du mariage mise à jour'
+                ];
+            } else {
+                throw new Exception("Type de source non géré pour document temporaire: $source");
+            }
+        }
+
+        // Pour les documents réels de la table documents
+        // Si person_id n'est pas fourni, le récupérer depuis le document
+        if (!$personId) {
+            $stmt = $this->pdo->prepare("SELECT person_id FROM documents WHERE id = :id");
+            $stmt->execute(['id' => $documentId]);
+            $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            if (!$doc) {
+                throw new Exception('Document introuvable');
+            }
+            
+            $personId = $doc['person_id'];
+        }
+
+        // Mettre à jour dans la table documents
+        $this->pdo->beginTransaction();
+
+        try {
+            if ($type === 'note') {
+                $title = $_POST['title'] ?? '';
+                $content = $_POST['content'] ?? '';
+                $description = $_POST['description'] ?? '';
+
+                $stmt = $this->pdo->prepare("
+                    UPDATE documents 
+                    SET source = :source, title = :title, content = :content, description = :description, updated_at = NOW()
+                    WHERE id = :id AND person_id = :person_id
+                ");
+                
+                $stmt->execute([
+                    'id' => $documentId,
+                    'person_id' => $personId,
+                    'source' => $source,
+                    'title' => $title,
+                    'content' => $content,
+                    'description' => $description
+                ]);
+            } elseif ($type === 'pdf') {
+                $title = $_POST['title'] ?? '';
+                $description = $_POST['description'] ?? '';
+                
+                // Récupérer le document actuel pour supprimer l'ancien fichier si un nouveau est uploadé
+                $stmt = $this->pdo->prepare("SELECT file_path FROM documents WHERE id = :id");
+                $stmt->execute(['id' => $documentId]);
+                $currentDoc = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                $updateFields = ['source' => $source, 'title' => $title, 'description' => $description];
+                
+                // Si un nouveau fichier est uploadé
+                if (isset($_FILES['pdf_file']) && $_FILES['pdf_file']['error'] === UPLOAD_ERR_OK) {
+                    $file = $_FILES['pdf_file'];
+                    
+                    // Vérifier le type MIME
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mimeType = finfo_file($finfo, $file['tmp_name']);
+                    
+                    if ($mimeType !== 'application/pdf') {
+                        throw new Exception('Le fichier doit être un PDF');
+                    }
+
+                    // Vérifier la taille
+                    if ($file['size'] > 10 * 1024 * 1024) {
+                        throw new Exception('Le fichier ne doit pas dépasser 10 Mo');
+                    }
+
+                    // Générer un nouveau nom de fichier
+                    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                    $fileName = uniqid('doc_') . '_' . time() . '.' . $extension;
+                    $filePath = $this->uploadDir . $fileName;
+
+                    // Déplacer le fichier
+                    if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+                        throw new Exception('Erreur lors de l\'enregistrement du fichier');
+                    }
+
+                    // Supprimer l'ancien fichier
+                    if ($currentDoc && $currentDoc['file_path'] && file_exists($currentDoc['file_path'])) {
+                        unlink($currentDoc['file_path']);
+                    }
+
+                    $updateFields['file_name'] = $file['name'];
+                    $updateFields['file_path'] = $filePath;
+                    $updateFields['file_size'] = $file['size'];
+                }
+
+                $this->updateDocumentFields($documentId, $personId, $updateFields);
+                
+            } elseif ($type === 'photo') {
+                $title = $_POST['title'] ?? '';
+                $description = $_POST['description'] ?? '';
+                
+                // Récupérer le document actuel pour supprimer l'ancienne photo si une nouvelle est uploadée
+                $stmt = $this->pdo->prepare("SELECT file_path FROM documents WHERE id = :id");
+                $stmt->execute(['id' => $documentId]);
+                $currentDoc = $stmt->fetch(PDO::FETCH_ASSOC);
+                
+                $updateFields = ['source' => $source, 'title' => $title, 'description' => $description];
+                
+                // Si une nouvelle photo est uploadée
+                if (isset($_FILES['photo_file']) && $_FILES['photo_file']['error'] === UPLOAD_ERR_OK) {
+                    $file = $_FILES['photo_file'];
+                    
+                    // Vérifier le type MIME
+                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                    $mimeType = finfo_file($finfo, $file['tmp_name']);
+                    
+                    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+                    if (!in_array($mimeType, $allowedTypes)) {
+                        throw new Exception('Format de photo non supporté');
+                    }
+
+                    // Vérifier la taille
+                    if ($file['size'] > 5 * 1024 * 1024) {
+                        throw new Exception('La photo ne doit pas dépasser 5 Mo');
+                    }
+
+                    // Créer le répertoire si nécessaire
+                    $photoUploadDir = '../uploads/photos/';
+                    if (!file_exists($photoUploadDir)) {
+                        mkdir($photoUploadDir, 0755, true);
+                    }
+
+                    // Générer un nom de fichier unique
+                    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                    $fileName = uniqid('photo_') . '_' . time() . '.' . $extension;
+                    $filePath = $photoUploadDir . $fileName;
+
+                    // Déplacer le fichier
+                    if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+                        throw new Exception('Erreur lors de l\'enregistrement de la photo');
+                    }
+
+                    // Supprimer l'ancienne photo
+                    if ($currentDoc && $currentDoc['file_path'] && file_exists($currentDoc['file_path'])) {
+                        unlink($currentDoc['file_path']);
+                    }
+
+                    $updateFields['file_name'] = $file['name'];
+                    $updateFields['file_path'] = $filePath;
+                    $updateFields['file_size'] = $file['size'];
+                }
+
+                $this->updateDocumentFields($documentId, $personId, $updateFields);
+            }
+
+            $this->pdo->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Document mis à jour avec succès'
+            ];
+
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            
+            // Supprimer le nouveau fichier si l'insertion a échoué
+            if (isset($filePath) && file_exists($filePath)) {
+                unlink($filePath);
+            }
+            
+            throw $e;
+        }
+    }
+
+    /**
+     * Supprimer un document
+     */
+    private function deleteDocument() {
+        $documentId = $_POST['document_id'] ?? '';
+
+        if (!$documentId) {
+            throw new Exception('ID du document manquant');
+        }
+
+        // Si c'est une note dans membres ou mariages
+        if (strpos($documentId, 'temp_membre') === 0) {
+            // Extraire l'ID du membre
+            preg_match('/temp_membre_(\d+)/', $documentId, $matches);
+            if (isset($matches[1])) {
+                $stmt = $this->pdo->prepare("UPDATE membres SET notes = NULL WHERE id = :id");
+                $stmt->execute(['id' => $matches[1]]);
+                
+                return [
+                    'success' => true,
+                    'message' => 'Note du membre supprimée'
+                ];
+            }
+        } elseif (strpos($documentId, 'temp_mariage_') === 0) {
+            // Extraire l'ID du mariage
+            preg_match('/temp_mariage_\d+_(\d+)/', $documentId, $matches); 
+            if (isset($matches[1])) {
+                $stmt = $this->pdo->prepare("UPDATE mariages SET notes = NULL WHERE id = :id");
+                $stmt->execute(['id' => $matches[1]]);
+                
+                return [
+                    'success' => true,
+                    'message' => 'Note du mariage supprimée'
+                ];
+            }
+        }
+
+        // Sinon, supprimer de la table documents (inclut les PDF)
+        $this->pdo->beginTransaction();
+
+        try {
+            // Récupérer les informations du document
+            $stmt = $this->pdo->prepare("SELECT type, file_path, file_name FROM documents WHERE id = :id");
+            $stmt->execute(['id' => $documentId]);
+            $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$doc) {
+                throw new Exception('Document non trouvé dans la base de données');
+            }
+
+            // Si c'est un PDF ou une photo, supprimer le fichier physique
+            if (($doc['type'] === 'pdf' || $doc['type'] === 'photo') && !empty($doc['file_path'])) {
+                if (file_exists($doc['file_path'])) {
+                    if (!unlink($doc['file_path'])) {
+                        error_log("Impossible de supprimer le fichier: " . $doc['file_path']);
+                    }
+                } else {
+                    error_log("Fichier non trouvé: " . $doc['file_path']);
+                }
+            }
+
+            // Supprimer l'enregistrement de la base de données
+            $stmt = $this->pdo->prepare("DELETE FROM documents WHERE id = :id");
+            $result = $stmt->execute(['id' => $documentId]);
+
+            if (!$result) {
+                throw new Exception('Erreur lors de la suppression de l\'enregistrement');
+            }
+
+            $this->pdo->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Document supprimé avec succès'
+            ];
+
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            error_log("Erreur lors de la suppression du document ID " . $documentId . ": " . $e->getMessage());
+            throw $e;
+        }
+    }
+
+    // ============================================
+    // MÉTHODES EXISTANTES (reprises de l'API originale)
+    // ============================================
+
+    private function getMembres() {
+        try {
+            // Récupérer d'abord tous les membres
+            $stmt = $this->pdo->query("
+                SELECT * FROM membres 
+                ORDER BY nom, prenom
+            ");
+            
+            $membres = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if (empty($membres)) {
+                return [];
+            }
+            
+            // Récupérer toutes les relations
+            $stmt = $this->pdo->query("
+                SELECT 
+                    r.*,
+                    m2.date_naissance as enfant_date_naissance,
+                    m2.nom as enfant_nom,
+                    m2.prenom as enfant_prenom,
+                    m3.date_naissance as parent_date_naissance,
+                    m3.nom as parent_nom,
+                    m3.prenom as parent_prenom
+                FROM relations r
+                LEFT JOIN membres m2 ON r.enfant_id = m2.id
+                LEFT JOIN membres m3 ON r.parent_id = m3.id
+                WHERE r.enfant_id != r.parent_id
+            ");
+            
+            $relations = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Créer un index des relations par membre
+            $relationsParMembre = [];
+            foreach ($relations as $relation) {
+                // Relations pour l'enfant
+                if ($relation['enfant_id']) {
+                    if (!isset($relationsParMembre[$relation['enfant_id']])) {
+                        $relationsParMembre[$relation['enfant_id']] = [];
+                    }
+                    
+                    $relationsParMembre[$relation['enfant_id']][] = [
+                        'type' => $relation['type'],
+                        'id' => $relation['enfant_id'],
+                        'relation_id' => $relation['parent_id'] ?? 0,
+                        'mariage_id' => $relation['mariage_id'],
+                        'date_naissance' => $relation['type'] == 'parent' ? $relation['parent_date_naissance'] : $relation['enfant_date_naissance'],
+                        'nom' => $relation['type'] == 'parent' ? $relation['parent_nom'] : $relation['enfant_nom'],
+                        'prenom' => $relation['type'] == 'parent' ? $relation['parent_prenom'] : $relation['enfant_prenom']
+                    ];
+                }
+                
+                // Relations pour le parent
+                if ($relation['parent_id'] && $relation['type'] == 'parent') {
+                    if (!isset($relationsParMembre[$relation['parent_id']])) {
+                        $relationsParMembre[$relation['parent_id']] = [];
+                    }
+                    
+                    $relationsParMembre[$relation['parent_id']][] = [
+                        'type' => $relation['type'],
+                        'id' => $relation['parent_id'],
+                        'relation_id' => $relation['enfant_id'],
+                        'mariage_id' => $relation['mariage_id'],
+                        'date_naissance' => $relation['enfant_date_naissance'],
+                        'nom' => $relation['enfant_nom'],
+                        'prenom' => $relation['enfant_prenom']
+                    ];
+                }
+            }
+            
+            // Ajouter les relations à chaque membre
+            foreach ($membres as &$membre) {
+                $membre['relations'] = isset($relationsParMembre[$membre['id']]) 
+                    ? json_encode($relationsParMembre[$membre['id']]) 
+                    : null;
+            }
+            
+            return $membres;
+            
+        } catch (PDOException $e) {
+            error_log("Erreur SQL getMembres: " . $e->getMessage());
+            throw new Exception("Erreur lors de la récupération des membres: " . $e->getMessage());
+        }
+    }
+
+    private function getRelations() {
+        $stmt = $this->pdo->query("
+            SELECT r.*, 
+                   p.prenom as parent_prenom, p.nom as parent_nom,
+                   e.prenom as enfant_prenom, e.nom as enfant_nom
+            FROM relations r
+            LEFT JOIN membres p ON r.parent_id = p.id
+            LEFT JOIN membres e ON r.enfant_id = e.id
+        ");
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    private function getFamilyData() {
+        return [
+            'membres' => $this->getMembres(),
+            'relations' => $this->getRelations()
+        ];
+    }
+
+    private function saveMember() {
+        $data = $_POST;
+        
+        if (empty($data['lastName']) || empty($data['firstName'])) {
+            throw new Exception('Nom et prénom requis');
+        }
+
+        $this->pdo->beginTransaction();
+
+        try {
+            $memberId = $data['memberId'] ?? null;
+            
+            $stmt = $memberId ? 
+                $this->pdo->prepare("
+                    UPDATE membres SET 
+                        nom = :nom, prenom = :prenom, surnom = :surnom, sex = :sex,
+                        date_naissance = :date_naissance, lieu_naissance = :lieu_naissance,
+                        date_deces = :date_deces, lieu_deces = :lieu_deces,
+                        notes = :notes
+                    WHERE id = :id
+                ") :
+                $this->pdo->prepare("
+                    INSERT INTO membres (nom, prenom, surnom, sex, date_naissance, lieu_naissance, 
+                                       date_deces, lieu_deces, notes)
+                    VALUES (:nom, :prenom, :surnom, :sex, :date_naissance, :lieu_naissance,
+                           :date_deces, :lieu_deces, :notes)
+                ");
+
+            $params = [
+                'nom' => $data['lastName'],
+                'prenom' => $data['firstName'],
+                'surnom' => $data['surnom'] ?? null,
+                'sex' => $data['gender'] ?? 'U',
+                'date_naissance' => $data['birthDate'] ?: null,
+                'lieu_naissance' => $data['birthPlace'] ?: null,
+                'date_deces' => $data['deathDate'] ?: null,
+                'lieu_deces' => $data['deathPlace'] ?: null,
+                'notes' => $data['notes'] ?? null
+            ];
+
+            if ($memberId) {
+                $params['id'] = $memberId;
+            }
+
+            $stmt->execute($params);
+            
+            $finalId = $memberId ?: $this->pdo->lastInsertId();
+
+            $this->pdo->commit();
+
+            return [
+                'success' => true,
+                'message' => $memberId ? 'Membre modifié' : 'Membre créé',
+                'id' => $finalId
+            ];
+
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function saveRelation() {
+        $data = $_POST;
+        
+        if (empty($data['parentId']) || empty($data['childId'])) {
+            throw new Exception('Données de relation manquantes');
+        }
+
+        $stmt = $this->pdo->prepare("
+            INSERT INTO relations (parent_id, enfant_id, type, mariage_id)
+            VALUES (:parent_id, :enfant_id, :type, :mariage_id)
+        ");
+
+        $stmt->execute([
+            'parent_id' => $data['parentId'],
+            'enfant_id' => $data['childId'],
+            'type' => $data['type'] ?? 'parent',
+            'mariage_id' => $data['mariageId'] ?? null
+        ]);
+
+        return [
+            'success' => true,
+            'message' => 'Relation créée',
+            'id' => $this->pdo->lastInsertId()
+        ];
+    }
+
+    private function deleteMember() {
+        $memberId = $_POST['memberId'] ?? null;
+        
+        if (!$memberId) {
+            throw new Exception('ID membre manquant');
+        }
+
+        $this->pdo->beginTransaction();
+
+        try {
+            // Supprimer les relations
+            $stmt = $this->pdo->prepare("DELETE FROM relations WHERE parent_id = :id OR enfant_id = :id");
+            $stmt->execute(['id' => $memberId]);
+
+            // Supprimer les mariages
+            $stmt = $this->pdo->prepare("DELETE FROM mariages WHERE epoux_id = :id OR epouse_id = :id");
+            $stmt->execute(['id' => $memberId]);
+
+            // Supprimer le membre
+            $stmt = $this->pdo->prepare("DELETE FROM membres WHERE id = :id");
+            $stmt->execute(['id' => $memberId]);
+
+            $this->pdo->commit();
+
+            return [
+                'success' => true,
+                'message' => 'Membre supprimé'
+            ];
+
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            throw $e;
+        }
+    }
+
+    private function deleteRelation() {
+        $relationId = $_POST['relationId'] ?? null;
+        
+        if (!$relationId) {
+            throw new Exception('ID relation manquant');
+        }
+
+        $stmt = $this->pdo->prepare("DELETE FROM relations WHERE id = :id");
+        $stmt->execute(['id' => $relationId]);
+
+        return [
+            'success' => true,
+            'message' => 'Relation supprimée'
+        ];
+    }
+
+    // ============================================
+    // MÉTHODES POUR LES MARIAGES
+    // ============================================
+
+    private function addMariage() {
+        $epouxId = $_POST['epoux_id'] ?? null;
+        $epouseId = $_POST['epouse_id'] ?? null;
+
+        if (!$epouxId || !$epouseId) {
+            throw new Exception('IDs des conjoints manquants');
+        }
+
+        $mariageId = $this->mariageManager->ajouterMariage(
+            $epouxId,
+            $epouseId,
+            $_POST['date_mariage'] ?? null,
+            $_POST['lieu_mariage'] ?? null,
+            $_POST['date_fin'] ?? null,
+            $_POST['type_fin'] ?? null,
+            $_POST['notes'] ?? null
+        );
+
+        if ($mariageId) {
+            return ['success' => true, 'message' => 'Mariage ajouté', 'id' => $mariageId];
+        }
+        
+        return ['success' => false, 'message' => 'Erreur lors de l\'ajout du mariage'];
+    }
+
+    private function updateMariage() {
+        $mariageId = $_POST['mariage_id'] ?? null;
+
+        if (!$mariageId) {
+            throw new Exception('ID du mariage manquant');
+        }
+
+        $data = [];
+        if (isset($_POST['date_mariage'])) $data['date_mariage'] = $_POST['date_mariage'];
+        if (isset($_POST['lieu_mariage'])) $data['lieu_mariage'] = $_POST['lieu_mariage'];
+        if (isset($_POST['date_fin'])) $data['date_fin'] = $_POST['date_fin'];
+        if (isset($_POST['type_fin'])) $data['type_fin'] = $_POST['type_fin'];
+        if (isset($_POST['notes'])) $data['notes'] = $_POST['notes'];
+
+        $result = $this->mariageManager->modifierMariage($mariageId, $data);
+        
+        if ($result) {
+            return ['success' => true, 'message' => 'Mariage modifié'];
+        }
+        
+        return ['success' => false, 'message' => 'Erreur lors de la modification'];
+    }
+
+    private function deleteMariage() {
+        $mariageId = $_POST['mariage_id'] ?? null;
+
+        if (!$mariageId) {
+            throw new Exception('ID du mariage manquant');
+        }
+
+        $result = $this->mariageManager->supprimerMariage($mariageId);
+        
+        if ($result) {
+            return ['success' => true, 'message' => 'Mariage supprimé'];
+        }
+        
+        return ['success' => false, 'message' => 'Erreur lors de la suppression'];
+    }
+
+    private function getMariagesPersonne() {
+        $personneId = $_GET['personne_id'] ?? null;
+
+        if (!$personneId) {
+            throw new Exception('ID de la personne manquant');
+        }
+
+        $mariages = $this->mariageManager->getMariagesPersonne($personneId);
+        
+        // Formater pour l'affichage
+        $mariagesFormates = [];
+        foreach ($mariages as $mariage) {
+            $conjoint_id = ($mariage['epoux_id'] == $personneId) ? $mariage['epouse_id'] : $mariage['epoux_id'];
+            $conjoint_prenom = ($mariage['epoux_id'] == $personneId) ? $mariage['prenom_epouse'] : $mariage['prenom_epoux'];
+            $conjoint_nom = ($mariage['epoux_id'] == $personneId) ? $mariage['nom_epouse'] : $mariage['nom_epoux'];
+            
+            $mariagesFormates[] = [
+                'mariage_id' => $mariage['id'],
+                'conjoint_id' => $conjoint_id,
+                'conjoint_prenom' => $conjoint_prenom,
+                'conjoint_nom' => $conjoint_nom,
+                'date_mariage' => $mariage['date_mariage'],
+                'lieu_mariage' => $mariage['lieu_mariage'],
+                'date_fin' => $mariage['date_fin'],
+                'type_fin' => $mariage['type_fin'],
+                'notes' => $mariage['notes']
+            ];
+        }
+        
+        return ['success' => true, 'mariages' => $mariagesFormates];
+    }
+
+    private function getMariageDetails() {
+        $mariageId = $_GET['mariage_id'] ?? null;
+
+        if (!$mariageId) {
+            throw new Exception('ID du mariage manquant');
+        }
+
+        $mariage = $this->mariageManager->getMariageComplet($mariageId);
+        
+        if (!$mariage) {
+            return ['success' => false, 'message' => 'Mariage non trouvé'];
+        }
+        
+        return ['success' => true, 'mariage' => $mariage];
+    }
+
+    private function updateMariageOrder() {
+        $mariageId = $_POST['mariage_id'] ?? null;
+        $ordre = $_POST['ordre'] ?? null;
+
+        if (!$mariageId || $ordre === null) {
+            throw new Exception('Données manquantes pour la mise à jour de l\'ordre');
+        }
+
+        // Mettre à jour directement (numero_ordre n'est pas dans modifierMariage)
+        $stmt = $this->pdo->prepare("UPDATE mariages SET numero_ordre = :ordre WHERE id = :id");
+        $stmt->execute([
+            'ordre' => $ordre,
+            'id' => $mariageId
+        ]);
+        
+        return ['success' => true, 'message' => 'Ordre mis à jour'];
+    }
+
+    // ============================================
+    // MÉTHODES POUR LA GESTION DES LIEUX
+    // ============================================
+
+    public function getLieuxUniques() {
+        $query = "
+            SELECT DISTINCT lieu, 
+                   SUM(CASE WHEN type = 'naissance' THEN occurrences ELSE 0 END) as nb_naissances,
+                   SUM(CASE WHEN type = 'décès' THEN occurrences ELSE 0 END) as nb_deces,
+                   SUM(CASE WHEN type = 'mariage' THEN occurrences ELSE 0 END) as nb_mariages,
+                   SUM(occurrences) as total
+            FROM (
+                SELECT lieu_naissance as lieu, 'naissance' as type, COUNT(*) as occurrences
+                FROM membres
+                WHERE lieu_naissance IS NOT NULL AND lieu_naissance != ''
+                GROUP BY lieu_naissance
+                UNION ALL
+                SELECT lieu_deces as lieu, 'décès' as type, COUNT(*) as occurrences
+                FROM membres
+                WHERE lieu_deces IS NOT NULL AND lieu_deces != ''
+                GROUP BY lieu_deces
+                UNION ALL
+                SELECT lieu_mariage as lieu, 'mariage' as type, COUNT(*) as occurrences
+                FROM mariages
+                WHERE lieu_mariage IS NOT NULL AND lieu_mariage != ''
+                GROUP BY lieu_mariage
+            ) as tous_lieux
+            GROUP BY lieu
+            ORDER BY lieu
+        ";
+        
+        $stmt = $this->pdo->query($query);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function mettreAJourLieu($ancienLieu, $nouveauLieu) {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare("UPDATE membres SET lieu_naissance = :nouveau_lieu WHERE lieu_naissance = :ancien_lieu");
+            $stmt->execute(['nouveau_lieu' => $nouveauLieu, 'ancien_lieu' => $ancienLieu]);
+
+            $stmt = $this->pdo->prepare("UPDATE membres SET lieu_deces = :nouveau_lieu WHERE lieu_deces = :ancien_lieu");
+            $stmt->execute(['nouveau_lieu' => $nouveauLieu, 'ancien_lieu' => $ancienLieu]);
+
+            $stmt = $this->pdo->prepare("UPDATE mariages SET lieu_mariage = :nouveau_lieu WHERE lieu_mariage = :ancien_lieu");
+            $stmt->execute(['nouveau_lieu' => $nouveauLieu, 'ancien_lieu' => $ancienLieu]);
+
+            $this->pdo->commit();
+            return ['success' => true, 'message' => 'Lieu mis à jour avec succès'];
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            return ['success' => false, 'message' => 'Erreur : ' . $e->getMessage()];
+        }
+    }
+
+    public function supprimerLieu($lieu) {
+        try {
+            $this->pdo->beginTransaction();
+
+            $stmt = $this->pdo->prepare("UPDATE membres SET lieu_naissance = NULL WHERE lieu_naissance = :lieu");
+            $stmt->execute(['lieu' => $lieu]);
+
+            $stmt = $this->pdo->prepare("UPDATE membres SET lieu_deces = NULL WHERE lieu_deces = :lieu");
+            $stmt->execute(['lieu' => $lieu]);
+
+            $stmt = $this->pdo->prepare("UPDATE mariages SET lieu_mariage = NULL WHERE lieu_mariage = :lieu");
+            $stmt->execute(['lieu' => $lieu]);
+
+            $this->pdo->commit();
+            return ['success' => true, 'message' => 'Lieu supprimé avec succès'];
+        } catch (Exception $e) {
+            $this->pdo->rollBack();
+            return ['success' => false, 'message' => 'Erreur : ' . $e->getMessage()];
+        }
+    }
+
+    public function getDetailsLieu($lieu) {
+        $details = [
+            'naissances' => [],
+            'deces' => [],
+            'mariages' => []
+        ];
+
+        $stmt = $this->pdo->prepare("SELECT id, prenom, nom, date_naissance FROM membres WHERE lieu_naissance = :lieu ORDER BY date_naissance, nom, prenom");
+        $stmt->execute(['lieu' => $lieu]);
+        $details['naissances'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmt = $this->pdo->prepare("SELECT id, prenom, nom, date_deces FROM membres WHERE lieu_deces = :lieu ORDER BY date_deces, nom, prenom");
+        $stmt->execute(['lieu' => $lieu]);
+        $details['deces'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $stmt = $this->pdo->prepare("
+            SELECT m.id, m.date_mariage, e1.prenom as epoux_prenom, e1.nom as epoux_nom, e2.prenom as epouse_prenom, e2.nom as epouse_nom
+            FROM mariages m
+            JOIN membres e1 ON m.epoux_id = e1.id
+            JOIN membres e2 ON m.epouse_id = e2.id
+            WHERE m.lieu_mariage = :lieu
+            ORDER BY m.date_mariage
+        ");
+        $stmt->execute(['lieu' => $lieu]);
+        $details['mariages'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return $details;
+    }
+
+    public function rechercherLieux($terme) {
+        $stmt = $this->pdo->prepare("
+            SELECT DISTINCT lieu,
+                   SUM(CASE WHEN type = 'naissance' THEN occurrences ELSE 0 END) as nb_naissances,
+                   SUM(CASE WHEN type = 'décès' THEN occurrences ELSE 0 END) as nb_deces,
+                   SUM(CASE WHEN type = 'mariage' THEN occurrences ELSE 0 END) as nb_mariages,
+                   SUM(occurrences) as total
+            FROM (
+                SELECT lieu_naissance as lieu, 'naissance' as type, COUNT(*) as occurrences
+                FROM membres
+                WHERE lieu_naissance IS NOT NULL AND lieu_naissance != '' AND lieu_naissance LIKE :terme
+                GROUP BY lieu_naissance
+                UNION ALL
+                SELECT lieu_deces as lieu, 'décès' as type, COUNT(*) as occurrences
+                FROM membres
+                WHERE lieu_deces IS NOT NULL AND lieu_deces != '' AND lieu_deces LIKE :terme
+                GROUP BY lieu_deces
+                UNION ALL
+                SELECT lieu_mariage as lieu, 'mariage' as type, COUNT(*) as occurrences
+                FROM mariages
+                WHERE lieu_mariage IS NOT NULL AND lieu_mariage != '' AND lieu_mariage LIKE :terme
+                GROUP BY lieu_mariage
+            ) as tous_lieux
+            GROUP BY lieu
+            ORDER BY lieu
+        ");
+        
+        $stmt->execute(['terme' => '%' . $terme . '%']);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Récupérer tous les compteurs de documents pour tous les membres en une seule requête
+     */
+    private function getAllDocumentCounts() {
+        try {
+            // Compter les notes de mariage par personne
+            $stmtMariages = $this->pdo->query("
+                SELECT 
+                    m.epoux_id as person_id,
+                    COUNT(*) as count
+                FROM mariages m
+                WHERE m.notes IS NOT NULL AND m.notes != ''
+                GROUP BY m.epoux_id
+                UNION ALL
+                SELECT 
+                    m.epouse_id as person_id,
+                    COUNT(*) as count
+                FROM mariages m
+                WHERE m.epouse_id IS NOT NULL
+                  AND m.notes IS NOT NULL AND m.notes != ''
+                GROUP BY m.epouse_id
+            ");
+            
+            $mariageCounts = [];
+            while ($row = $stmtMariages->fetch(PDO::FETCH_ASSOC)) {
+                $personId = $row['person_id'];
+                if (!isset($mariageCounts[$personId])) {
+                    $mariageCounts[$personId] = 0;
+                }
+                $mariageCounts[$personId] += intval($row['count']);
+            }
+            
+            // Compter les documents (notes et PDFs) par personne
+            $stmtDocuments = $this->pdo->query("
+                SELECT 
+                    person_id,
+                    type,
+                    COUNT(*) as count
+                FROM documents
+                WHERE source = 'document'
+                  AND (id NOT LIKE 'temp_%')
+                GROUP BY person_id, type
+            ");
+            
+            $documentCounts = [];
+            while ($row = $stmtDocuments->fetch(PDO::FETCH_ASSOC)) {
+                $personId = $row['person_id'];
+                if (!isset($documentCounts[$personId])) {
+                    $documentCounts[$personId] = ['note' => 0, 'pdf' => 0, 'photo' => 0];
+                }
+                $documentCounts[$personId][$row['type']] = intval($row['count']);
+            }
+            
+            return [
+                'success' => true,
+                'mariageCounts' => $mariageCounts,
+                'documentCounts' => $documentCounts
+            ];
+            
+        } catch (Exception $e) {
+            return [
+                'success' => false,
+                'message' => 'Erreur lors du chargement des compteurs: ' . $e->getMessage()
+            ];
+        }
+    }
+}
+
+// Initialize and run
+$api = new FamilyTreeAPI();
+$api->handleRequest();
+?>

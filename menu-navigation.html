@@ -1,0 +1,296 @@
+<style>
+.top-fixed-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 45px;
+  background: var(--bg-tertiary);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  z-index: 3000;
+  box-shadow: var(--shadow-md);
+  gap: 20px;
+}
+
+/* Titre desktop */
+.desktop-only {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Nom de la personne */
+.current-person-wrapper {
+  font-size: 0.8em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  display: none;
+}
+
+/* Légende inline */
+.legend-inline {
+  margin-left: auto;
+  display: flex;
+  color: var(--text-primary);
+  gap: 3px;
+  font-size: 0.8em;
+}
+
+.legend-controls {
+  display: flex;
+  gap: 15px;
+}
+
+.checkbox-inline {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.85em; 
+  cursor: pointer;
+}
+
+.checkbox-inline input {
+  transform: scale(0.9);
+  cursor: pointer;
+}
+
+.navigation-help-inline {
+  font-size: 0.85em;
+  margin-left: 10px;
+  display: flex;
+  align-items: center;
+  color: var(--text-secondary);
+  gap: 5px;
+}
+
+.navigation-help-inline i,
+.checkbox-inline i {
+    color: var(--accent-color);
+}
+
+/* Décalage du contenu */
+body {
+  padding-top: 15px;
+}
+
+/* --- VERSION MOBILE --- */
+@media (max-width: 768px) {
+
+  .top-fixed-bar {
+    height: 40px;
+    padding: 0 10px;
+    background: var(--bg-tertiary);
+  }
+
+  /* On masque le titre "Arbre Généalogique Ascendant" */
+  .desktop-only {
+    display: none;
+  }
+
+  /* Nom de la personne bien visible */
+  .current-person-wrapper {
+    display: initial;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: max-content;
+  }
+
+  /* On garde la légende */
+  .legend-inline {
+    display: flex;
+  }
+
+  .legend-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  }
+
+  /* On masque l'aide de navigation en mobile */
+  .navigation-help-inline {
+    display: none;
+  }
+}
+</style>
+<div class="top-fixed-bar">
+
+  <!-- Bouton burger -->
+  <button class="burger-menu" id="burgerMenu" aria-label="Menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+
+  <!-- Titre desktop uniquement -->
+  <div class="controls-title desktop-only">
+    <i class="fas fa-sitemap fa-rotate-180"></i>
+    Arbre Généalogique Ascendant
+  </div>
+
+  <!-- Nom de la personne (toujours visible) -->
+  <div class="current-person-wrapper">
+    <span id="current-person-name"></span>
+  </div>
+  
+  <!-- Légende intégrée -->
+  <div class="legend-inline">
+    <div class="legend-controls">
+      <label class="checkbox-inline">
+        <input type="checkbox" id="toggleSiblings" />
+        <i class="fas fa-users"></i> Fratrie
+      </label>
+
+      <label class="checkbox-inline">
+        <input type="checkbox" id="toggleMarriageDates" />
+        <i class="fas fa-calendar-alt"></i> Mariages
+      </label>
+    </div>
+
+    <div class="navigation-help-inline">
+      <i class="fas fa-lightbulb"></i>
+      <span>Zoom : molette — Déplacement : clic droit</span>
+    </div>
+  </div>
+</div>
+
+<!-- Menu Burger (mobile uniquement) -->
+<button class="burger-menu" id="burgerMenu" aria-label="Menu">
+  <span></span>
+  <span></span>
+  <span></span>
+</button>
+
+<!-- Navigation Overlay (mobile) -->
+<nav class="burger-nav" id="burgerNav">
+  <div class="burger-nav-header">
+    <h2><i class="fas fa-bars"></i> Menu</h2>
+    <button class="burger-close" id="burgerClose" aria-label="Fermer">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
+  <ul class="burger-nav-list">
+    <li>
+      <a href="#" class="burger-nav-item" id="burgerOpenPanel">
+        <i class="fas fa-user-circle"></i>
+        <span>Détails de la personne</span>
+      </a>
+    </li>
+    <li class="burger-nav-divider"></li>
+    <li>
+      <a href="tree-family_44.html" class="burger-nav-item" id="burgerTabSitemap">
+        <i class="fas fa-sitemap fa-rotate-270"></i>
+        <span>Arbres</span>
+      </a>
+    </li>
+    <li>
+      <a href="add-person_15.html" class="burger-nav-item" id="burgerTabUsers">
+        <i class="fas fa-users"></i>
+        <span>Gestion des individus</span>
+      </a>
+    </li>
+    <li>
+      <a href="gestion-des-lieux_02.html" class="burger-nav-item" id="burgerTabMap">
+        <i class="fas fa-map-marker-alt"></i>
+        <span>Liste des lieux</span>
+      </a>
+    </li>
+    <li>
+      <a href="documents-manager_11.html" class="burger-nav-item" id="burgerTabDocs">
+        <i class="fas fa-file-alt"></i>
+        <span>Documents</span>
+      </a>
+    </li>
+    <li>
+      <a href="statistics_01.html" class="burger-nav-item" id="burgerTabStats">
+        <i class="fas fa-chart-bar"></i>
+        <span>Statistiques</span>
+      </a>
+    </li>
+    <li>
+      <a href="#" class="burger-nav-item" id="burgerTabStories">
+        <i class="fas fa-book-open"></i>
+        <span>Histoires</span>
+      </a>
+    </li>
+    <li>
+      <a href="#" class="burger-nav-item" id="burgerTabGedcom">
+        <i class="fas fa-file-import"></i>
+        <span>Importer/Exporter GEDCOM</span>
+      </a>
+    </li>
+    <li>
+      <a href="convertisseur-republicain_01.html" class="burger-nav-item" id="burgerTabDna">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Calendrier Républicain</span>
+      </a>
+    </li>
+    <li class="burger-nav-divider"></li>
+    <li>
+      <a href="#" class="burger-nav-item" id="burgerDarkMode">
+        <i class="fas fa-sun"></i><i class="fas fa-moon"></i>
+        <span>Mode jour/nuit</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<div class="burger-overlay" id="burgerOverlay"></div>
+
+<div class="root-tab">
+  <div class="root-tab-handle" id="rootTabHandle">
+    <div class="root-tab-header" id="rootTabHeader">
+      <div class="root-tab-arrow" id="rootTabArrow">
+        <i class="fas fa-chevron-right"></i>
+      </div>
+      <div class="root-tab-name" id="rootTabName">Individu Racine</div>
+    </div>
+    <div class="root-tab-icons">
+      <a href="tree-family_44.html" class="root-tab-icon" id="rootTabSitemap">
+        <i class="fas fa-sitemap fa-rotate-270"></i>
+        <span class="tooltip">Arbres</span>
+      </a>
+      <a href="add-person_15.html" class="root-tab-icon" id="rootTabUsers">
+        <i class="fas fa-users"></i>
+        <span class="tooltip">Gestion des individus</span>
+      </a>
+      <a href="gestion-des-lieux_02.html" class="root-tab-icon" id="rootTabMap">
+        <i class="fas fa-map-marker-alt"></i>
+        <span class="tooltip">Liste des lieux</span>
+      </a>
+      <a href="documents-manager_11.html" class="root-tab-icon" id="rootTabDocs">
+        <i class="fas fa-file-alt"></i>
+        <span class="tooltip">Documents</span>
+      </a>
+      <a href="statistics_01.html" class="root-tab-icon" id="rootTabStats">
+        <i class="fas fa-chart-bar"></i>
+        <span class="tooltip">Statistiques</span>
+      </a>
+      <a href="#" class="root-tab-icon" id="rootTabStories">
+        <i class="fas fa-book-open"></i>
+        <span class="tooltip">Histoires</span>
+      </a>
+      <a href="#" class="root-tab-icon" id="rootTabGedcom">
+        <i class="fas fa-file-import"></i>
+        <span class="tooltip">Importer/Exporter GEDCOM</span>
+      </a>
+      <a href="convertisseur-republicain_01.html" class="root-tab-icon" id="rootTabDna">
+        <i class="fas fa-calendar-alt"></i>
+        <span class="tooltip">Calendrier Républicain</span>
+      </a>
+      <a href="#" class="root-tab-icon" id="dark-mode-toggle">
+        <i class="fas fa-sun"></i><i class="fas fa-moon"></i>
+        <span class="tooltip">Mode jour/nuit</span>
+      </a>
+    </div>
+  </div>
+</div>
