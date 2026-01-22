@@ -11,6 +11,7 @@ desktop.ini
 # Dossiers IDE
 .vscode/
 .idea/
+.claude/
 
 # Logs
 *.log
