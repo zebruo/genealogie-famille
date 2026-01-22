@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arbre Généalogique</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 50px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .tree {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+            transition: all 0.5s;
+        }
+
+        .tree li {
+            float: left;
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+
+        .tree li::before,
+        .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid #667eea;
+            width: 50%;
+            height: 20px;
+        }
+
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid #667eea;
+        }
+
+        .tree li:only-child::after,
+        .tree li:only-child::before {
+            display: none;
+        }
+
+        .tree li:only-child {
+            padding-top: 0;
+        }
+
+        .tree li:first-child::before,
+        .tree li:last-child::after {
+            border: 0 none;
+        }
+
+        .tree li:last-child::before {
+            border-right: 2px solid #667eea;
+            border-radius: 0 5px 0 0;
+        }
+
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid #667eea;
+            width: 0;
+            height: 20px;
+        }
+
+        .tree li .person {
+            border: 2px solid #667eea;
+            padding: 15px 20px;
+            text-decoration: none;
+            color: #333;
+            font-family: arial, verdana, tahoma;
+            font-size: 14px;
+            display: inline-block;
+            border-radius: 10px;
+            transition: all 0.3s;
+            background: linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%);
+            min-width: 120px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .tree li .person:hover {
+            background: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-color: #764ba2;
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .person .name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }
+
+        .person .dates {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .tree li .person:hover .dates {
+            color: #fff;
+        }
+
+        .generation {
+            margin-top: 20px;
+            padding-top: 10px;
+        }
+
+        @media screen and (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .tree li .person {
+                padding: 10px;
+                font-size: 12px;
+                min-width: 100px;
+            }
+
+            .person .name {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Arbre Généalogique Familial</h1>
+
+        <div class="tree" id="tree">
+            <!-- L'arbre sera généré dynamiquement ici -->
+        </div>
+    </div>
+
+    <script>
+        // Fonction pour créer un élément personne
+        function createPersonElement(person) {
+            const personDiv = document.createElement('div');
+            personDiv.className = 'person';
+
+            const nameDiv = document.createElement('div');
+            nameDiv.className = 'name';
+            nameDiv.textContent = person.name;
+
+            const datesDiv = document.createElement('div');
+            datesDiv.className = 'dates';
+            datesDiv.textContent = person.dates;
+
+            personDiv.appendChild(nameDiv);
+            personDiv.appendChild(datesDiv);
+
+            return personDiv;
+        }
+
+        // Fonction récursive pour créer l'arbre
+        function buildTree(person) {
+            const li = document.createElement('li');
+
+            // Ajouter la personne
+            li.appendChild(createPersonElement(person));
+
+            // Si la personne a des enfants, créer une sous-liste
+            if (person.children && person.children.length > 0) {
+                const ul = document.createElement('ul');
+                person.children.forEach(child => {
+                    ul.appendChild(buildTree(child));
+                });
+                li.appendChild(ul);
+            }
+
+            return li;
+        }
+
+        // Charger les données JSON et construire l'arbre
+        fetch('family-data.json')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Impossible de charger les données');
+                }
+                return response.json();
+            })
+            .then(data => {
+                const treeContainer = document.getElementById('tree');
+                const rootUl = document.createElement('ul');
+                rootUl.appendChild(buildTree(data));
+                treeContainer.appendChild(rootUl);
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                document.getElementById('tree').innerHTML =
+                    '<p style="text-align: center; color: red;">Erreur de chargement des données familiales.</p>';
+            });
+    </script>
+</body>
+</html>
