@@ -362,11 +362,13 @@ CONTENEURS PRINCIPAUX
 }
 
 .tree-container {
-    width: 100%;
-    height: calc(100vh - 250px);
-    min-height: 500px;
-    position: relative;
+    width: 100vw;
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
     overflow: hidden;
+    z-index: 1;
 }
 
 /* ========================================
@@ -393,7 +395,14 @@ EN-TÊTES ET SECTIONS
 CONTRÔLES ET ACTIONS
 ======================================== */
 .controls {
-    padding: 0 0 15px 0;
+    padding: 55px 20px 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: var(--bg-color);
+    box-shadow: var(--shadow-md);
 }
 
 .controls-header {
@@ -421,9 +430,10 @@ CONTRÔLES ET ACTIONS
 .controls-actions {
     display: flex;
     align-items: center;
-    gap: 15px;
+    gap: 40px;
     flex-wrap: wrap;
     justify-content: center;
+    flex-direction: row-reverse;
 }
 
 .action-button {
@@ -725,7 +735,6 @@ SECTION DES RELATIONS
 RECHERCHE ET SUGGESTIONS
 ======================================== */
 .search-bar {
-    margin: 25px 0;
     display: flex;
     gap: 10px;
     align-items: center;
@@ -1576,6 +1585,52 @@ LOADER / CHARGEMENT (MÉCANISME UNIQUE)
 /* ========================================
 NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 ======================================== */
+
+/* Rectangles des nœuds (nouvelle structure) */
+.node rect {
+    fill: var(--bg-color);
+    stroke: var(--text-secondary);
+    stroke-width: 1.5px;
+    transition: all var(--transition-fast);
+    cursor: pointer;
+}
+
+.node:hover rect {
+    filter: brightness(1.05);
+    stroke-width: 2px;
+}
+
+.node rect.male {
+    fill: rgba(173, 216, 230, 0.4);  /* Bleu clair */
+}
+
+.node rect.female {
+    fill: rgba(255, 182, 193, 0.4);  /* Rose clair */
+}
+
+/* Nœud racine avec bordure verte */
+.node.root-node rect {
+    fill: #dcfce7;
+    stroke: #166534;
+    stroke-width: 2px;
+}
+
+/* Lien de mariage (trait plein) */
+.marriage-link {
+    fill: none;
+    stroke: #f43f5e;
+    stroke-width: 2px;
+}
+
+/* Date de mariage */
+.marriage-date {
+    font-size: 10px;
+    fill: #e11d48;
+    font-weight: bold;
+    pointer-events: none;
+}
+
+/* Legacy: cercles (pour compatibilité) */
 .node circle {
     stroke-width: 2px;
     transition: all var(--transition-fast);
@@ -1594,6 +1649,22 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 
 .vertical-mode .person-name {
     font-size: 1.1rem;
+}
+
+.person-name-border {
+    fill: var(--bg-secondary);
+    stroke: var(--text-secondary);
+    stroke-width: 1.5;
+    rx: 4;
+    ry: 4;
+}
+
+.person-name-border.male {
+    fill: rgba(173, 216, 230, 0.3);  /* Bleu clair */
+}
+
+.person-name-border.female {
+    fill: rgba(255, 182, 193, 0.3);  /* Rose clair */
 }
 
 .person-dates {
@@ -2046,7 +2117,9 @@ RESPONSIVE DESIGN
     }
 
     .tree-container {
-        height: calc(100vh - 250px);
+        /* Reste en plein écran sur mobile aussi */
+        width: 100vw;
+        height: 100vh;
     }
 
     .stats-flex-row {

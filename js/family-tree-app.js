@@ -10,7 +10,6 @@ class FamilyTreeApp {
     this.zoom = null;
     this.showSiblings = false;
     this.showMarriages = false;
-    this.isHorizontal = false; // Orientation de l'arbre par défaut
     this.maxGenerations = 6;
     this.currentPersonId = null;
     this.searchDebounceTimer = null;
@@ -19,7 +18,6 @@ class FamilyTreeApp {
     var loader = document.getElementById("loader");
     loader.style.display = "flex";
     var self = this;
-    this.initializeOrientation(); // Initialise l'orientation de l'arbre
     // Ajouter un gestionnaire de clic pour fermer le panneau
     document.addEventListener("click", function(e) {
       var personPanel = document.getElementById("person-panel");
@@ -231,108 +229,28 @@ class FamilyTreeApp {
     ).checked;
     if (this.currentPersonId) this.rebuildTree(this.currentPersonId);
   }
-  toggleOrientation() {
-    this.isHorizontal = !this.isHorizontal;
-    var button = document.getElementById("toggleOrientationButton");
-    button.innerHTML = this.isHorizontal ?
-      '<i class="fas fa-sitemap fa-rotate-270"></i>Paysage' : // ← Inversé
-      '<i class="fas fa-sitemap fa-rotate-180"></i>Portrait'; // ← Inversé
-    var generationSelect = document.getElementById("generationSelect");
-    if (!this.isHorizontal) {
-      if (this.maxGenerations > 5) {
-        this.maxGenerations = 5;
-        generationSelect.value = "5";
-      }
-      Array.from(generationSelect.options).forEach(option => {
-        if (parseInt(option.value) > 5) {
-          option.disabled = true;
-        }
-      });
-    } else {
-      // Mode horizontal: réactiver toutes les options
-      this.maxGenerations = 6;
-      generationSelect.value = "6";
-      Array.from(generationSelect.options).forEach(option => {
-        option.disabled = false;
-      });
-    }
-    if (this.currentPersonId) this.rebuildTree(this.currentPersonId);
-  }
-  initializeOrientation() {
-  var button = document.getElementById("toggleOrientationButton");
-  var generationSelect = document.getElementById("generationSelect");
-  
-  if (this.isHorizontal) {
-    // Mode horizontal par défaut
-    button.innerHTML = '<i class="fas fa-sitemap fa-rotate-270"></i>Paysage';
-  } else {
-    // Mode vertical par défaut
-    button.innerHTML = '<i class="fas fa-sitemap fa-rotate-180"></i>Portrait';
-    
-    // Limiter à 5 générations en mode vertical
-    if (this.maxGenerations > 5) {
-this.maxGenerations = 5;
-generationSelect.value = "5";
-    }
-    Array.from(generationSelect.options).forEach(option => {
-if (parseInt(option.value) > 5) {
-  option.disabled = true;
-}
-    });
-  }
-}
   centerView() {
     if (this.visualizer.zoom && this.familyTree) {
       var rootNode = d3.hierarchy(this.familyTree, (d) => d.parents);
-      var dims = this.visualizer.getDimensions();
-      var modeConfig = this.isHorizontal ?
-        CONFIG.horizontal :
-        CONFIG.vertical;
       var self = this;
+      var hGap = CONFIG.tree.horizontalSpacing;
+
       var treeData = d3
         .tree()
-        .size(
-          this.isHorizontal ? [dims.height, dims.width * modeConfig.treeSizeMultiplier] : [
-            dims.width * (modeConfig.widthMultiplier || 1),
-            dims.height * modeConfig.treeSizeMultiplier,
-          ]
-        )
+        .nodeSize([hGap, CONFIG.tree.verticalSpacing])
         .separation(function(a, b) {
-          var aSize =
-            1 +
-            (self.showSiblings && a.data.siblings ?
-              a.data.siblings.length :
-              0);
-          var bSize =
-            1 +
-            (self.showSiblings && b.data.siblings ?
-              b.data.siblings.length :
-              0);
-          return a.parent === b.parent ?
-            Math.max(
-              modeConfig.separationSameParent,
-              (aSize + bSize) / 1.2
-            ) :
-            Math.max(
-              modeConfig.separationDifferentParent,
-              (aSize + bSize) / 1.2
-            );
+          var aSize = 1 + (self.showSiblings && a.data.siblings ? a.data.siblings.length : 0);
+          var bSize = 1 + (self.showSiblings && b.data.siblings ? b.data.siblings.length : 0);
+          return a.parent === b.parent ? Math.max(1.5, (aSize + bSize) / 2) : Math.max(2.0, (aSize + bSize) / 2);
         })(rootNode);
-      if (!this.isHorizontal) {
-        var nodes = treeData.descendants();
-        var maxY = Math.max.apply(
-          null,
-          nodes.map(function(n) {
-            return n.y;
-          })
-        );
-        nodes.forEach(function(node) {
-          node.y = maxY - node.y;
-        });
-      }
-      var transform = this.visualizer.calculateOptimalTransform(
-        treeData.descendants()
-      );
+
+      // Y négatif pour ascendance (vers le haut)
+      var nodes = treeData.descendants();
+      nodes.forEach(function(node) {
+        node.y = -node.depth * CONFIG.tree.verticalSpacing;
+      });
+
+      var transform = this.visualizer.calculateOptimalTransform(nodes);
       d3.select("#tree-container svg")
         .transition()
         .duration(CONFIG.transitionDuration)
@@ -888,738 +806,238 @@ if (parseInt(option.value) > 5) {
         ")"
       );
     this.visualizer.zoom = this.visualizer.setupZoom(svg, g);
-    var dims = this.visualizer.getDimensions();
-    var modeConfig = this.isHorizontal ?
-      CONFIG.horizontal :
-      CONFIG.vertical;
     var self = this;
+
+    // Ajuster l'espacement horizontal si beaucoup de générations
+    var hGap = this.maxGenerations > 4
+      ? CONFIG.tree.horizontalSpacing * 0.8
+      : CONFIG.tree.horizontalSpacing;
+
+    // Layout avec nodeSize (comme test.html)
     var treemap = d3
       .tree()
-      .size(
-        this.isHorizontal ? [
-          dims.height * (modeConfig.heightMultiplier || 1),
-          dims.width * modeConfig.treeSizeMultiplier,
-        ] : [
-          dims.width * (modeConfig.widthMultiplier || 1),
-          dims.height * modeConfig.treeSizeMultiplier,
-        ]
-      )
+      .nodeSize([hGap, CONFIG.tree.verticalSpacing])
       .separation(function(a, b) {
-        var aSize =
-          1 +
-          (self.showSiblings && a.data.siblings ?
-            a.data.siblings.length :
-            0);
-        var bSize =
-          1 +
-          (self.showSiblings && b.data.siblings ?
-            b.data.siblings.length :
-            0);
-        return a.parent === b.parent ?
-          Math.max(
-            modeConfig.separationSameParent,
-            (aSize + bSize) / 1.2
-          ) :
-          Math.max(
-            modeConfig.separationDifferentParent,
-            (aSize + bSize) / 1.2
-          );
+        var aSize = 1 + (self.showSiblings && a.data.siblings ? a.data.siblings.length : 0);
+        var bSize = 1 + (self.showSiblings && b.data.siblings ? b.data.siblings.length : 0);
+        return a.parent === b.parent
+          ? Math.max(1.6, (aSize + bSize) / 1.2)
+          : Math.max(2.0, (aSize + bSize) / 1.2);
       });
+
     var rootNode = d3.hierarchy(this.familyTree, function(d) {
       return d.parents;
     });
     var treeData = treemap(rootNode);
-    if (!this.isHorizontal) {
-      var nodes = treeData.descendants();
-      var maxY = Math.max.apply(
-        null,
-        nodes.map(function(n) {
-          return n.y;
-        })
-      );
-      nodes.forEach(function(node) {
-        node.y = maxY - node.y;
-      });
-    }
+
+    // Appliquer Y négatif pour l'ascendance (comme test.html)
     var nodes = treeData.descendants();
-    if (this.isHorizontal) {
-      var initialTransform =
-        this.visualizer.calculateOptimalTransform(nodes);
-      svg.call(this.visualizer.zoom.transform, initialTransform);
-    }
+    nodes.forEach(function(node) {
+      node.y = -node.depth * CONFIG.tree.verticalSpacing;
+    });
+
     // Dessiner d'abord tous les liens (arrière-plan)
     this.drawTreeLinks(g, treeData);
     this.visualizer.drawMarriageLinks(g, nodes);
+
     // Dessiner les fratries avant les nœuds principaux
     if (this.showSiblings) {
       this.drawSiblings(g, nodes);
     }
+
     // Dessiner les nœuds EN DERNIER pour qu'ils soient au-dessus de tous les liens
     this.drawTreeNodes(g, treeData);
-    var self = this;
+
+    // Centrer la vue
     requestAnimationFrame(function() {
       setTimeout(function() {
-        var finalTransform =
-          self.visualizer.calculateOptimalTransform(nodes);
-        if (self.isHorizontal) {
-          svg
-            .transition()
-            .duration(400)
-            .call(self.visualizer.zoom.transform, finalTransform);
-        } else {
-          svg.call(self.visualizer.zoom.transform, finalTransform);
-        }
+        var finalTransform = self.visualizer.calculateOptimalTransform(nodes);
+        svg.call(self.visualizer.zoom.transform, finalTransform);
       }, 150);
     });
   }
   drawTreeLinks(g, treeData) {
+    var self = this;
     var links = treeData.links();
-    var isVertical = !this.isHorizontal;
-    var radius = isVertical ?
-      CONFIG.nodeRadius.vertical :
-      CONFIG.nodeRadius.default;
-    if (this.isHorizontal) {
-      var linkGenerator = d3
-        .link(d3.curveStep)
-        .x(function(d) {
-          return d.y;
-        })
-        .y(function(d) {
-          return d.x;
-        });
-      g.selectAll(".link")
-        .data(links)
-        .join("path")
+    var h = CONFIG.node.height;
+
+    // Liens orthogonaux : source (enfant) vers target (ancêtre au-dessus)
+    links.forEach(function(link) {
+      var source = link.source;  // Personne (Y plus proche de 0)
+      var target = link.target;  // Ancêtre (Y négatif, au-dessus)
+      var bendY = (source.y + target.y) / 2;
+
+      g.append("path")
         .attr("class", "link")
-        .attr("d", linkGenerator)
-        .transition()
-        .duration(CONFIG.transitionDuration);
-    } else {
-      var childrenWithParents = new Map();
-      links.forEach(function(link) {
-        var childId = link.target.data.id;
-        if (!childrenWithParents.has(childId)) {
-          childrenWithParents.set(childId, []);
+        .attr("d",
+          "M " + source.x + " " + (source.y - h / 2) +
+          " V " + bendY +
+          " H " + target.x +
+          " V " + (target.y + h / 2)
+        );
+
+      // Date de mariage des ancêtres (au centre de la barre horizontale entre les 2 parents)
+      if (self.showMarriages && source.children && source.children.length === 2 && target === source.children[1]) {
+        var parent1 = source.children[0];
+        var parent2 = source.children[1];
+        var midX = (parent1.x + parent2.x) / 2;
+
+        // Chercher la date de mariage dans la base de données
+        var marriageYear = "?";
+        var parent1Data = self.familyDatabase[parent1.data.id];
+        if (parent1Data && parent1Data.marriages && parent1Data.marriages[parent2.data.id]) {
+          var marriageData = parent1Data.marriages[parent2.data.id];
+          marriageYear = marriageData.marriageYear || marriageData.date || "?";
         }
-        childrenWithParents.get(childId).push(link);
-      });
-      childrenWithParents.forEach(function(parentLinks) {
-        if (parentLinks.length === 0) return;
-        var child = parentLinks[0].target;
-        var childX = child.x;
-        var childY = child.y - radius;
-        if (parentLinks.length === 1) {
-          var parent = parentLinks[0].source;
-          var midY = (childY + parent.y + radius) / 2;
-          g.append("path")
-            .attr("class", "link")
-            .attr(
-              "d",
-              "M " +
-              childX +
-              "," +
-              childY +
-              " V " +
-              midY +
-              " H " +
-              parent.x +
-              " V " +
-              (parent.y + radius)
-            );
-        } else if (parentLinks.length === 2) {
-          var parent1 = parentLinks[0].source;
-          var parent2 = parentLinks[1].source;
-          var avgParentY = (parent1.y + parent2.y) / 2 + radius;
-          var branchY = (childY + avgParentY) / 2;
-          g.append("path")
-            .attr("class", "link")
-            .attr("d", "M " + childX + "," + childY + " V " + branchY);
-          g.append("path")
-            .attr("class", "link")
-            .attr(
-              "d",
-              "M " + parent1.x + "," + branchY + " H " + parent2.x
-            );
-          g.append("path")
-            .attr("class", "link")
-            .attr(
-              "d",
-              "M " +
-              parent1.x +
-              "," +
-              branchY +
-              " V " +
-              (parent1.y + radius)
-            );
-          g.append("path")
-            .attr("class", "link")
-            .attr(
-              "d",
-              "M " +
-              parent2.x +
-              "," +
-              branchY +
-              " V " +
-              (parent2.y + radius)
-            );
-        }
-      });
-    }
+
+        g.append("text")
+          .attr("class", "marriage-date")
+          .attr("x", midX)
+          .attr("y", bendY - 5)
+          .attr("text-anchor", "middle")
+          .text("× " + marriageYear);
+      }
+    });
   }
   drawTreeNodes(g, treeData) {
     var self = this;
-    var isVertical = !this.isHorizontal;
-    var nodeRadius = isVertical ?
-      CONFIG.nodeRadius.vertical :
-      CONFIG.nodeRadius.default;
-    var nodeGroups = g
-      .selectAll(".node")
-      .data(treeData.descendants())
-      .join("g")
-      .attr("class", function(d) {
-        return "node depth-" + d.data.depth;
-      })
-      .attr("transform", function(d) {
-        return self.isHorizontal ?
-          "translate(" + d.y + "," + d.x + ")" :
-          "translate(" + d.x + "," + d.y + ")";
-      })
-      .style("cursor", "pointer")
-      .on("click", function(event, d) {
-        self.selectPerson(d.data.id);
-      });
-    nodeGroups.append("circle").attr("r", nodeRadius);
-    this.visualizer.addHoverEffect(nodeGroups);
-    this.addNodeTexts(nodeGroups);
-    var rootNode = treeData.descendants()[0];
+    var nodes = treeData.descendants();
+    var rootNode = nodes[0];
+
+    // Dessiner tous les nœuds sauf la racine (rectangles)
+    nodes.slice(1).forEach(function(d) {
+      self.drawNode(g, d.x, d.y, d.data, false, null);
+    });
+
+    // Dessiner la famille racine (conjoints, enfants, fratries)
     this.drawRootFamily(g, rootNode);
+
     // Re-dessiner le nœud racine en dernier pour qu'il soit au-dessus de tous les liens
-    var rootGroup = g
-      .append("g")
-      .attr("class", "node depth-" + rootNode.data.depth)
-      .attr("transform", function() {
-        return self.isHorizontal ?
-          "translate(" + rootNode.y + "," + rootNode.x + ")" :
-          "translate(" + rootNode.x + "," + rootNode.y + ")";
-      })
-      .style("cursor", "pointer")
-      .on("click", function() {
-        self.selectPerson(rootNode.data.id);
-      })
-      .datum(rootNode);
-    rootGroup.append("circle").attr("r", nodeRadius);
-    this.visualizer.addHoverEffect(rootGroup);
-    this.addNodeTexts(rootGroup);
+    this.drawNode(g, rootNode.x, rootNode.y, rootNode.data, true, "#166534");
   }
   drawRootFamily(g, rootNode) {
     var self = this;
-    var modeConfig = this.isHorizontal ?
-      CONFIG.horizontal :
-      CONFIG.vertical;
-    var isVertical = !this.isHorizontal;
-    var rootRadius = isVertical ?
-      CONFIG.nodeRadius.vertical :
-      CONFIG.nodeRadius.default;
-    var spouseRadius = isVertical ?
-      CONFIG.siblingRadius.vertical :
-      CONFIG.siblingRadius.default;
-    var rootCoord = this.isHorizontal ? rootNode.x : rootNode.x;
+    var h = CONFIG.node.height;
+    var w = CONFIG.node.width;
+    var bendHeight = CONFIG.tree.bendHeight;
+
+    // === 1. FRATRIES DE LA RACINE (à gauche, liées par le HAUT) ===
     var siblings = rootNode.data.siblings || [];
-    var siblingSpacing = this.isHorizontal ?
-      CONFIG.spacing.siblingVertical :
-      CONFIG.vertical.siblingSpacing;
     if (siblings.length > 0) {
-      var horizontalSiblingOffset = 20;
+      var topY = rootNode.y - h / 2;
+      var linkY = topY - bendHeight;
+
       siblings.forEach(function(sibling, index) {
-        if (self.isHorizontal) {
-          var siblingCoord =
-            rootCoord + siblingSpacing + index * siblingSpacing;
-          g.append("path")
-            .attr("class", "sibling-link")
-            .attr(
-              "d",
-              "M " +
-              rootNode.y +
-              "," +
-              (rootCoord + rootRadius) +
-              " L " +
-              rootNode.y +
-              "," +
-              siblingCoord +
-              " L " +
-              (rootNode.y + horizontalSiblingOffset) +
-              "," +
-              siblingCoord +
-              " L " +
-              (rootNode.y + spouseRadius * 2) +
-              "," +
-              siblingCoord
-            );
-          self.drawFamilyMember(
-            g,
-            sibling,
-            rootNode.y + spouseRadius * 2,
-            siblingCoord,
-            "sibling"
+        var siblingX = rootNode.x - CONFIG.sibling.spacing * (index + 1);
+        var siblingY = rootNode.y;
+
+        // Lien par le HAUT : horizontal puis descend vers fratrie
+        g.append("path")
+          .attr("class", "sibling-link")
+          .attr("d",
+            "M " + rootNode.x + " " + linkY +
+            " H " + siblingX +
+            " V " + topY
           );
-        } else {
-          var rootSiblingOffset = CONFIG.vertical.rootSiblingOffset;
-          var siblingCoord =
-            rootCoord + rootSiblingOffset + index * siblingSpacing;
-          g.append("path")
-            .attr("class", "sibling-link")
-            .attr(
-              "d",
-              "M " +
-              (rootCoord + rootRadius) +
-              "," +
-              rootNode.y +
-              " L " +
-              siblingCoord +
-              "," +
-              rootNode.y +
-              " L " +
-              siblingCoord +
-              "," +
-              (rootNode.y - horizontalSiblingOffset) +
-              " L " +
-              siblingCoord +
-              "," +
-              (rootNode.y - spouseRadius * 2)
-            );
-          self.drawFamilyMember(
-            g,
-            sibling,
-            siblingCoord,
-            rootNode.y - spouseRadius * 2,
-            "sibling"
-          );
-        }
+
+        self.drawNode(g, siblingX, siblingY, sibling, false, null);
       });
     }
-    var marriages =
-      this.familyDatabase[rootNode.data.id] &&
+
+    // === 2. MARIAGES ET ENFANTS ===
+    var marriages = this.familyDatabase[rootNode.data.id] &&
       this.familyDatabase[rootNode.data.id].marriages ?
       this.familyDatabase[rootNode.data.id].marriages : {};
+
     var sortedMarriages = Object.entries(marriages).sort(function(a, b) {
       var yearA = parseInt(a[1].marriageYear || a[1].date) || 9999;
       var yearB = parseInt(b[1].marriageYear || b[1].date) || 9999;
       return yearA - yearB;
     });
-    var spouseSpacing = modeConfig.familySpacing;
-    var childSpacing =
-      modeConfig.familySpacing * modeConfig.childSpacingMultiplier;
-    var horizontalOffset = this.isHorizontal ?
-      -modeConfig.familySpacing * 2.5 :
-      modeConfig.familySpacing * 0.5;
-    var currentCoord = rootCoord;
-    var previousSpouseCoord = rootCoord;
-    var previousChildrenWidth = 0;
-    var previousChildrenEndX = 0;
+
+    var spouseX = rootNode.x + CONFIG.spouse.spacing;
+
     sortedMarriages.forEach(function(item, index) {
       var spouseId = item[0];
       var spouseData = self.familyDatabase[spouseId];
       if (!spouseData) return;
-      var marriageChildren = self.getMarriageChildren(
-        rootNode.data.id,
-        spouseId
-      );
-      var childrenHeight = marriageChildren.length * childSpacing;
-      var childrenWidth = self.isHorizontal ?
-        childrenHeight :
-        marriageChildren.length * childSpacing;
-      var totalMarriageHeight = self.isHorizontal ?
-        Math.max(childrenHeight, spouseSpacing) :
-        Math.max(childrenWidth, spouseSpacing);
-      var spouseCoord;
-      if (self.isHorizontal) {
-        spouseCoord = currentCoord - totalMarriageHeight;
-      } else {
-        var baseSpouseSpacing = Math.abs(spouseSpacing);
-        if (index === 0) {
-          spouseCoord = currentCoord - baseSpouseSpacing * 1.5;
-        } else {
-          if (previousChildrenWidth > 0 && previousChildrenEndX > 0) {
-            var minChildrenGap = childSpacing * 1.5;
-            var nextChildrenStartX =
-              previousChildrenEndX - minChildrenGap;
-            var thisChildrenWidth =
-              marriageChildren.length * childSpacing;
-            spouseCoord = nextChildrenStartX - thisChildrenWidth / 2;
-          } else {
-            var minSpouseGap = baseSpouseSpacing * 1.5;
-            spouseCoord =
-              previousSpouseCoord - spouseRadius - minSpouseGap;
-          }
-        }
-      }
-      if (self.isHorizontal) {
-        if (index === 0) {
-          g.append("path")
-            .attr(
-              "class",
-              sortedMarriages.length === 1 ?
-              "spouse-link-single" :
-              "spouse-link"
-            )
-            .attr(
-              "d",
-              "M " +
-              rootNode.y +
-              "," +
-              (rootNode.x - rootRadius) +
-              " L " +
-              rootNode.y +
-              "," +
-              (spouseCoord + spouseRadius)
-            );
-        } else {
-          g.append("path")
-            .attr("class", "spouse-link")
-            .attr(
-              "d",
-              "M " +
-              rootNode.y +
-              "," +
-              (previousSpouseCoord - spouseRadius) +
-              " L " +
-              rootNode.y +
-              "," +
-              (spouseCoord + spouseRadius)
-            );
-        }
-        self.drawFamilyMember(
-          g,
-          spouseData,
-          rootNode.y,
-          spouseCoord,
-          "spouse"
+
+      var currentSpouseX = spouseX + index * CONFIG.spouse.spacing;
+      var prevX = index === 0 ? rootNode.x : currentSpouseX - CONFIG.spouse.spacing;
+
+      // Lien mariage (trait plein) - du bord droit au bord gauche
+      var linkStartX = prevX + w / 2;
+      var linkEndX = currentSpouseX - w / 2;
+      g.append("path")
+        .attr("class", "marriage-link")
+        .attr("d",
+          "M " + linkStartX + " " + rootNode.y +
+          " H " + linkEndX
         );
-        if (sortedMarriages.length > 1) {
-          var midChildY = (spouseCoord + previousSpouseCoord) / 2;
-          g.append("text")
-            .attr("class", "marriage-number")
-            .attr("x", rootNode.y - 2)
-            .attr("y", midChildY - 12)
-            .attr("text-anchor", "end")
-            .text(index + 1);
-        }
-        if (marriageChildren.length > 0) {
-          var midChildY = (spouseCoord + previousSpouseCoord) / 2;
-          var totalChildrenHeight =
-            (marriageChildren.length - 1) * childSpacing;
-          var childStartY = midChildY - totalChildrenHeight / 2;
+
+      // Date de mariage (au centre du lien)
+      if (self.showMarriages) {
+        var marriageData = item[1];
+        var marriageYear = marriageData.marriageYear || marriageData.date || "?";
+        var midX = (linkStartX + linkEndX) / 2;
+        g.append("text")
+          .attr("class", "marriage-date")
+          .attr("x", midX)
+          .attr("y", rootNode.y - 8)
+          .attr("text-anchor", "middle")
+          .text("× " + marriageYear);
+      }
+
+      // Numéro de mariage si plusieurs
+      if (sortedMarriages.length > 1) {
+        g.append("text")
+          .attr("class", "marriage-number")
+          .attr("x", currentSpouseX)
+          .attr("y", rootNode.y + h / 2 + 15)
+          .attr("text-anchor", "middle")
+          .text(index + 1);
+      }
+
+      // Dessiner le conjoint
+      self.drawNode(g, currentSpouseX, rootNode.y, spouseData, false, null);
+
+      // === ENFANTS ===
+      var marriageChildren = self.getMarriageChildren(rootNode.data.id, spouseId);
+      if (marriageChildren.length > 0) {
+        var childY = rootNode.y + CONFIG.children.descent;
+        // Centre entre le parent précédent et le conjoint actuel
+        var midX = (prevX + w / 2 + linkEndX) / 2;
+        var topChildY = childY - h / 2;
+        var horizontalY = topChildY - bendHeight;
+
+        // Lien vertical du centre des parents vers la ligne horizontale
+        g.append("path")
+          .attr("class", "child-link")
+          .attr("d",
+            "M " + midX + " " + rootNode.y +
+            " V " + horizontalY
+          );
+
+        // Calcul des positions des enfants
+        var totalWidth = (marriageChildren.length - 1) * CONFIG.children.spacing;
+        var startChildX = midX - totalWidth / 2;
+
+        // Dessiner chaque enfant avec son lien
+        marriageChildren.forEach(function(child, childIndex) {
+          var childX = startChildX + childIndex * CONFIG.children.spacing;
+
+          // Lien : horizontal depuis midX puis vertical vers l'enfant
           g.append("path")
             .attr("class", "child-link")
-            .attr(
-              "d",
-              "M " +
-              rootNode.y +
-              "," +
-              midChildY +
-              " H " +
-              (rootNode.y + horizontalOffset)
+            .attr("d",
+              "M " + midX + " " + horizontalY +
+              " H " + childX +
+              " V " + topChildY
             );
-          if (marriageChildren.length > 1) {
-            g.append("path")
-              .attr("class", "child-link")
-              .attr(
-                "d",
-                "M " +
-                (rootNode.y + horizontalOffset) +
-                "," +
-                childStartY +
-                " V " +
-                (childStartY + totalChildrenHeight)
-              );
-          }
-          marriageChildren.forEach(function(child, childIndex) {
-            var childY = childStartY + childIndex * childSpacing;
-            g.append("path")
-              .attr("class", "child-link")
-              .attr(
-                "d",
-                "M " +
-                (rootNode.y + horizontalOffset) +
-                "," +
-                childY +
-                " H " +
-                (rootNode.y + horizontalOffset - spouseRadius * 4)
-              );
-            self.drawFamilyMember(
-              g,
-              child,
-              rootNode.y + horizontalOffset - spouseRadius * 4,
-              childY,
-              "child"
-            );
-          });
-        }
-        // Calculer la position de la date (50% entre chaque conjoint)
-        var datePosition;
-        if (index === 0) {
-          datePosition = rootNode.x + (spouseCoord - rootNode.x) * 0.5;
-        } else {
-          datePosition = previousSpouseCoord + (spouseCoord - previousSpouseCoord) * 0.5;
-        }
-        // Date de mariage (conditionnelle) - dessinée EN DERNIER pour être au-dessus
-        if (self.showMarriages) {
-          var marriageData = item[1];
-          var marriageYear = marriageData.marriageYear || marriageData.date || "?";
-          g.append("text")
-            .attr("class", "marriage-symbol-year horizontal")
-            .attr("x", rootNode.y - 10)
-            .attr("y", datePosition)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-            .text("x " + marriageYear);
-        }
-      } else {
-        if (index === 0) {
-          g.append("path")
-            .attr(
-              "class",
-              sortedMarriages.length === 1 ?
-              "spouse-link-single" :
-              "spouse-link"
-            )
-            .attr(
-              "d",
-              "M " +
-              (rootNode.x - rootRadius) +
-              "," +
-              rootNode.y +
-              " L " +
-              (spouseCoord + spouseRadius) +
-              "," +
-              rootNode.y
-            );
-        } else {
-          g.append("path")
-            .attr("class", "spouse-link")
-            .attr(
-              "d",
-              "M " +
-              (previousSpouseCoord - spouseRadius) +
-              "," +
-              rootNode.y +
-              " L " +
-              (spouseCoord + spouseRadius) +
-              "," +
-              rootNode.y
-            );
-        }
-        // Calculer la position de la date (50% entre chaque conjoint)
-        var datePosition;
-        if (index === 0) {
-          datePosition = rootNode.x + (spouseCoord - rootNode.x) * 0.5;
-        } else {
-          datePosition = previousSpouseCoord + (spouseCoord - previousSpouseCoord) * 0.5;
-        }
-        // Date de mariage (conditionnelle)
-        if (self.showMarriages) {
-          var marriageData = item[1];
-          var marriageYear = marriageData.marriageYear || marriageData.date || "?";
-          g.append("text")
-            .attr("class", "marriage-symbol-year vertical")
-            .attr("x", datePosition)
-            .attr("y", rootNode.y - 10)
-            .attr("text-anchor", "middle")
-            .attr("dominant-baseline", "middle")
-            .text("x " + marriageYear);
-        }
-        var spouseGroup = self.drawFamilyMember(
-          g,
-          spouseData,
-          spouseCoord,
-          rootNode.y,
-          "spouse"
-        );
-        spouseGroup.classed("root-spouse", true);
-        var marriageNumberX;
-        if (sortedMarriages.length > 1) {
-          if (index === 0) {
-            marriageNumberX = (rootNode.x + spouseCoord) / 2;
-          } else {
-            marriageNumberX = (spouseCoord + previousSpouseCoord) / 2;
-          }
-          g.append("text")
-            .attr("class", "marriage-number")
-            .attr("x", marriageNumberX + 4)
-            .attr("y", rootNode.y + 15)
-            .attr("text-anchor", "start")
-            .text(index + 1);
-        }
-        if (marriageChildren.length > 0) {
-          var totalChildrenWidth = marriageChildren.length * childSpacing;
-          var childStartX, verticalBarStartX;
-          var isSecondMarriage = index === 1;
-          if (
-            sortedMarriages.length > 1 &&
-            marriageNumberX !== undefined
-          ) {
-            verticalBarStartX = marriageNumberX;
-            if (isSecondMarriage) {
-              var firstChildX = verticalBarStartX;
-              childStartX = firstChildX;
-            } else {
-              var firstChildX = verticalBarStartX;
-              childStartX =
-                firstChildX -
-                (marriageChildren.length - 1) * childSpacing;
-            }
-          } else {
-            var centerBetweenParents = (rootNode.x + spouseCoord) / 2;
-            verticalBarStartX = centerBetweenParents;
-            if (marriageChildren.length === 1) {
-              childStartX = centerBetweenParents;
-            } else {
-              childStartX = centerBetweenParents - totalChildrenWidth / 2;
-            }
-          }
-          g.append("path")
-            .attr("class", "child-link")
-            .attr(
-              "d",
-              "M " +
-              verticalBarStartX +
-              "," +
-              rootNode.y +
-              " V " +
-              (rootNode.y - horizontalOffset)
-            );
-          if (marriageChildren.length > 1) {
-            var childRadius = isVertical ?
-              CONFIG.siblingRadius.vertical :
-              CONFIG.siblingRadius.default;
-            var childY = rootNode.y - horizontalOffset + spouseRadius * 4;
-            var firstChildX = childStartX;
-            var lastChildX =
-              childStartX + (marriageChildren.length - 1) * childSpacing;
-            if (sortedMarriages.length > 1) {
-              if (isSecondMarriage) {
-                var horizontalLineX = firstChildX - childRadius;
-                g.append("path")
-                  .attr("class", "child-link")
-                  .attr(
-                    "d",
-                    "M " +
-                    horizontalLineX +
-                    "," +
-                    childY +
-                    " H " +
-                    (horizontalLineX +
-                      (marriageChildren.length - 1) * 0)
-                  );
-                g.append("path")
-                  .attr("class", "child-link")
-                  .attr(
-                    "d",
-                    "M " +
-                    horizontalLineX +
-                    "," +
-                    childY +
-                    " H " +
-                    (lastChildX - childRadius)
-                  );
-              } else {
-                var horizontalLineX = lastChildX + childRadius;
-                g.append("path")
-                  .attr("class", "child-link")
-                  .attr(
-                    "d",
-                    "M " +
-                    (firstChildX + childRadius) +
-                    "," +
-                    childY +
-                    " H " +
-                    horizontalLineX
-                  );
-              }
-            } else {
-              g.append("path")
-                .attr("class", "child-link")
-                .attr(
-                  "d",
-                  "M " +
-                  firstChildX +
-                  "," +
-                  (rootNode.y - horizontalOffset) +
-                  " H " +
-                  lastChildX
-                );
-            }
-          }
-          marriageChildren.forEach(function(child, childIndex) {
-            var childX = childStartX + childIndex * childSpacing;
-            var childLineY = rootNode.y - horizontalOffset;
-            var childY = rootNode.y - horizontalOffset + spouseRadius * 4;
-            var childRadius = isVertical ?
-              CONFIG.siblingRadius.vertical :
-              CONFIG.siblingRadius.default;
-            if (sortedMarriages.length > 1) {
-              if (isSecondMarriage) {
-                if (childIndex === 0) {
-                  g.append("path")
-                    .attr("class", "child-link")
-                    .attr(
-                      "d",
-                      "M " + childX + "," + childLineY + " V " + childY
-                    );
-                }
-              } else {
-                if (childIndex === marriageChildren.length - 1) {
-                  g.append("path")
-                    .attr("class", "child-link")
-                    .attr(
-                      "d",
-                      "M " + childX + "," + childLineY + " V " + childY
-                    );
-                }
-              }
-            } else {
-              g.append("path")
-                .attr("class", "child-link")
-                .attr(
-                  "d",
-                  "M " + childX + "," + childLineY + " V " + childY
-                );
-            }
-            if (
-              sortedMarriages.length > 1 &&
-              marriageChildren.length > 1
-            ) {
-              if (isSecondMarriage) {
-                var connectionX = childX - childRadius;
-                g.append("path")
-                  .attr("class", "child-link")
-                  .attr(
-                    "d",
-                    "M " + childX + "," + childY + " H " + connectionX
-                  );
-              } else {
-                var connectionX = childX + childRadius;
-                g.append("path")
-                  .attr("class", "child-link")
-                  .attr(
-                    "d",
-                    "M " + childX + "," + childY + " H " + connectionX
-                  );
-              }
-            }
-            self.drawFamilyMember(g, child, childX, childY, "child");
-          });
-          previousChildrenEndX = childStartX;
-        }
+
+          self.drawNode(g, childX, childY, child, false, null);
+        });
       }
-      previousSpouseCoord = spouseCoord;
-      previousChildrenWidth =
-        marriageChildren.length > 0 ?
-        marriageChildren.length * childSpacing :
-        0;
-      currentCoord = self.isHorizontal ?
-        spouseCoord - spouseSpacing :
-        spouseCoord + spouseSpacing;
     });
   }
   getMarriageChildren(rootId, spouseId) {
@@ -1635,388 +1053,133 @@ if (parseInt(option.value) > 5) {
         return (a.birthDate || "").localeCompare(b.birthDate || "");
       });
   }
-  drawFamilyMember(g, member, x, y, memberType) {
+  drawSiblings(g, nodes) {
     var self = this;
-    var isVertical = !this.isHorizontal;
-    var memberGroup = g
-      .append("g")
-      .attr("class", "node " + memberType)
+    var h = CONFIG.node.height;
+    var bendHeight = CONFIG.tree.bendHeight;
+
+    // Dessiner les fratries des ancêtres (pas la racine - gérée par drawRootFamily)
+    nodes.forEach(function(person) {
+      if (person === nodes[0]) return;  // Skip root
+      var siblings = person.data.siblings;
+      if (!siblings || !siblings.length) return;
+
+      siblings.forEach(function(sibling, index) {
+        // Position à gauche de l'ancêtre
+        var siblingX = person.x - CONFIG.sibling.spacing * (index + 1);
+        var siblingY = person.y;
+
+        // Lien par le HAUT : du haut de l'ancêtre, monte, va à gauche, puis descend vers fratrie
+        var topY = person.y - h / 2;
+        var linkY = topY - bendHeight;
+
+        g.append("path")
+          .attr("class", "sibling-link")
+          .attr("d",
+            "M " + person.x + " " + linkY +
+            " H " + siblingX +
+            " V " + topY
+          );
+
+        // Dessiner le nœud fratrie
+        self.drawNode(g, siblingX, siblingY, sibling, false, null);
+      });
+    });
+  }
+
+  // =====================================================
+  // NOUVELLES MÉTHODES - Structure test.html
+  // =====================================================
+
+  /**
+   * Dessine un nœud rectangle avec texte (nouvelle structure)
+   * @param {d3.Selection} g - Groupe SVG parent
+   * @param {number} x - Position X
+   * @param {number} y - Position Y
+   * @param {Object} person - Données de la personne
+   * @param {boolean} isRoot - Est-ce le nœud racine
+   * @param {string} strokeColor - Couleur de bordure optionnelle
+   * @returns {d3.Selection} Le groupe du nœud créé
+   */
+  drawNode(g, x, y, person, isRoot, strokeColor) {
+    var self = this;
+    var nodeG = g.append("g")
+      .attr("class", "node" + (isRoot ? " root-node" : ""))
       .attr("transform", "translate(" + x + "," + y + ")")
       .style("cursor", "pointer")
       .on("click", function() {
-        self.selectPerson(member.id);
+        self.selectPerson(person.id);
       });
-    memberGroup.attr("data-member-type", memberType);
-    var nodeRadius = isVertical ?
-      CONFIG.nodeRadius.vertical :
-      CONFIG.nodeRadius.default;
-    var siblingRadius = isVertical ?
-      CONFIG.siblingRadius.vertical :
-      CONFIG.siblingRadius.default;
-    memberGroup
-      .append("circle")
-      .attr("r", memberType === "default" ? nodeRadius : siblingRadius)
-      .attr("class", "depth-0");
-    this.visualizer.addHoverEffect(memberGroup, memberType === "default");
-    var isChild = memberType === "child";
-    var isSpouse = memberType === "spouse";
-    var isSibling = memberType === "sibling";
-    var textAbove =
-      isChild || isSpouse || (isSibling && !self.isHorizontal);
-    var textOffset = isVertical ?
-      CONFIG.spacing.verticalTextOffset :
-      CONFIG.spacing.textOffset;
-    var textOffsetX = textAbove ? 0 : textOffset;
-    var nameDy = textAbove ? "-2em" : "-0.5em";
-    var textAnchor = textAbove ? "middle" : "start";
-    var textContainer = memberGroup
-      .append("g")
-      .attr("transform", "translate(" + textOffsetX + ", -5)");
-    if (textAbove && !self.isHorizontal) {
-      textContainer
-        .append("text")
-        .attr("class", "person-name")
-        .attr("dy", "-3.2em")
-        .style("text-anchor", textAnchor)
-        .text(getFirstNameWithInitials(member));
-      textContainer
-        .append("text")
-        .attr("class", "person-name")
-        .attr("dy", "-1.9em")
-        .style("text-anchor", textAnchor)
-        .text(member.lastName);
-    } else if (textAbove && self.isHorizontal) {
-      var displayName = getFirstNameWithInitials(member) + " " + member.lastName;
-      var memberName = textContainer
-        .append("text")
-        .attr("class", "person-name")
-        .attr("dy", nameDy)
-        .style("text-anchor", textAnchor)
-        .text(displayName);
-      var nameWidth = memberName.node().getComputedTextLength();
-      datesX = nameWidth / 2;
-    } else {
-      var displayName = getFirstNameWithInitials(member) + " " + member.lastName;
-      var memberName = textContainer
-        .append("text")
-        .attr("class", "person-name")
-        .attr("dy", nameDy)
-        .style("text-anchor", textAnchor)
-        .text(displayName);
-      var nameWidth = memberName.node().getComputedTextLength();
-      datesX = nameWidth / 2;
-    }
-    var datesX = textAbove ? 0 : nameWidth / 2;
-    var datesDy = textAbove ?
-      isVertical ?
-      "-0.8em" :
-      "-0.9em" :
-      "0.5em";
-    var birthYear =
-      member.birthDate && member.birthDate.length > 4 ?
-      member.birthDate.substring(0, 4) :
-      member.birthDate;
-    var deathYear =
-      member.deathDate && member.deathDate.length > 4 ?
-      member.deathDate.substring(0, 4) :
-      member.deathDate;
-    var datesText = '';
-    var isDeceased = deathYear && deathYear !== '' && deathYear !== '0000' && deathYear !== '0';
-    if (birthYear && !isDeceased) {
-      var neLabel = member.sex === 'F' ? 'née en' : 'né en';
-      datesText = neLabel + ' ' + birthYear;
-    } else if (birthYear && isDeceased) {
-      datesText = birthYear + ' - ' + deathYear;
-    } else if (isDeceased) {
-      datesText = '- ' + deathYear;
-    }
-    textContainer
-      .append("text")
-      .attr("class", "person-dates")
-      .attr("x", datesX)
-      .attr("dy", datesDy)
-      .style("text-anchor", "middle")
-      .text(datesText);
-    return memberGroup;
+
+    // Classe de sexe pour la couleur de fond
+    var sexClass = person.sex === 'M' ? 'male' : (person.sex === 'F' ? 'female' : '');
+
+    // Rectangle du nœud
+    nodeG.append("rect")
+      .attr("x", -CONFIG.node.width / 2)
+      .attr("y", -CONFIG.node.height / 2)
+      .attr("width", CONFIG.node.width)
+      .attr("height", CONFIG.node.height)
+      .attr("class", sexClass)
+      .style("stroke", strokeColor || null);
+
+    // Ajouter le texte
+    this.addNodeText(nodeG, person);
+
+    return nodeG;
   }
-  addNodeTexts(nodeGroups) {
-    var self = this;
-    var isVertical = !this.isHorizontal;
-    if (isVertical) {
-      nodeGroups.each(function(d) {
-        var group = d3.select(this);
-        if (d.depth === 0) {
-          var firstNames = d.data.firstNames || d.data.firstName || "";
-          var names = firstNames.split(' ').filter(n => n.trim() !== '');
-          var fixedDateToCirle = -2.0; // Distance souhaitée entre date et cercle
-          var dateDy = fixedDateToCirle;
-          var lastNameDy = dateDy - 1.2;
-          var firstNameStartDy = lastNameDy - (names.length * 1.3);
-          names.forEach(function(name, index) {
-            group.append("text")
-              .attr("class", "person-name")
-              .attr("dy", (firstNameStartDy + index * 1.3) + "em")
-              .attr("x", 0)
-              .style("text-anchor", "middle")
-              .text(name);
-          });
-          group.append("text")
-            .attr("class", "person-name")
-            .attr("dy", lastNameDy + "em")
-            .attr("x", 0)
-            .style("text-anchor", "middle")
-            .text(d.data.lastName || "");
-          group.append("text")
-            .attr("class", "person-dates")
-            .attr("dy", dateDy + "em")
-            .attr("x", 0)
-            .style("text-anchor", "middle")
-            .text(d.data.getDisplayDates());
-        } else {
-          group.append("text")
-            .attr("class", "person-name")
-            .attr("dy", "-3.5em")
-            .attr("x", 0)
-            .style("text-anchor", "middle")
-            .text(d.data.getFirstNameWithInitials() || "");
-          group.append("text")
-            .attr("class", "person-name")
-            .attr("dy", "-2.2em")
-            .attr("x", 0)
-            .style("text-anchor", "middle")
-            .text(d.data.lastName || "");
-          group.append("text")
-            .attr("class", "person-dates")
-            .attr("dy", "-1em")
-            .attr("x", 0)
-            .style("text-anchor", "middle")
-            .text(d.data.getDisplayDates());
-        }
-      });
-    } else {
-      nodeGroups.each(function(d) {
-        var group = d3.select(this);
-        var baseOffset =
-          d.parents && d.parents.length > 0 ?
-          -CONFIG.spacing.textOffset :
-          CONFIG.spacing.textOffset;
-        var anchor =
-          d.parents && d.parents.length > 0 ? "end" : "start";
-        if (d.depth === 0) {
-          // Décalage supplémentaire pour le bloc racine
-          var rootTextOffset = CONFIG.spacing.rootTextOffset || 58;
-          var firstNames = d.data.firstNames || d.data.firstName || "";
-          var names = firstNames.split(' ').filter(n => n.trim() !== '');
-          var dateDy = -0.5;
-          var lastNameDy = -1.6;
-          var firstNameStartDy = lastNameDy - (names.length * 1.3);
-          var lastNameEl = group.append("text")
-            .attr("class", "person-name")
-            .attr("dy", lastNameDy + "em")
-            .attr("x", rootTextOffset)
-            .style("text-anchor", "middle")
-            .text(d.data.lastName || "");
-          // Mesure la largeur du nom
-          var lastNameWidth = lastNameEl.node().getComputedTextLength();
-          // Centre du nom
-          var nameCenterX = rootTextOffset;
-          // Empile les prénoms centrés
-          names.forEach(function(name, index) {
-            group.append("text")
-              .attr("class", "person-name")
-              .attr("dy", (firstNameStartDy + index * 1.3) + "em")
-              .attr("x", nameCenterX)
-              .style("text-anchor", "middle")
-              .text(name);
-          });
-          // Dates centrées sous le nom
-          group.append("text")
-            .attr("class", "person-dates")
-            .attr("dy", dateDy + "em")
-            .attr("x", nameCenterX)
-            .style("text-anchor", "middle")
-            .text(d.data.getDisplayDates());
-        } else {
-          // Cas non-racine avec initiales
-          var displayName = d.data.getFirstNameWithInitials() + " " + d.data.lastName;
-          group.append("text")
-            .attr("class", "person-name")
-            .attr("dy", "-0.6em")
-            .attr("x", baseOffset)
-            .style("text-anchor", anchor)
-            .text(displayName)
-            .each(function(d) {
-              d.nameWidth = this.getComputedTextLength();
-            });
-          group.append("text")
-            .attr("class", "person-dates")
-            .attr("dy", "0.5em")
-            .attr("x", baseOffset + (d.nameWidth / 2) * (d.parents && d.parents.length > 0 ? -1 : 1))
-            .style("text-anchor", "middle")
-            .text(d.data.getDisplayDates());
-        }
-      });
+
+  /**
+   * Ajoute le texte multi-ligne dans un nœud rectangle
+   * @param {d3.Selection} nodeG - Groupe du nœud
+   * @param {Object} person - Données de la personne
+   */
+  addNodeText(nodeG, person) {
+    // Construire le texte à afficher
+    var firstName = person.firstNames || person.firstName || "";
+    var lastName = person.lastName || "";
+    var displayName = firstName + " " + lastName;
+    var words = displayName.trim().split(/\s+/).filter(function(w) { return w !== ""; });
+
+    // Ajouter les dates
+    var birthYear = "";
+    var deathYear = "";
+    if (person.birthDate) {
+      birthYear = person.birthDate.length > 4 ? person.birthDate.substring(0, 4) : person.birthDate;
     }
-  }
-  drawSiblings(g, nodes) {
-    var self = this;
-    nodes.forEach(function(person) {
-      if (
-        person !== nodes[0] &&
-        (person.data.depth === 0 || person.data.depth === 1)
-      ) {
-        var siblings = person.data.siblings;
-        if (!siblings || !siblings.length) return;
-        var siblingPositions = siblings
-          .map(function(sibling, index) {
-            var spacingValue = self.isHorizontal ?
-              CONFIG.spacing.siblingVertical :
-              CONFIG.vertical.siblingSpacing;
-            var offset = Math.ceil((index + 1) / 2) * spacingValue;
-            var side;
-            if (self.isHorizontal) {
-              var isEven = index % 2 === 0;
-              side = isEven ? 1 : -1;
-            } else {
-              var isEven = index % 2 === 0;
-              side = isEven ? -1 : 1;
-            }
-            return {
-              sibling: sibling,
-              coord: (self.isHorizontal ? person.x : person.x) + offset * side,
-            };
-          })
-          .sort(function(a, b) {
-            return a.coord - b.coord;
-          });
-        siblingPositions.forEach(function(item) {
-          self.drawSiblingConnection(g, person, item.coord);
-          self.drawSibling(g, person, item.sibling, item.coord);
-        });
-      }
+    if (person.deathDate) {
+      deathYear = person.deathDate.length > 4 ? person.deathDate.substring(0, 4) : person.deathDate;
+    }
+
+    var datesText = "";
+    if (birthYear && deathYear) {
+      datesText = birthYear + " - " + deathYear;
+    } else if (birthYear) {
+      datesText = CONFIG.symbols.birth + " " + birthYear;
+    } else if (deathYear) {
+      datesText = CONFIG.symbols.death + " " + deathYear;
+    }
+
+    if (datesText) {
+      words.push(datesText);
+    }
+
+    // Calculer le décalage vertical pour centrer
+    var lineHeight = 12;
+    var totalHeight = words.length * lineHeight;
+    var startY = -totalHeight / 2 + lineHeight / 2;
+
+    // Créer l'élément texte avec tspans
+    var textElem = nodeG.append("text")
+      .attr("class", "node-text")
+      .attr("text-anchor", "middle")
+      .attr("dominant-baseline", "middle");
+
+    words.forEach(function(word, i) {
+      textElem.append("tspan")
+        .attr("x", 0)
+        .attr("y", startY + i * lineHeight)
+        .text(word);
     });
-  }
-  drawSiblingConnection(g, person, targetCoord) {
-    var isVertical = !this.isHorizontal;
-    var radius = isVertical ?
-      CONFIG.nodeRadius.vertical :
-      CONFIG.nodeRadius.default;
-    var siblingRadius = isVertical ?
-      CONFIG.siblingRadius.vertical :
-      CONFIG.siblingRadius.default;
-    var horizontalOffset = -14;
-    if (this.isHorizontal) {
-      g.append("path")
-        .attr("class", "sibling-link")
-        .attr(
-          "d",
-          "M " +
-          (person.y - radius) +
-          "," +
-          person.x +
-          " L " +
-          (person.y + horizontalOffset) +
-          "," +
-          person.x +
-          " L " +
-          (person.y + horizontalOffset) +
-          "," +
-          targetCoord +
-          " L " +
-          (person.y - siblingRadius) +
-          "," +
-          targetCoord
-        );
-    } else {
-      g.append("path")
-        .attr("class", "sibling-link")
-        .attr(
-          "d",
-          "M " +
-          person.x +
-          "," +
-          (person.y - radius) +
-          " L " +
-          person.x +
-          "," +
-          (person.y + horizontalOffset) +
-          " L " +
-          targetCoord +
-          "," +
-          (person.y + horizontalOffset) +
-          " L " +
-          targetCoord +
-          "," +
-          (person.y - siblingRadius)
-        );
-    }
-  }
-  drawSibling(g, person, sibling, siblingCoord) {
-    var self = this;
-    var isVertical = !this.isHorizontal;
-    var siblingRadius = isVertical ?
-      CONFIG.siblingRadius.vertical :
-      CONFIG.siblingRadius.default;
-    var textOffset = isVertical ?
-      CONFIG.spacing.verticalTextOffset :
-      CONFIG.spacing.textOffset;
-    var siblingGroup = g
-      .append("g")
-      .attr("class", "sibling-group")
-      .attr("data-member-type", "sibling")
-      .attr(
-        "transform",
-        this.isHorizontal ?
-        "translate(" + person.y + "," + siblingCoord + ")" :
-        "translate(" + siblingCoord + "," + person.y + ")"
-      )
-      .style("cursor", "pointer")
-      .on("click", function() {
-        self.selectPerson(sibling.id);
-      });
-    siblingGroup
-      .append("circle")
-      .attr("r", siblingRadius)
-      .attr("class", "depth-" + person.data.depth);
-    this.visualizer.addHoverEffect(siblingGroup, false);
-    if (this.isHorizontal) {
-      var displayName = getFirstNameWithInitials(sibling) + " " + sibling.lastName;
-      var siblingName = siblingGroup
-        .append("text")
-        .attr("class", "person-name")
-        .attr("x", textOffset)
-        .attr("dy", "-0.5em")
-        .text(displayName);
-      var nameWidth = siblingName.node().getComputedTextLength();
-      siblingGroup
-        .append("text")
-        .attr("class", "person-dates")
-        .attr("x", textOffset + nameWidth / 2)
-        .attr("dy", "0.5em")
-        .style("text-anchor", "middle")
-        .text(sibling.getDisplayDates());
-    } else {
-      siblingGroup
-        .append("text")
-        .attr("class", "person-name")
-        .attr("x", 0)
-        .attr("dy", "-3.6em")
-        .style("text-anchor", "middle")
-        .text(getFirstNameWithInitials(sibling));
-      siblingGroup
-        .append("text")
-        .attr("class", "person-name")
-        .attr("x", 0)
-        .attr("dy", "-2.3em")
-        .style("text-anchor", "middle")
-        .text(sibling.lastName || "");
-      siblingGroup
-        .append("text")
-        .attr("class", "person-dates")
-        .attr("x", 0)
-        .attr("dy", "-1.1em")
-        .style("text-anchor", "middle")
-        .text(sibling.getDisplayDates());
-    }
   }
 }
