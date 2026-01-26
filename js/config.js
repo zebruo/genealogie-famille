@@ -21,23 +21,23 @@ const CONFIG = {
   // Fratries
   sibling: {
     width: 70,                 // Largeur zone fratrie
-    spacing: 125,              // Distance entre fratries
+    spacing: 100,              // Distance entre fratries
   },
 
   // Conjoints
   spouse: {
-    spacing: 180,              // Distance horizontale entre conjoints
+    spacing: 160,              // Distance horizontale entre conjoints
   },
 
   // Enfants
   children: {
-    descent: 180,              // Distance verticale vers les enfants (Y positif)
-    spacing: 85,               // Distance entre enfants
+    descent: 120,              // Distance verticale vers les enfants (Y positif)
+    spacing: 40,               // Distance entre enfants
   },
 
   // Zoom et vue
   view: {
-    initialScale: 0.95,
+    initialScale: 3,
     zoomExtent: [0.3, 3],
   },
 

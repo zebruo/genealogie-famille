@@ -1019,12 +1019,18 @@ class FamilyTreeApp {
           );
 
         // Calcul des positions des enfants
-        var totalWidth = (marriageChildren.length - 1) * CONFIG.children.spacing;
-        var startChildX = midX - totalWidth / 2;
+        var childSpacing = CONFIG.node.width + CONFIG.children.spacing;
 
         // Dessiner chaque enfant avec son lien
         marriageChildren.forEach(function(child, childIndex) {
-          var childX = startChildX + childIndex * CONFIG.children.spacing;
+          var childX;
+          if (index === 0) {
+            // Premier mariage : enfants vers la GAUCHE (de droite à gauche)
+            childX = midX - childIndex * childSpacing;
+          } else {
+            // Mariages suivants : enfants vers la DROITE (de gauche à droite)
+            childX = midX + childIndex * childSpacing;
+          }
 
           // Lien : horizontal depuis midX puis vertical vers l'enfant
           g.append("path")
@@ -1065,11 +1071,14 @@ class FamilyTreeApp {
       if (!siblings || !siblings.length) return;
 
       siblings.forEach(function(sibling, index) {
-        // Position à gauche de l'ancêtre
-        var siblingX = person.x - CONFIG.sibling.spacing * (index + 1);
+        // Alterner gauche/droite : pair = gauche, impair = droite
+        var isLeft = index % 2 === 0;
+        var offset = Math.floor(index / 2) + 1;  // 1, 1, 2, 2, 3, 3...
+        var direction = isLeft ? -1 : 1;
+        var siblingX = person.x + direction * CONFIG.sibling.spacing * offset;
         var siblingY = person.y;
 
-        // Lien par le HAUT : du haut de l'ancêtre, monte, va à gauche, puis descend vers fratrie
+        // Lien par le HAUT : du haut de l'ancêtre, monte, va à gauche/droite, puis descend vers fratrie
         var topY = person.y - h / 2;
         var linkY = topY - bendHeight;
 

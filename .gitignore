@@ -8,6 +8,7 @@ desktop.ini
 *.bak
 *~
 *.old
+*.backup
 
 # Dossiers IDE
 .vscode/

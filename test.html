@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Généalogie Dynamique - 6 Générations</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f8fafc; margin: 0; overflow: hidden; }
+        #controls { 
+            position: absolute; top: 0; left: 0; right: 0; height: 60px;
+            background: #1e293b; color: white; display: flex; 
+            align-items: center; padding: 0 20px; gap: 20px; z-index: 100;
+        }
+        .control-group { display: flex; align-items: center; gap: 8px; }
+        button { background: #3b82f6; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold;}
+        
+        svg { width: 100vw; height: calc(100vh - 60px); margin-top: 60px; cursor: grab; }
+        .trunk { fill: none; stroke: #1e293b; stroke-width: 2.5px; }
+        .link-secondary { fill: none; stroke: #94a3b8; stroke-width: 1.5px; }
+        .marriage { fill: none; stroke: #f43f5e; stroke-width: 2px; stroke-dasharray: 4,4; }
+        .marriage-date { font-size: 9px; fill: #e11d48; font-weight: bold; pointer-events: none; }
+        .node rect { fill: white; stroke: #1e293b; stroke-width: 1.5px; }
+        .node text { font-size: 10px; font-weight: bold; text-anchor: middle; fill: #1e293b; pointer-events: none; }
+        .root-node rect { fill: #dcfce7; stroke: #166534; stroke-width: 2.5px; }
+    </style>
+</head>
+<body>
+
+    <div id="controls">
+        <div class="control-group">
+            <label>Générations:</label>
+            <select id="genSelect">
+                <option value="1">1</option><option value="2">2</option>
+                <option value="3">3</option><option value="4">4</option>
+                <option value="5">5</option><option value="6" selected>6</option>
+            </select>
+        </div>
+        <div class="control-group"><input type="checkbox" id="siblingCheck" checked><label>Fratries</label></div>
+        <div class="control-group"><input type="checkbox" id="dateCheck" checked><label>Dates</label></div>
+        <button onclick="centerTree()">Centrer</button>
+    </div>
+
+    <svg id="canvas"></svg>
+
+    <script>
+        const CONFIG = {
+            largeurBoite: 55,
+            hauteurBoite: 85,
+            espacementVerticalGen: 180,
+            espacementHorizontalBase: 80, // Ajusté dynamiquement par la suite
+            largeurFratrie: 70,
+            largeurConjoints: 180,
+            largeurEntreEnfants: 65,
+            descenteVersEnfants: 120,
+            hauteurCoude: 25, 
+            zoomInitial: 0.95
+        };
+
+        let svg = d3.select("#canvas"), g = svg.append("g");
+        let zoom = d3.zoom().on("zoom", (e) => g.attr("transform", e.transform));
+        svg.call(zoom);
+
+        function buildData(name, depth, max) {
+            if (depth >= max) return { name };
+            return { name, children: [buildData(`Père G${depth+1}`, depth+1, max), buildData(`Mère G${depth+1}`, depth+1, max)] };
+        }
+
+        function update() {
+            g.selectAll("*").remove();
+            const maxGen = +document.getElementById("genSelect").value;
+            const showSiblings = document.getElementById("siblingCheck").checked;
+            const showDates = document.getElementById("dateCheck").checked;
+            
+            const hierarchy = d3.hierarchy(buildData("Racine", 0, maxGen - 1));
+            
+            // L'astuce : On réduit l'espacement si on a beaucoup de générations pour garder l'arbre compact
+            const hGap = maxGen > 4 ? CONFIG.espacementHorizontalBase * 0.8 : CONFIG.espacementHorizontalBase;
+            const treeLayout = d3.tree().nodeSize([hGap, CONFIG.espacementVerticalGen]);
+            treeLayout(hierarchy);
+
+            // 1. Mise à jour des liens d'ascendance
+            g.selectAll(".link-asc")
+                .data(hierarchy.links()).enter().each(function(d) {
+                    const sX = d.source.x, sY = -d.source.depth * CONFIG.espacementVerticalGen;
+                    const tX = d.target.x, tY = -d.target.depth * CONFIG.espacementVerticalGen;
+                    const bendY = (sY + tY) / 2;
+
+                    // Lien orthogonal Parents -> Enfant
+                    g.append("path").attr("class", "link-secondary")
+                        .attr("d", `M ${sX} ${sY - CONFIG.hauteurBoite/2} V ${bendY} H ${tX} V ${tY + CONFIG.hauteurBoite/2}`);
+
+                    // Oncle G1 (Fratrie du Père)
+                    if (showSiblings && d.source.depth === 0 && d.target === d.source.children[0]) {
+                        const uncleX = d.target.x - (CONFIG.largeurBoite + CONFIG.largeurFratrie);
+                        const topB = tY - CONFIG.hauteurBoite/2;
+                        g.append("path").attr("class", "link-secondary")
+                            .attr("d", `M ${d.target.x} ${topB - CONFIG.hauteurCoude} H ${uncleX} V ${topB}`);
+                        drawNode(g, uncleX, tY, "Oncle G1", false);
+                    }
+
+                    // Dates Mariage (Toujours au centre de la barre horizontale des parents)
+                    if (showDates && d.source.children && d.target === d.source.children[1]) {
+                        const midX = (d.source.children[0].x + d.source.children[1].x) / 2;
+                        g.append("text").attr("class", "marriage-date").attr("x", midX).attr("y", bendY - 5)
+                            .attr("text-anchor", "middle").text("× 19" + (90 - d.source.depth*10));
+                    }
+                });
+
+            // 2. Tronc et Fratrie Racine
+            g.append("line").attr("class", "trunk").attr("x1", 0).attr("y1", -CONFIG.espacementVerticalGen/2).attr("x2", 0).attr("y2", -CONFIG.hauteurBoite/2);
+            if (showSiblings) {
+                const yFratrie = -CONFIG.hauteurBoite/2 - CONFIG.hauteurCoude;
+                ["Frère", "Sœur"].forEach((name, i) => {
+                    const x = -(CONFIG.largeurBoite + CONFIG.largeurFratrie) * (i + 1);
+                    g.append("path").attr("class", "link-secondary").attr("d", `M 0 ${yFratrie} H ${x} V ${-CONFIG.hauteurBoite/2}`);
+                    drawNode(g, x, 0, name, false);
+                });
+            }
+
+            // 3. Conjoints et Enfants (Rétablissement complet)
+            const partners = [{ name: "Conjoint 1", children: ["E 1", "E 2"] }, { name: "Conjoint 2", children: ["E 3"] }];
+            partners.forEach((p, index) => {
+                const partnerX = (index + 1) * CONFIG.largeurConjoints;
+                const prevX = (index === 0) ? 0 : index * CONFIG.largeurConjoints;
+                g.append("path").attr("class", "marriage").attr("d", `M ${prevX + CONFIG.largeurBoite/2} 0 H ${partnerX - CONFIG.largeurBoite/2}`);
+                drawNode(g, partnerX, 0, p.name, false, "#f43f5e");
+                
+                const midX = (prevX + CONFIG.largeurBoite/2 + partnerX - CONFIG.largeurBoite/2) / 2;
+                const topE = CONFIG.descenteVersEnfants - CONFIG.hauteurBoite/2;
+                g.append("line").attr("class", "link-secondary").attr("x1", midX).attr("y1", 0).attr("x2", midX).attr("y2", topE - CONFIG.hauteurCoude);
+                p.children.forEach((cName, i) => {
+                    const cX = midX + (i - (p.children.length - 1) / 2) * (CONFIG.largeurBoite + CONFIG.largeurEntreEnfants);
+                    g.append("path").attr("class", "link-secondary").attr("d", `M ${midX} ${topE - CONFIG.hauteurCoude} H ${cX} V ${topE}`);
+                    drawNode(g, cX, CONFIG.descenteVersEnfants, cName, false);
+                });
+            });
+
+            // 4. Noeuds Ascendance
+            hierarchy.descendants().forEach(d => drawNode(g, d.x, -d.depth * CONFIG.espacementVerticalGen, d.data.name, d.depth === 0));
+            
+            setTimeout(centerTree, 100);
+        }
+
+        function drawNode(container, x, y, text, isRoot, strokeColor) {
+            const nodeG = container.append("g").attr("class", `node ${isRoot ? 'root-node' : ''}`).attr("transform", `translate(${x},${y})`);
+            nodeG.append("rect").attr("x", -CONFIG.largeurBoite/2).attr("y", -CONFIG.hauteurBoite/2).attr("width", CONFIG.largeurBoite).attr("height", CONFIG.hauteurBoite).style("stroke", strokeColor || "");
+            const words = text.split(/\s+/);
+            const textElem = nodeG.append("text").attr("dy", -((words.length-1)*6));
+            words.forEach((word, i) => textElem.append("tspan").attr("x", 0).attr("dy", i === 0 ? 0 : 12).text(word));
+        }
+
+        function centerTree() {
+            const bounds = g.node().getBBox();
+            const scale = CONFIG.zoomInitial / Math.max(bounds.width / window.innerWidth, bounds.height / (window.innerHeight - 60));
+            const tx = window.innerWidth / 2 - scale * (bounds.x + bounds.width / 2);
+            const ty = (window.innerHeight - 60) / 2 - scale * (bounds.y + bounds.height / 2);
+            svg.transition().duration(750).call(zoom.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+        }
+
+        ["genSelect", "siblingCheck", "dateCheck"].forEach(id => document.getElementById(id).addEventListener("change", update));
+        window.addEventListener("resize", centerTree);
+        update();
+    </script>
+</body>
+</html>
