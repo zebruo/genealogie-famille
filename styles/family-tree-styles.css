@@ -290,7 +290,7 @@ ROOT TAB
 .root-tab-icons {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 2px;
     padding: 15px 0;
     border-top: 1px solid var(--border-color);
     margin-top: 10px;
@@ -365,10 +365,12 @@ CONTENEURS PRINCIPAUX
     width: 100vw;
     height: 100vh;
     position: fixed;
+    margin-top: 30px;
     top: 0;
     left: 0;
     overflow: hidden;
     z-index: 1;
+    font-size: 16px;  /* Taille de base pour les textes des nœuds */
 }
 
 /* ========================================
@@ -1615,19 +1617,49 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
     stroke-width: 2px;
 }
 
-/* Lien de mariage (trait plein) */
+/* Lien de mariage (trait plein par défaut) */
 .marriage-link {
     fill: none;
-    stroke: #f43f5e;
+    stroke: var(--text-primary);
+    stroke-width: 2px;
+}
+
+/* Lien de mariage en pointillés (quand plusieurs conjoints) */
+.marriage-link-multiple {
+    fill: none;
+    stroke: var(--text-primary);
+    stroke-dasharray: 4 2;
     stroke-width: 2px;
 }
 
 /* Date de mariage */
 .marriage-date {
-    font-size: 10px;
-    fill: #e11d48;
-    font-weight: bold;
+    font-size: 16px;
+    fill: var(--text-primary);
+    /*font-weight: bold;*/
     pointer-events: none;
+}
+
+/* Texte des nœuds - hérite du font-size de .tree-container (10px) */
+.node-text {
+    fill: var(--text-primary);
+    pointer-events: none;
+}
+
+.node-text-firstname {
+    /*font-weight: 500;*/
+    font-size: 0.9em;  /* 9px relatif au 10px de .tree-container */
+}
+
+.node-text-lastname {
+    /*font-weight: 500;*/
+    text-transform: uppercase;
+    font-size: 0.9em;  /* 9px relatif au 10px de .tree-container */
+}
+
+.node-text-dates {
+    font-size: 0.9em;  /* 8px relatif au 10px de .tree-container */
+    fill: var(--text-secondary);
 }
 
 /* Legacy: cercles (pour compatibilité) */
@@ -1688,8 +1720,8 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 .spouse-link {
     fill: none;
     stroke: var(--link-color);
-    stroke-width: 1.5px;
-    stroke-dasharray: 4 2;
+    stroke-width: 2px;
+    /*stroke-dasharray: 4 2;*/
 }
 
 .spouse-link-single {

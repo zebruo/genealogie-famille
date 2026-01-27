@@ -1,12 +1,13 @@
 # Arbre Généalogique Familial
 
+**Version 2.1**
+
 Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne.
 
 ## Fonctionnalités
 
 ### Visualisation
 - Arbre généalogique interactif avec D3.js
-- Basculement entre mode horizontal et vertical
 - Zoom et navigation fluide
 - Affichage de 2 à 6 générations
 - Connexions visuelles entre parents et enfants
@@ -115,7 +116,6 @@ genealogie-famille/
 - **Zoom**: Molette de la souris ou pinch sur mobile
 - **Pan**: Cliquer-glisser pour déplacer l'arbre
 - **Centrer**: Bouton "Centrer" pour recentrer la vue
-- **Orientation**: Basculer entre horizontal et vertical
 
 ### Recherche
 

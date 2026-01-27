@@ -48,7 +48,7 @@ class TreeVisualizer {
     var padding = 60;
     var scaleX = (dims.width - padding * 2) / treeWidth;
     var scaleY = (dims.height - padding * 2) / treeHeight;
-    var scale = Math.min(scaleX, scaleY, CONFIG.view.initialScale);
+    var scale = Math.min(scaleX, scaleY, CONFIG.view.zoomExtent[1]);
     scale = Math.max(scale, 0.4);
 
     var centerX = (bounds.minX + bounds.maxX) / 2;

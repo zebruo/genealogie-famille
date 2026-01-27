@@ -1,20 +1,24 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
-
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Arbre Généalogique Ascendant</title>
+    <link rel="icon" href="data:,"> <!--source vide pour le moment-->
     <link rel="stylesheet" href="styles/family-tree-styles.css" />
     <link rel="stylesheet" href="styles/person-quick-view.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <link rel="stylesheet" href="styles/modal-system.css" />
   </head>
+
   <body>
     <!-- Menu de navigation, top-fixed-bar chargés dynamiquement depuis menu-navigation.html -->
     <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
-     
+
     <div id="person-panel" class="person-panel">
       <button id="close-panel-button" class="close-panel-button">
         <i class="fas fa-times"></i>
@@ -34,10 +38,12 @@
     </div>
 
     <!-- Modal Person Quick View -->
-    <div class="modal-overlay" id="documentsModal" style="display: none;">
+    <div class="modal-overlay" id="documentsModal" style="display: none">
       <div class="modal-content-qv">
         <div class="modal-header-qv">
-          <h2><i class="fas fa-file-alt"></i> <span id="modalPersonName"></span></h2>
+          <h2>
+            <i class="fas fa-file-alt"></i> <span id="modalPersonName"></span>
+          </h2>
           <button class="modal-close-qv" onclick="closeDocumentsModal()">
             <i class="fas fa-times"></i>
           </button>
@@ -53,9 +59,18 @@
         <div class="controls-actions">
           <div class="search-bar">
             <i class="fas fa-search search-icon"></i>
-            <input type="text" id="searchInput" placeholder="Rechercher une personne..." autocomplete="off" />
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Rechercher une personne..."
+              autocomplete="off"
+            />
             <i class="fas fa-times clear-icon" id="clearSearch"></i>
-            <div id="searchResults" class="search-results" style="display: none"></div>
+            <div
+              id="searchResults"
+              class="search-results"
+              style="display: none"
+            ></div>
           </div>
 
           <select id="generationSelect" class="generation-select">
@@ -74,7 +89,11 @@
             <i class="fas fa-compress-arrows-alt"></i>Centrer
           </button>
 
-          <button class="action-button" id="returnToDefaultButton" style="display: none">
+          <button
+            class="action-button"
+            id="returnToDefaultButton"
+            style="display: none"
+          >
             <i class="fas fa-home"></i>Retour
           </button>
 
@@ -90,7 +109,7 @@
       </div>
 
       <div class="tree-container" id="tree-container"></div>
-
+    </div>
     <!-- Scripts de l'application -->
     <script src="js/config.js"></script>
     <script src="js/helpers.js"></script>
@@ -106,5 +125,4 @@
     <script src="js/darkMode.js"></script>
     <script src="js/burger.js"></script>
   </body>
-
 </html>

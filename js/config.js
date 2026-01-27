@@ -7,15 +7,15 @@
 const CONFIG = {
   // Dimensions des nœuds (rectangles)
   node: {
-    width: 65,
-    height: 85,
+    width: 80,
+    height: 105,
   },
 
   // Espacements de l'arbre
   tree: {
-    verticalSpacing: 180,      // Distance entre générations (ascendance)
-    horizontalSpacing: 60,     // Distance entre nœuds même génération
-    bendHeight: 15,            // Hauteur des coudes des liens
+    verticalSpacing: 220,      // Distance entre générations (ascendance)
+    horizontalSpacing: 70,     // Distance entre nœuds même génération
+    bendHeight: 25,            // Hauteur des coudes des liens
   },
 
   // Fratries
@@ -31,22 +31,21 @@ const CONFIG = {
 
   // Enfants
   children: {
-    descent: 120,              // Distance verticale vers les enfants (Y positif)
-    spacing: 40,               // Distance entre enfants
+    descent: 150,              // Distance verticale vers les enfants (Y positif)
+    spacing: 30,               // Distance entre enfants
   },
 
   // Zoom et vue
   view: {
-    initialScale: 3,
-    zoomExtent: [0.3, 3],
+    zoomExtent: [0.5, 3],  // [min, max] - le max est aussi l'échelle initiale
   },
 
-  // Marges
+  // Marges (non utilisées avec le zoom - garder à 0)
   margins: {
-    top: 50,
+    top: 0,
     right: 0,
-    bottom: 50,
-    left: 60,
+    bottom: 0,
+    left: 0,
   },
 
   // Symboles

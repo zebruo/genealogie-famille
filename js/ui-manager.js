@@ -36,9 +36,6 @@ class UIManager {
       this.handleGenerationChange.bind(this)
     );
     document
-      .getElementById("toggleOrientationButton")
-      .addEventListener("click", () => this.app.toggleOrientation());
-    document
       .getElementById("centerViewButton")
       .addEventListener("click", () => this.app.centerView());
     document
@@ -58,17 +55,12 @@ class UIManager {
       .addEventListener("click", () => this.app.closePanel());
   }
 
-  // MÉTHODES DE RECHERCHE SUPPRIMÉES - maintenant dans SearchEngine externe
   handleGenerationChange(e) {
     var selectedValue = parseInt(e.target.value);
-    if (!this.app.isHorizontal && selectedValue > 5) {
-      selectedValue = 5;
-      e.target.value = "5";
-    }
     this.app.maxGenerations = selectedValue;
     if (this.app.currentPersonId) {
       this.app.rebuildTree(this.app.currentPersonId);
-      setTimeout(() => this.app.centerView(), 100);
+      // Le centrage est maintenant fait immédiatement dans updateTreeVisualization()
     }
   }
 }

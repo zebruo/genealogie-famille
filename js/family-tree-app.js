@@ -792,20 +792,22 @@ class FamilyTreeApp {
       console.error("L'arbre généalogique n'est pas disponible");
       return;
     }
-    var container = document.getElementById("tree-container");
-    container.innerHTML = "";
-    var svg = this.visualizer.createSVG();
-    var g = svg
-      .append("g")
-      .attr(
-        "transform",
-        "translate(" +
-        CONFIG.margins.left +
-        "," +
-        CONFIG.margins.top +
-        ")"
-      );
-    this.visualizer.zoom = this.visualizer.setupZoom(svg, g);
+
+    var svg = d3.select("#tree-container svg");
+    var g;
+
+    // Réutiliser le SVG existant ou en créer un nouveau
+    if (svg.empty()) {
+      var container = document.getElementById("tree-container");
+      container.innerHTML = "";
+      svg = this.visualizer.createSVG();
+      g = svg.append("g");
+      this.visualizer.zoom = this.visualizer.setupZoom(svg, g);
+    } else {
+      // SVG existe déjà, on vide juste le groupe (comme test.html)
+      g = svg.select("g");
+      g.selectAll("*").remove();
+    }
     var self = this;
 
     // Ajuster l'espacement horizontal si beaucoup de générations
@@ -965,11 +967,13 @@ class FamilyTreeApp {
       var currentSpouseX = spouseX + index * CONFIG.spouse.spacing;
       var prevX = index === 0 ? rootNode.x : currentSpouseX - CONFIG.spouse.spacing;
 
-      // Lien mariage (trait plein) - du bord droit au bord gauche
+      // Lien mariage - du bord droit au bord gauche
+      // Pointillés si plusieurs conjoints, trait plein sinon
       var linkStartX = prevX + w / 2;
       var linkEndX = currentSpouseX - w / 2;
+      var marriageLinkClass = sortedMarriages.length > 1 ? "marriage-link-multiple" : "marriage-link";
       g.append("path")
-        .attr("class", "marriage-link")
+        .attr("class", marriageLinkClass)
         .attr("d",
           "M " + linkStartX + " " + rootNode.y +
           " H " + linkEndX
@@ -1123,12 +1127,14 @@ class FamilyTreeApp {
     // Classe de sexe pour la couleur de fond
     var sexClass = person.sex === 'M' ? 'male' : (person.sex === 'F' ? 'female' : '');
 
-    // Rectangle du nœud
+    // Rectangle du nœud avec coins arrondis
     nodeG.append("rect")
       .attr("x", -CONFIG.node.width / 2)
       .attr("y", -CONFIG.node.height / 2)
       .attr("width", CONFIG.node.width)
       .attr("height", CONFIG.node.height)
+      .attr("rx", 6)
+      .attr("ry", 6)
       .attr("class", sexClass)
       .style("stroke", strokeColor || null);
 
@@ -1144,13 +1150,58 @@ class FamilyTreeApp {
    * @param {Object} person - Données de la personne
    */
   addNodeText(nodeG, person) {
-    // Construire le texte à afficher
-    var firstName = person.firstNames || person.firstName || "";
-    var lastName = person.lastName || "";
-    var displayName = firstName + " " + lastName;
-    var words = displayName.trim().split(/\s+/).filter(function(w) { return w !== ""; });
+    var maxWidth = CONFIG.node.width - 10;  // Marge de 5px de chaque côté
 
-    // Ajouter les dates
+    // Fonction pour tronquer le texte
+    function truncateText(text, maxW) {
+      if (!text) return "";
+      var temp = nodeG.append("text").style("visibility", "hidden").text(text);
+      var textWidth = temp.node().getComputedTextLength();
+      temp.remove();
+
+      if (textWidth <= maxW) return text;
+
+      var truncated = text;
+      while (truncated.length > 0) {
+        truncated = truncated.slice(0, -1);
+        temp = nodeG.append("text").style("visibility", "hidden").text(truncated + "…");
+        textWidth = temp.node().getComputedTextLength();
+        temp.remove();
+        if (textWidth <= maxW) return truncated + "…";
+      }
+      return "…";
+    }
+
+    // Construire les lignes avec gaps
+    var lines = [];
+    var lineHeight = 15;
+    var gapAfterFirstnames = 3;  // Gap entre prénoms et nom
+    var gapAfterLastname = 4;    // Gap entre nom et dates
+
+    // Prénoms - chaque prénom sur sa propre ligne
+    var firstNames = person.firstNames || person.firstName || "";
+    if (firstNames) {
+      var prenoms = firstNames.trim().split(/\s+/);
+      prenoms.forEach(function(prenom, index) {
+        lines.push({
+          text: truncateText(prenom, maxWidth),
+          class: "node-text-firstname",
+          extraGap: (index === prenoms.length - 1) ? gapAfterFirstnames : 0
+        });
+      });
+    }
+
+    // Nom de famille
+    var lastName = person.lastName || "";
+    if (lastName) {
+      lines.push({
+        text: truncateText(lastName.toUpperCase(), maxWidth),
+        class: "node-text-lastname",
+        extraGap: gapAfterLastname
+      });
+    }
+
+    // Dates avec "né en" / "née en" selon le sexe
     var birthYear = "";
     var deathYear = "";
     if (person.birthDate) {
@@ -1164,18 +1215,21 @@ class FamilyTreeApp {
     if (birthYear && deathYear) {
       datesText = birthYear + " - " + deathYear;
     } else if (birthYear) {
-      datesText = CONFIG.symbols.birth + " " + birthYear;
+      var bornText = (person.sex === 'F') ? "née en " : "né en ";
+      datesText = bornText + birthYear;
     } else if (deathYear) {
       datesText = CONFIG.symbols.death + " " + deathYear;
     }
 
     if (datesText) {
-      words.push(datesText);
+      lines.push({ text: datesText, class: "node-text-dates", extraGap: 0 });
     }
 
-    // Calculer le décalage vertical pour centrer
-    var lineHeight = 12;
-    var totalHeight = words.length * lineHeight;
+    // Calculer la hauteur totale avec les gaps
+    var totalHeight = 0;
+    lines.forEach(function(line) {
+      totalHeight += lineHeight + (line.extraGap || 0);
+    });
     var startY = -totalHeight / 2 + lineHeight / 2;
 
     // Créer l'élément texte avec tspans
@@ -1184,11 +1238,14 @@ class FamilyTreeApp {
       .attr("text-anchor", "middle")
       .attr("dominant-baseline", "middle");
 
-    words.forEach(function(word, i) {
+    var currentY = startY;
+    lines.forEach(function(line, i) {
       textElem.append("tspan")
         .attr("x", 0)
-        .attr("y", startY + i * lineHeight)
-        .text(word);
+        .attr("y", currentY)
+        .attr("class", line.class)
+        .text(line.text);
+      currentY += lineHeight + (line.extraGap || 0);
     });
   }
 }
