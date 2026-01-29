@@ -18,17 +18,24 @@ class FamilyTreeApp {
     var loader = document.getElementById("loader");
     loader.style.display = "flex";
     var self = this;
+    // Flag pour savoir si un nœud a été cliqué (évite la fermeture du panneau)
+    this.nodeClickedFlag = false;
+
     // Ajouter un gestionnaire de clic pour fermer le panneau
     document.addEventListener("click", function(e) {
       var personPanel = document.getElementById("person-panel");
       var rootTab = document.querySelector(".root-tab");
       if (personPanel.classList.contains("is-open")) {
+        // Ne pas fermer si clic sur le panneau, le root-tab, un nœud, ou si un nœud vient d'être cliqué
         if (!personPanel.contains(e.target) &&
           !rootTab.contains(e.target) &&
-          !e.target.closest(".node")) {
+          !e.target.closest(".node") &&
+          !self.nodeClickedFlag) {
           self.closePanel();
         }
       }
+      // Réinitialiser le flag après chaque clic
+      self.nodeClickedFlag = false;
     });
     fetch("admin/api3.php?action=getFamilyData")
       .then(function(response) {
@@ -205,7 +212,13 @@ class FamilyTreeApp {
     document.getElementById("searchResults").style.display = "none";
     document.getElementById("searchInput").value = "";
     document.querySelector(".search-bar").classList.remove("has-text");
+
+    // Vérifier si le panneau était ouvert AVANT de reconstruire l'arbre
+    var personPanel = document.getElementById("person-panel");
+    var wasOpen = personPanel && personPanel.classList.contains("is-open");
+
     this.rebuildTree(personId);
+
     // CORRECTION : Toujours utiliser familyDatabase pour avoir TOUTES les données
     var person = this.familyDatabase[personId];
     if (person) {
@@ -213,9 +226,10 @@ class FamilyTreeApp {
       if (rootTabName) {
         rootTabName.textContent = person.firstNames + " " + person.lastName;
       }
-      var personPanel = document.getElementById("person-panel");
-      if (personPanel && personPanel.classList.contains("is-open")) {
+      // Si le panneau était ouvert, le garder ouvert et mettre à jour
+      if (wasOpen) {
         this.displayPersonInfo(person);
+        personPanel.classList.add("is-open");
       }
     }
   }
@@ -230,31 +244,12 @@ class FamilyTreeApp {
     if (this.currentPersonId) this.rebuildTree(this.currentPersonId);
   }
   centerView() {
-    if (this.visualizer.zoom && this.familyTree) {
-      var rootNode = d3.hierarchy(this.familyTree, (d) => d.parents);
-      var self = this;
-      var hGap = CONFIG.tree.horizontalSpacing;
-
-      var treeData = d3
-        .tree()
-        .nodeSize([hGap, CONFIG.tree.verticalSpacing])
-        .separation(function(a, b) {
-          var aSize = 1 + (self.showSiblings && a.data.siblings ? a.data.siblings.length : 0);
-          var bSize = 1 + (self.showSiblings && b.data.siblings ? b.data.siblings.length : 0);
-          return a.parent === b.parent ? Math.max(1.5, (aSize + bSize) / 2) : Math.max(2.0, (aSize + bSize) / 2);
-        })(rootNode);
-
-      // Y négatif pour ascendance (vers le haut)
-      var nodes = treeData.descendants();
-      nodes.forEach(function(node) {
-        node.y = -node.depth * CONFIG.tree.verticalSpacing;
-      });
-
-      var transform = this.visualizer.calculateOptimalTransform(nodes);
+    if (this.visualizer.zoom && this.visualizer.lastOptimalTransform) {
+      // Réutiliser le transform optimal stocké pour éviter les changements de taille
       d3.select("#tree-container svg")
         .transition()
         .duration(CONFIG.transitionDuration)
-        .call(this.visualizer.zoom.transform, transform);
+        .call(this.visualizer.zoom.transform, this.visualizer.lastOptimalTransform);
     }
   }
   async setDefaultPerson() {
@@ -631,15 +626,16 @@ class FamilyTreeApp {
     
     // Construction du header
     var headerHtml =
-      '<h3>' +
-      person.firstNames +
-      " " +
-      person.lastName +
-      "</h3>" +
-      '<button class="quick-view-btn root-tab-icon" id="qv-btn-' + person.id + '" data-person-id="' + person.id + '" onclick="openPersonQuickView(' + person.id + ')">' +
-      '<i class="fas fa-folder-open"></i>' +
-      '<span class="doc-clip-container"></span>' +
-      '<span class="tooltip">' + initialTitle + '</span>' +
+      '<div class="panel-header-left">' +
+        '<h3>' + person.firstNames + ' ' + person.lastName + '</h3>' +
+        '<button class="quick-view-btn" id="qv-btn-' + person.id + '" data-person-id="' + person.id + '" onclick="openPersonQuickView(' + person.id + ')">' +
+          '<i class="fas fa-folder-open"></i> ' +
+          '<span class="doc-clip-container"></span>' +
+          '<span class="qv-label">' + initialTitle + '</span>' +
+        '</button>' +
+      '</div>' +
+      '<button id="close-panel-button" class="close-panel-button">' +
+        '<i class="fas fa-times"></i>' +
       '</button>';
     
     // Construction du content
@@ -1121,11 +1117,12 @@ class FamilyTreeApp {
       .attr("transform", "translate(" + x + "," + y + ")")
       .style("cursor", "pointer")
       .on("click", function() {
+        self.nodeClickedFlag = true;  // Empêcher la fermeture du panneau
         self.selectPerson(person.id);
       });
 
-    // Classe de sexe pour la couleur de fond
-    var sexClass = person.sex === 'M' ? 'male' : (person.sex === 'F' ? 'female' : '');
+    // Classe de sexe pour la couleur de bordure
+    var sexClass = person.sex === 'M' ? 'male' : (person.sex === 'F' ? 'female' : 'unknown');
 
     // Rectangle du nœud avec coins arrondis
     nodeG.append("rect")

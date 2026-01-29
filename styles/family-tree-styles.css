@@ -1274,17 +1274,14 @@ PANNEAU D'INFORMATIONS PERSONNELLES
 }
 
 .close-panel-button {
-    position: absolute;
-    top: 10px;
-    right: 10px;
     background: transparent;
     border: none;
-    font-size: 1.5rem;
+    font-size: 1.1rem;
     color: var(--text-primary);
     cursor: pointer;
     opacity: 0.6;
     transition: all var(--transition-fast);
-    padding: 5px;
+    padding: 4px 6px;
     border-radius: var(--radius-sm);
 }
 
@@ -1305,14 +1302,16 @@ PANNEAU D'INFORMATIONS PERSONNELLES
     position: relative;
 }
 
-.quick-view-btn:hover {
+/*.quick-view-btn:hover {
 
     transform: translateY(-1px);
-}
+}*/
 
 .panel-header {
     display: flex;
-    flex-direction: row-reverse;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
     margin-bottom: 8px;
 }
 
@@ -1348,10 +1347,40 @@ PANNEAU D'INFORMATIONS PERSONNELLES
     margin: 0;
 }
 
+.panel-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
 .panel-header h3 {
-    font-size: 0.8rem;
-    margin-bottom: 4px;
+    font-size: 0.85rem;
+    margin: 0;
     color: var(--text-primary);
+    font-weight: 600;
+}
+
+.panel-header .quick-view-btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 4px 8px;
+    /*font-size: 0.75rem;*/
+    color: var(--text-secondary);
+    background: var(--bg-primary);
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.panel-header .quick-view-btn:hover {
+    color: var(--accent-color);
+    background: var(--bg-color);
+}
+
+.panel-header .quick-view-btn .qv-label {
+    font-size: 0.7rem;
 }
 
 .panel-content h4 {
@@ -1603,31 +1632,38 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 }
 
 .node rect.male {
-    fill: rgba(173, 216, 230, 0.4);  /* Bleu clair */
+    fill: var(--bg-tertiary);
+    stroke: #5b9bd5;  /* Bleu */
 }
 
 .node rect.female {
-    fill: rgba(255, 182, 193, 0.4);  /* Rose clair */
+    fill: var(--bg-tertiary);
+    stroke: #e57373;  /* Rose */
+}
+
+.node rect.unknown {
+    fill: var(--bg-tertiary);
+    stroke: var(--text-secondary);  /* Gris */
 }
 
 /* Nœud racine avec bordure verte */
 .node.root-node rect {
-    fill: #dcfce7;
-    stroke: #166534;
-    stroke-width: 2px;
+    fill: var(--bg-color);
+    stroke: #166534 !important;
+    stroke-width: 2.5px;
 }
 
 /* Lien de mariage (trait plein par défaut) */
 .marriage-link {
     fill: none;
-    stroke: var(--text-primary);
+    stroke: var(--link-color);
     stroke-width: 2px;
 }
 
 /* Lien de mariage en pointillés (quand plusieurs conjoints) */
 .marriage-link-multiple {
     fill: none;
-    stroke: var(--text-primary);
+    stroke: var(--link-color);
     stroke-dasharray: 4 2;
     stroke-width: 2px;
 }
@@ -1648,17 +1684,17 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 
 .node-text-firstname {
     /*font-weight: 500;*/
-    font-size: 0.9em;  /* 9px relatif au 10px de .tree-container */
+    font-size: 0.95em;  /* 9px relatif au 10px de .tree-container */
 }
 
 .node-text-lastname {
     /*font-weight: 500;*/
     text-transform: uppercase;
-    font-size: 0.9em;  /* 9px relatif au 10px de .tree-container */
+    font-size: 0.95em;  /* 9px relatif au 10px de .tree-container */
 }
 
 .node-text-dates {
-    font-size: 0.9em;  /* 8px relatif au 10px de .tree-container */
+    font-size: 0.95em;  /* 8px relatif au 10px de .tree-container */
     fill: var(--text-secondary);
 }
 
@@ -1692,11 +1728,13 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 }
 
 .person-name-border.male {
-    fill: rgba(173, 216, 230, 0.3);  /* Bleu clair */
+    fill: var(--bg-color);
+    stroke: #5b9bd5;  /* Bleu */
 }
 
 .person-name-border.female {
-    fill: rgba(255, 182, 193, 0.3);  /* Rose clair */
+    fill: var(--bg-color);
+    stroke: #e57373;  /* Rose */
 }
 
 .person-dates {

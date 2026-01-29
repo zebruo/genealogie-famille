@@ -48,8 +48,9 @@ class TreeVisualizer {
     var padding = 60;
     var scaleX = (dims.width - padding * 2) / treeWidth;
     var scaleY = (dims.height - padding * 2) / treeHeight;
+    // Utiliser les limites de zoom de la config
     var scale = Math.min(scaleX, scaleY, CONFIG.view.zoomExtent[1]);
-    scale = Math.max(scale, 0.4);
+    scale = Math.max(scale, CONFIG.view.zoomExtent[0]);
 
     var centerX = (bounds.minX + bounds.maxX) / 2;
     var centerY = (bounds.minY + bounds.maxY) / 2;
@@ -57,7 +58,9 @@ class TreeVisualizer {
     var translateX = dims.width / 2 - centerX * scale + CONFIG.margins.left;
     var translateY = dims.height / 2 - centerY * scale + CONFIG.margins.top;
 
-    return d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+    // Stocker le transform optimal pour le réutiliser
+    this.lastOptimalTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
+    return this.lastOptimalTransform;
   }
 
   getTreeBounds(nodes) {

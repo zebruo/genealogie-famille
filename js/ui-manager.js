@@ -50,9 +50,14 @@ class UIManager {
     this.toggleMarriageDates.addEventListener("change", () =>
       this.app.toggleMarriageDates()
     );
+    // Utiliser la délégation d'événements pour le bouton close (recréé dynamiquement)
     document
-      .getElementById("close-panel-button")
-      .addEventListener("click", () => this.app.closePanel());
+      .getElementById("person-panel")
+      .addEventListener("click", (e) => {
+        if (e.target.closest("#close-panel-button")) {
+          this.app.closePanel();
+        }
+      });
   }
 
   handleGenerationChange(e) {

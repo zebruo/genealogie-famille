@@ -7,14 +7,14 @@
 const CONFIG = {
   // Dimensions des nœuds (rectangles)
   node: {
-    width: 80,
-    height: 105,
+    width: 85,
+    height: 110,
   },
 
   // Espacements de l'arbre
   tree: {
     verticalSpacing: 220,      // Distance entre générations (ascendance)
-    horizontalSpacing: 70,     // Distance entre nœuds même génération
+    horizontalSpacing: 72,     // Distance entre nœuds même génération
     bendHeight: 25,            // Hauteur des coudes des liens
   },
 
@@ -37,7 +37,7 @@ const CONFIG = {
 
   // Zoom et vue
   view: {
-    zoomExtent: [0.5, 3],  // [min, max] - le max est aussi l'échelle initiale
+    zoomExtent: [0.2, 3],  // [min, max] - min ajusté pour arbres avec 6 générations
   },
 
   // Marges (non utilisées avec le zoom - garder à 0)
