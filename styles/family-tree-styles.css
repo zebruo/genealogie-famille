@@ -83,8 +83,7 @@ VARIABLES CSS - MODE SOMBRE
     --bg-color: #1e293b;
     --bg-primary: #1e293b;
     --bg-secondary: #293d58;
-    /*--bg-tertiary: #334155;*/
-    --bg-tertiary: #1a1a2e;
+    --bg-tertiary: #151c29;
     --form-section-bg: #2a2a2a;
     --card-bg: #2a2a2a;
 
@@ -136,9 +135,6 @@ RESET ET STYLES DE BASE
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    /*font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial,
-        sans-serif;*/
-    /*font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;*/
     font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     padding: 10px 30px;
     transition: all var(--transition-base);
@@ -177,8 +173,8 @@ h3 {
 }
 
 h4 {
-    font-size: 0.95rem;
-    margin-bottom: 5px;
+    font-size: 0.9rem;
+    margin-top: 4px;
     color: var(--accent-color);
     font-weight: 600;
     display: flex;
@@ -375,7 +371,6 @@ CONTENEURS PRINCIPAUX
     left: 0;
     overflow: hidden;
     z-index: 1;
-    /*font-size: 14px;*/  /* Taille de base pour les textes des nœuds */
 }
 
 /* ========================================
@@ -672,12 +667,10 @@ SECTION DES RELATIONS
 }
 
 .existing-relation {
-    margin: 0;
-    flex: 0 0 auto;
     background-color: var(--bg-color);
     border: 1px solid var(--input-border);
     border-radius: 20px;
-    padding: 8px 16px;
+    padding: 6px 16px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -703,11 +696,13 @@ SECTION DES RELATIONS
 .temp-relations {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
 }
 
-.existing-relations {
-    margin-bottom: 6px;
+.relation-type-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .modal-overlay {
@@ -931,7 +926,7 @@ BOUTONS
 .btn-edit {
     border: none;
     margin-right: 12px;
-    background: var(--bg-tertiary);
+    background: transparent;
     color: var(--button-hover);
 }
 
@@ -940,17 +935,6 @@ BOUTONS
     transform: translateY(-1px);
     cursor: pointer;
 }
-
-/* ========================================
-ICÔNES SPÉCIFIQUES
-======================================== */
-/*.fa-cross {
-    color: #607d8b;
-}*/
-
-/*.fa-heart {
-    color: #30eb36;
-}*/
 
 /* ========================================
 TABLEAUX
@@ -1218,42 +1202,6 @@ RÉSULTATS DE RECHERCHE
 }
 
 /* ========================================
-LÉGENDE (pour tree-family)
-======================================== */
-/*.legend {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: var(--bg-tertiary);
-    padding: 10px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border-color);
-    max-width: 280px;
-    z-index: 10;
-}
-
-.legend-controls {
-    display: flex;
-    flex-direction: column;
-}
-
-.navigation-help {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-    padding-top: 12px;
-    border-top: 1px solid var(--border-color);
-}
-
-.navigation-help i {
-    color: var(--accent-color);
-    margin-top: 2px;
-    flex-shrink: 0;
-}*/
-
-/* ========================================
 PANNEAU D'INFORMATIONS PERSONNELLES
 ======================================== */
 .person-panel {
@@ -1307,11 +1255,6 @@ PANNEAU D'INFORMATIONS PERSONNELLES
     position: relative;
 }
 
-/*.quick-view-btn:hover {
-
-    transform: translateY(-1px);
-}*/
-
 .panel-header {
     display: flex;
     flex-direction: row;
@@ -1340,7 +1283,6 @@ PANNEAU D'INFORMATIONS PERSONNELLES
     margin: 0;
     padding: 4px 20px;
     flex-shrink: 0;
-    /*border-top: 1px solid var(--border-color);*/
     box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
     z-index: 100;
     text-align: center;
@@ -1370,7 +1312,6 @@ PANNEAU D'INFORMATIONS PERSONNELLES
     align-items: center;
     gap: 3px;
     padding: 4px 8px;
-    /*font-size: 0.75rem;*/
     color: var(--text-secondary);
     background: var(--bg-primary);
     border: none;
@@ -1480,10 +1421,6 @@ STATISTIQUES (statistics.html)
 .stat-card-icon.fa-heart {
     color: #4caf50;
 }
-
-/*.stat-card-icon.fa-cross {
-    color: #607d8b;
-}*/
 
 .stats-details {
     display: flex;
@@ -1677,7 +1614,6 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 .marriage-date {
     font-size: 16px;
     fill: var(--text-primary);
-    /*font-weight: bold;*/
     pointer-events: none;
 }
 
@@ -1688,12 +1624,10 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 }
 
 .node-text-firstname {
-    /*font-weight: 500;*/
     font-size: 1.2em;  /* 9px relatif au 10px de .tree-container */
 }
 
 .node-text-lastname {
-    /*font-weight: 500;*/
     text-transform: uppercase;
     font-size: 1.2em;  /* 9px relatif au 10px de .tree-container */
 }
@@ -1702,55 +1636,6 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
     font-size: 1.2em;  /* 8px relatif au 10px de .tree-container */
     fill: var(--text-secondary);
 }
-
-/* Legacy: cercles (pour compatibilité) */
-/*.node circle {
-    stroke-width: 2px;
-    transition: all var(--transition-fast);
-    cursor: pointer;
-}
-
-.node:hover circle {
-    filter: brightness(1.1);
-}*/
-
-/*.person-name {
-    font-size: 0.75rem;
-    fill: var(--text-primary);
-    pointer-events: none;
-}
-
-.vertical-mode .person-name {
-    font-size: 1.1rem;
-}
-
-.person-name-border {
-    fill: var(--bg-secondary);
-    stroke: var(--text-secondary);
-    stroke-width: 1.5;
-    rx: 4;
-    ry: 4;
-}
-
-.person-name-border.male {
-    fill: var(--bg-color);
-    stroke: #5b9bd5;
-}
-
-.person-name-border.female {
-    fill: var(--bg-color);
-    stroke: #e57373;
-}
-
-.person-dates {
-    font-size: 0.75rem;
-    fill: var(--text-secondary);
-    pointer-events: none;
-}
-
-.vertical-mode .person-dates {
-    font-size: 1.1rem;
-}*/
 
 /* Liens entre les nœuds */
 .link {
@@ -1764,7 +1649,6 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
     fill: none;
     stroke: var(--link-color);
     stroke-width: 2px;
-    /*stroke-dasharray: 4 2;*/
 }
 
 .spouse-link-single {
@@ -1782,7 +1666,6 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 .marriage-number {
     font-size: 0.95rem;
     fill: var(--text-secondary);
-    /*font-weight: 600;*/
 }
 
 .marriage-symbol-year {
@@ -1798,48 +1681,6 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 .marriage-symbol-year.vertical {
     font-size: 1.1rem;
 }
-
-/* Couleurs des nœuds par profondeur */
-/*.depth-0 circle {
-    fill: #ff6b6b;
-    stroke: #e06060;
-}
-
-.depth-1 circle {
-    fill: #45b7af;
-    stroke: #3ca29a;
-}
-
-.depth-2 circle {
-    fill: #3ca29a;
-    stroke: #338d86;
-}
-
-.depth-3 circle {
-    fill: #338d86;
-    stroke: #2a7871;
-}
-
-.depth-4 circle {
-    fill: #2a7871;
-    stroke: #216660;
-}
-
-.depth-5 circle {
-    fill: #216660;
-    stroke: #184f4b;
-}
-
-.root-spouse circle,
-.node.spouse circle,
-.root-child circle,
-.node.child circle,
-.root-sibling circle,
-.node.sibling circle,
-.sibling-group .depth-1 {
-    fill: #4ecdc4;
-    stroke: #45b7af;
-}*/
 
 /* ========================================
 TOOLTIPS GÉNÉRAUX
@@ -2416,7 +2257,6 @@ UTILITAIRES
     padding: 3px 8px;
     border-radius: var(--radius-sm);
     font-size: 0.7rem;
-    font-weight: 600;
     margin: 0 3px;
 }
 
@@ -2488,23 +2328,9 @@ UTILITAIRES
     border-bottom: 2px solid var(--accent-color);
 }
 
-/*.details-section {
-    margin-bottom: 25px;
-}
-
-.details-section h4 {
-    margin-bottom: 12px;
-    color: var(--accent-color);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}*/
-
 .person-item {
     padding: 10px 15px;
     background: var(--bg-primary);
-    /*border-radius: var(--radius-sm);*/
-    /*margin-bottom: 8px;*/
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -2567,7 +2393,6 @@ UTILITAIRES
     font-size: 1rem;
     font-weight: 700;
     color: var(--accent-color);
-    /*margin-bottom: 5px;*/
 }
 
 .stat-label {
@@ -2666,7 +2491,6 @@ UTILITAIRES
     top: 0;
     left: -320px;
     width: 320px;
-    /*height: 100vh;*/
     background: var(--bg-color);
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.2);
     z-index: 1100;
@@ -2882,5 +2706,131 @@ body:not(.dark-mode) .burger-nav-item .fa-sun {
 
     .root-tab {
         display: block;
+    }
+}
+
+/* ========================================
+   BARRE FIXE SUPÉRIEURE (TOP BAR)
+   ======================================== */
+
+.top-fixed-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 45px;
+    background: var(--bg-tertiary);
+    color: white;
+    display: flex;
+    align-items: center;
+    padding: 0 15px;
+    z-index: 3000;
+    box-shadow: var(--shadow-md);
+    gap: 20px;
+}
+
+/* Titre desktop */
+.desktop-only {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Nom de la personne */
+.current-person-wrapper {
+    font-size: 0.8em;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    display: none;
+}
+
+/* Légende inline */
+.legend-inline {
+    margin-left: auto;
+    display: flex;
+    color: var(--text-primary);
+    gap: 3px;
+    font-size: 0.8em;
+}
+
+.legend-controls {
+    display: flex;
+    gap: 15px;
+}
+
+.checkbox-inline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.85em;
+    cursor: pointer;
+}
+
+.checkbox-inline input {
+    transform: scale(0.9);
+    cursor: pointer;
+}
+
+.navigation-help-inline {
+    font-size: 0.85em;
+    margin-left: 10px;
+    display: flex;
+    align-items: center;
+    color: var(--text-secondary);
+    gap: 5px;
+}
+
+.navigation-help-inline i,
+.checkbox-inline i {
+    color: var(--accent-color);
+}
+
+/* --- TOP BAR VERSION MOBILE --- */
+@media (max-width: 768px) {
+
+    .top-fixed-bar {
+        height: 40px;
+        padding: 0 10px;
+        background: var(--bg-tertiary);
+    }
+
+    /* On masque le titre "Arbre Généalogique Ascendant" */
+    .desktop-only {
+        display: none;
+    }
+
+    /* Nom de la personne bien visible */
+    .current-person-wrapper {
+        display: initial;
+        position: absolute;
+        left: 50%;
+        font-size: 0.6em;
+        transform: translate(-50%, -50%);
+        top: 50%;
+        text-align: center;
+        width: max-content;
+    }
+
+    .controls-actions {
+        gap: 4px;
+    }
+
+    /* On garde la légende */
+    .legend-inline {
+        display: flex;
+    }
+
+    .legend-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+
+    /* On masque l'aide de navigation en mobile */
+    .navigation-help-inline {
+        display: none;
     }
 }

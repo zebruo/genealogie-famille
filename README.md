@@ -1,6 +1,6 @@
 # Arbre Généalogique Familial
 
-**Version 2.3**
+**Version 2.4**
 
 Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne.
 
@@ -19,6 +19,7 @@ Application web professionnelle et interactive pour visualiser et gérer un arbr
 - Design moderne et responsive
 - Mode sombre / clair
 - Menu de navigation avec hamburger (mobile)
+- Barre supérieure fixe avec contrôles
 - Panneau latéral avec informations détaillées
 - Quick View pour les documents
 - Recherche universelle avec autocomplétion
@@ -35,9 +36,15 @@ Application web professionnelle et interactive pour visualiser et gérer un arbr
 ```
 genealogie-famille/
 ├── index.html                      # Page principale - Arbre généalogique
-├── add-person.html                 # Formulaire d'ajout de personne
+├── add-person.html                 # Formulaire d'ajout/édition de personne
+├── gestion-des-lieux.html          # Gestion des lieux
+├── gestion_mariages_multiples.html # Gestion des mariages multiples
+├── documents-manager.html          # Gestionnaire de documents
+├── statistics.html                 # Page de statistiques
+├── convertisseur-republicain.html  # Convertisseur calendrier républicain
 ├── menu-navigation.html            # Menu de navigation principal
 ├── menu-navigation-users.html      # Menu de navigation utilisateurs
+├── .htaccess                       # Configuration Apache
 ├── README.md                       # Documentation
 │
 ├── admin/                          # Backend PHP
@@ -66,7 +73,7 @@ genealogie-famille/
 │   └── burger.js                   # Menu hamburger mobile
 │
 ├── styles/                         # Feuilles de style CSS
-│   ├── family-tree-styles.css      # Styles principaux (2800+ lignes)
+│   ├── family-tree-styles.css      # Styles principaux (~3000 lignes)
 │   ├── person-quick-view.css       # Styles Quick View
 │   ├── modal-system.css            # Styles des modales
 │   └── convertisseur-styles.css    # Styles convertisseur
@@ -186,6 +193,7 @@ Le code JavaScript est organisé en modules séparés pour une meilleure mainten
 
 ## Historique des versions
 
+- **v2.4** - Consolidation CSS (styles top-bar), nouvelles pages, .htaccess
 - **v2.3** - Nettoyage code obsolète, nouvelles pages (add-person, menu-users)
 - **v2.2** - Améliorations UI panel et zoom optimal
 - **v2.1** - Gaps texte, liens mariage conditionnels, nettoyage

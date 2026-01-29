@@ -1,0 +1,26 @@
+# Augmenter les limites d'upload pour les fichiers PDF et photos
+# Note: Ces directives necessitent que PHP soit configure en mode CGI/FastCGI
+# Si PHP fonctionne en mode Apache (mod_php), utilisez plutot php_value
+
+# Taille maximale d'un fichier uploade (15 Mo pour les PDF)
+php_value upload_max_filesize 15M
+
+# Taille maximale des donnees POST (20 Mo pour inclure les metadonnees)
+php_value post_max_size 20M
+
+# Temps maximum d'execution du script (5 minutes)
+php_value max_execution_time 300
+
+# Temps maximum pour les donnees POST (5 minutes)
+php_value max_input_time 300
+
+# Memoire allouee au script (256 Mo)
+php_value memory_limit 256M
+
+# Si les directives ci-dessus ne fonctionnent pas (erreur 500),
+# commentez-les et utilisez uniquement le fichier api4.php
+# qui configure ces valeurs via ini_set()
+
+# Note pour le futur : Si tu changes d'hébergement ou de serveur,
+# il faudra peut-être copier ce fichier .htaccess également,
+# car c'est lui qui configure les limites PHP au niveau du serveur web.

@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Statistiques Généalogiques</title>
+    <link rel="icon" href="data:,"> <!--source vide pour le moment-->
+    <link rel="stylesheet" href="styles/family-tree-styles.css" />
+    <link rel="stylesheet" href="styles/person-quick-view.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+
+  <body>
+    <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-stats.html -->
+    <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
+
+    <div class="container">
+      <div class="controls-header">
+        <div class="controls-title">
+            <i class="fas fa-chart-bar"></i>
+            <span>Statistiques Généalogiques</span>
+          </div>
+      </div>
+
+      <!-- Cartes de statistiques principales -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Total membres</div>
+            <i class="fas fa-users stat-card-icon"></i>
+          </div>
+          <div class="stat-number" id="totalMembers">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Naissances</div>
+            <i class="fas fa-baby document-type-naissance"></i>
+          </div>
+          <div class="stat-number" id="totalBirths">-</div>
+          <div class="stat-card-detail" id="unknownBirthsDetail"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Mariages</div>
+            <i class="fas fa-ring document-type-mariage"></i>
+          </div>
+          <div class="stat-number" id="totalMarriages">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Décès</div>
+            <i class="fas fa-cross document-type-deces"></i>
+          </div>
+          <div class="stat-number" id="totalDeaths">-</div>
+          <div class="stat-card-detail" id="unknownDeathsDetail"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">En vie / Décédés</div>
+            <i class="fas fa-heartbeat document-type-vie_deces"></i>
+          </div>
+          <div class="stat-number" id="aliveDeceased">-</div>
+        </div>
+      </div>
+
+      <!-- Onglets de navigation -->
+      <div class="tabs-container">
+        <div class="tabs">
+          <button class="tab-button active" data-tab="overview">
+            <i class="fas fa-chart-pie"></i> Vue d'ensemble
+          </button>
+          <button class="tab-button" data-tab="events">
+            <i class="fas fa-calendar-alt"></i> Derniers événements
+          </button>
+          <button class="tab-button" data-tab="lifespan">
+            <i class="fas fa-heartbeat"></i> Espérance de vie
+          </button>
+          <button class="tab-button" data-tab="unknown">
+            <i class="fas fa-question-circle"></i> Dates inconnues
+          </button>
+          <button class="tab-button" data-tab="frequency">
+            <i class="fas fa-chart-bar"></i> Fréquences
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenu des onglets -->
+
+      <!-- Onglet: Vue d'ensemble -->
+      <div id="tabOverview" class="tab-content active">
+        <div class="stats-flex-row">
+          <!-- Colonne 1 : Distribution par genre -->
+          <div class="stats-box flex-1">
+            <h2>Distribution par genre</h2>
+            <ul class="stats-list">
+              <li>
+                <div class="stats-label-value">
+                  <div class="stats-label">
+                    <i class="fas fa-mars"></i>
+                    <span>Hommes</span>
+                  </div>
+                  <div class="stats-value" id="maleCount">-</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" id="maleProgress"></div>
+                </div>
+              </li>
+              <li>
+                <div class="stats-label-value">
+                  <div class="stats-label">
+                    <i class="fas fa-venus"></i>
+                    <span>Femmes</span>
+                  </div>
+                  <div class="stats-value" id="femaleCount">-</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" id="femaleProgress"></div>
+                </div>
+              </li>
+              <li>
+                <div class="stats-label-value">
+                  <div class="stats-label">
+                    <i class="fas fa-genderless"></i>
+                    <span>Non spécifié</span>
+                  </div>
+                  <div class="stats-value" id="unknownCount">-</div>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" id="unknownProgress"></div>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          <!-- Colonne 2 : Répartition par siècle -->
+          <div class="stats-box flex-1">
+            <h2>Répartition par siècle</h2>
+            <ul class="stats-list" id="centuriesList">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </ul>
+          </div>
+          <div class="stats-box flex-2">
+            <h2>Statistiques des lieux</h2>
+            <div class="places-grid">
+              <div class="places-section">
+                <h3>Top 10 des lieux de naissance</h3>
+                <div class="places-list" id="birthPlaces">
+                  <div class="loading-spinner">
+                    <i class="fas fa-spinner"></i>
+                  </div>
+                </div>
+              </div>
+              <div class="places-section">
+                <h3>Top 10 des lieux de décès</h3>
+                <div class="places-list" id="deathPlaces">
+                  <div class="loading-spinner">
+                    <i class="fas fa-spinner"></i>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet: Derniers événements -->
+      <div id="tabEvents" class="tab-content">
+        <div class="stats-flex-row">
+          <!-- 3 colonnes égales -->
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-baby"></i> 10 dernières naissances</h2>
+            <div class="events-list" id="lastBirths">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-ring"></i> 10 dernières unions</h2>
+            <div class="events-list" id="lastMarriages">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-cross"></i> 10 derniers décès</h2>
+            <div class="events-list" id="lastDeaths">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet: Espérance de vie -->
+      <div id="tabLifespan" class="tab-content">
+
+        <!-- Ligne 2 : 2 colonnes égales -->
+        <div class="stats-flex-row">
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-birthday-cake"></i> 10 les plus âgés (potentiellement vivants)</h2>
+            <div class="events-list" id="oldestLiving">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-medal"></i> 10 ayant vécu le plus longtemps</h2>
+            <div class="events-list" id="longestLived">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet: Fréquences -->
+      <div id="tabFrequency" class="tab-content">
+        <div class="stats-flex-row">
+          <!-- 2 colonnes égales -->
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-signature"></i> Fréquence des noms de famille</h2>
+            <div class="frequency-grid" id="lastNameFrequency">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-user"></i> Fréquence des prénoms</h2>
+            <div class="frequency-grid" id="firstNameFrequency">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Onglet: Dates inconnues -->
+      <div id="tabUnknown" class="tab-content">
+        <div class="stats-flex-row">
+          <!-- 2 colonnes égales -->
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-baby"></i> Dates de naissance inconnues</h2>
+            <div class="events-list" id="unknownBirths">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-cross"></i> Dates de décès inconnues</h2>
+            <div class="events-list" id="unknownDeaths">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+    <script src="js/darkMode.js"></script>
+    <script src="js/burger.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // loadDarkModeScript est appelé automatiquement par menu-loader.js après chargement du menu
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const targetTab = this.getAttribute('data-tab');
+            tabButtons.forEach(btn => btn.classList.remove('active'));
+            tabContents.forEach(content => content.classList.remove('active'));
+            this.classList.add('active');
+            document.getElementById('tab' + targetTab.charAt(0).toUpperCase() + targetTab.slice(1)).classList.add('active');
+            loadTabData(targetTab);
+          });
+        });
+        loadAllData();
+      });
+      let allData = null;
+
+      function calculatePercentage(value, total) {
+        return total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+      }
+
+      function formatDate(dateStr) {
+        if (!dateStr) return 'Date inconnue';
+        let date;
+        if (dateStr.includes('-') && dateStr.length === 10) {
+          const parts = dateStr.split('-');
+          if (parts[0].length === 2) {
+            date = new Date(parts[2], parts[1] - 1, parts[0]);
+          } else {
+            date = new Date(dateStr);
+          }
+        } else if (dateStr.length === 4 && !isNaN(dateStr)) {
+          date = new Date(dateStr, 0, 1);
+          return dateStr;
+        } else {
+          date = new Date(dateStr);
+        }
+        if (isNaN(date.getTime())) {
+          return dateStr;
+        }
+        const options = {
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        };
+        return date.toLocaleDateString('fr-FR', options);
+      }
+
+      function calculateAge(birthDate, deathDate = null) {
+        const birth = new Date(birthDate);
+        const end = deathDate ? new Date(deathDate) : new Date();
+        let age = end.getFullYear() - birth.getFullYear();
+        const monthDiff = end.getMonth() - birth.getMonth();
+        if (monthDiff < 0 || (monthDiff === 0 && end.getDate() < birth.getDate())) {
+          age--;
+        }
+        return age;
+      }
+      async function loadAllData() {
+        try {
+          const response = await fetch('admin/api3.php?action=getFamilyData');
+          const data = await response.json();
+          allData = Object.values(data);
+          updateOverviewTab();
+        } catch (error) {
+          console.error('Erreur lors du chargement des données:', error);
+        }
+      }
+
+      function loadTabData(tab) {
+        if (!allData) return;
+        switch (tab) {
+          case 'events':
+            updateEventsTab();
+            break;
+          case 'lifespan':
+            updateLifespanTab();
+            break;
+          case 'frequency':
+            updateFrequencyTab();
+            break;
+          case 'unknown':
+            updateUnknownTab();
+            break;
+        }
+      }
+
+      function updateOverviewTab() {
+        if (!allData) return;
+        const total = allData.length;
+        const males = allData.filter(p => p.sex === 'M').length;
+        const females = allData.filter(p => p.sex === 'F').length;
+        const unknown = total - males - females;
+        let totalMarriages = 0;
+        const processedMarriages = new Set();
+        allData.forEach(person => {
+          if (person.marriages) {
+            Object.values(person.marriages).forEach(marriage => {
+              const id = marriage.marriageId || marriage.mariageId;
+              if (id && !processedMarriages.has(id)) {
+                processedMarriages.add(id);
+                totalMarriages++;
+              }
+            });
+          }
+        });
+        // Fonction pour vérifier si une date est invalide
+        const isInvalidDate = (dateStr) => {
+          if (!dateStr) return true;
+          const cleaned = dateStr.trim();
+          if (cleaned.includes('/')) {
+            return true;
+          }
+          if (cleaned === '0000' ||
+            cleaned === '9999' ||
+            cleaned.startsWith('0000-') ||
+            cleaned.startsWith('9999-') ||
+            cleaned.includes('-00-00') ||
+            cleaned.includes('-00-') ||
+            cleaned.endsWith('-00') ||
+            cleaned.match(/^00-/) ||
+            cleaned.match(/-00$/) ||
+            cleaned.match(/^\d{2}-00-\d{4}$/) ||
+            cleaned.match(/^\d{4}-00-\d{2}$/)) {
+            return true;
+          }
+          return false;
+        };
+        // Calculer les naissances et décès
+        const totalBirths = allData.length; // Tous les membres ont une naissance
+        const unknownBirthDates = allData.filter(p => {
+          return isInvalidDate(p.isoBirthDate) || isInvalidDate(p.fullBirthDate) || !p.isoBirthDate;
+        }).length;
+        const totalDeaths = allData.filter(p => p.deathDate || p.isoDeathDate || p.fullDeathDate).length;
+        const unknownDeathDates = allData.filter(p => {
+          return p.deathDate && (isInvalidDate(p.isoDeathDate) || isInvalidDate(p.fullDeathDate));
+        }).length;
+        document.getElementById('totalMembers').textContent = total;
+        document.getElementById('totalMarriages').textContent = totalMarriages;
+        document.getElementById('totalBirths').textContent = totalBirths;
+        document.getElementById('totalDeaths').textContent = totalDeaths;
+        // Afficher le détail des dates inconnues
+        if (unknownBirthDates > 0) {
+          const detailEl = document.getElementById('unknownBirthsDetail');
+          detailEl.textContent = `dont ${unknownBirthDates} date${unknownBirthDates > 1 ? 's' : ''} inconnue${unknownBirthDates > 1 ? 's' : ''}`;
+          detailEl.classList.add('stat-label');
+        }
+        if (unknownDeathDates > 0) {
+          const detailEl = document.getElementById('unknownDeathsDetail');
+          detailEl.textContent = `dont ${unknownDeathDates} date${unknownDeathDates > 1 ? 's' : ''} inconnue${unknownDeathDates > 1 ? 's' : ''}`;
+          detailEl.classList.add('stat-label');
+        }
+        // Calculer le nombre de personnes vivantes et décédées
+        const deceased = totalDeaths;
+        const alive = total - deceased;
+        document.getElementById('aliveDeceased').innerHTML = `<span>${alive}</span> / <span>${deceased}</span>`;
+        document.getElementById('maleCount').textContent = males;
+        document.getElementById('femaleCount').textContent = females;
+        document.getElementById('unknownCount').textContent = unknown;
+        document.getElementById('maleProgress').style.width = calculatePercentage(males, total) + '%';
+        document.getElementById('femaleProgress').style.width = calculatePercentage(females, total) + '%';
+        document.getElementById('unknownProgress').style.width = calculatePercentage(unknown, total) + '%';
+        updateCenturiesStats();
+        updatePlacesStats();
+      }
+
+      function updateCenturiesStats() {
+        const centuriesStats = {};
+        const minCentury = 17;
+        const maxCentury = 21;
+        const toRoman = (num) => {
+          const romans = [
+            ["M", 1000],
+            ["CM", 900],
+            ["D", 500],
+            ["CD", 400],
+            ["C", 100],
+            ["XC", 90],
+            ["L", 50],
+            ["XL", 40],
+            ["X", 10],
+            ["IX", 9],
+            ["V", 5],
+            ["IV", 4],
+            ["I", 1]
+          ];
+          let result = "";
+          for (const [letter, value] of romans) {
+            while (num >= value) {
+              result += letter;
+              num -= value;
+            }
+          }
+          return result;
+        };
+        const formatCenturyLabel = (centuryNumber) => {
+          const roman = toRoman(centuryNumber);
+          const suffix = centuryNumber === 1 ? "er" : "e";
+          return `${roman}<span class="ordinal">${suffix}</span> siècle`;
+        };
+        const calculateCentury = (year) => {
+          if (!year || isNaN(year)) return null;
+          const centuryNumber = Math.floor((year - 1) / 100) + 1;
+          if (centuryNumber < minCentury || centuryNumber > maxCentury) {
+            return null;
+          }
+          const minYear = (centuryNumber - 1) * 100 + 1;
+          const maxYear = centuryNumber * 100;
+          if (year < minYear || year > maxYear) {
+            return null;
+          }
+          return centuryNumber;
+        };
+        for (let c = minCentury; c <= maxCentury; c++) {
+          centuriesStats[c] = {
+            label: formatCenturyLabel(c),
+            birthCount: 0,
+            deathCount: 0
+          };
+        }
+        allData.forEach(person => {
+          if (person.birthDate) {
+            const birthYear = new Date(person.birthDate).getFullYear();
+            const birthCentury = calculateCentury(birthYear);
+            if (birthCentury && centuriesStats[birthCentury]) {
+              centuriesStats[birthCentury].birthCount += 1;
+            }
+          }
+          if (person.deathDate) {
+            const deathYear = new Date(person.deathDate).getFullYear();
+            const deathCentury = calculateCentury(deathYear);
+            if (deathCentury && centuriesStats[deathCentury]) {
+              centuriesStats[deathCentury].deathCount += 1;
+            }
+          }
+        });
+        const centuriesList = document.getElementById('centuriesList');
+        const totalBirths = Object.values(centuriesStats).reduce((a, b) => a + b.birthCount, 0);
+        const totalDeaths = Object.values(centuriesStats).reduce((a, b) => a + b.deathCount, 0);
+        const formatDataList = Object.entries(centuriesStats)
+          .sort((a, b) => a[0] - b[0])
+          .map(([num, {
+            label,
+            birthCount,
+            deathCount
+          }]) => {
+            const birthPercentage = (birthCount / totalBirths) * 100 || 0;
+            const deathPercentage = (deathCount / totalDeaths) * 100 || 0;
+            return `
+                <li class="century-stats-item">
+                    <div class="stats-label-header">
+                        <!-- <i class="fas fa-calendar-alt"></i> -->
+                        <span>${label}</span>
+                    </div>
+
+                    <div class="stats-label-value stats-birth">
+                        <div class="stats-label">Naissances</div>
+                        <div class="stats-value">${birthCount}</div>
+                    </div>
+                    <div class="progress-bar birth-bar">
+                        <div class="progress-fill" style="width: ${birthPercentage}%"></div>
+                    </div>
+                    
+                    <div class="stats-label-value stats-death">
+                        <div class="stats-label">Décès</div>
+                        <div class="stats-value">${deathCount}</div>
+                    </div>
+                    <div class="progress-bar death-bar">
+                        <div class="progress-fill" style="width: ${deathPercentage}%"></div>
+                    </div>
+                </li>
+            `;
+          }).join('');
+        centuriesList.innerHTML = `<ul class="stats-list">${formatDataList}</ul>`;
+      }
+
+      function updatePlacesStats() {
+        const birthPlacesMap = {};
+        allData.forEach(person => {
+          if (person.birthPlace) {
+            birthPlacesMap[person.birthPlace] = (birthPlacesMap[person.birthPlace] || 0) + 1;
+          }
+        });
+        const birthPlacesContainer = document.getElementById('birthPlaces');
+        const topBirthPlaces = Object.entries(birthPlacesMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10);
+        birthPlacesContainer.innerHTML = topBirthPlaces.length > 0 ?
+          topBirthPlaces.map(([place, count]) => `
+                    <div class="place-item">
+                        <div class="stats-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${place}</span>
+                        </div>
+                        <div class="stats-value">${count}</div>
+                    </div>
+                `).join('') :
+          '<div class="empty-state"><i class="fas fa-map-marker-alt"></i><p>Aucun lieu de naissance</p></div>';
+        const deathPlacesMap = {};
+        allData.forEach(person => {
+          if (person.deathPlace) {
+            deathPlacesMap[person.deathPlace] = (deathPlacesMap[person.deathPlace] || 0) + 1;
+          }
+        });
+        const deathPlacesContainer = document.getElementById('deathPlaces');
+        const topDeathPlaces = Object.entries(deathPlacesMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10);
+        deathPlacesContainer.innerHTML = topDeathPlaces.length > 0 ?
+          topDeathPlaces.map(([place, count]) => `
+                    <div class="place-item">
+                        <div class="stats-label">
+                            <i class="fas fa-map-marker-alt"></i>
+                            <span>${place}</span>
+                        </div>
+                        <div class="stats-value">${count}</div>
+                    </div>
+                `).join('') :
+          '<div class="empty-state"><i class="fas fa-map-marker-alt"></i><p>Aucun lieu de décès</p></div>';
+      }
+
+      function updateEventsTab() {
+        const births = allData
+          .filter(p => p.birthDate)
+          .sort((a, b) => {
+            const dateA = new Date(a.isoBirthDate || a.birthDate);
+            const dateB = new Date(b.isoBirthDate || b.birthDate);
+            return dateB - dateA;
+          })
+          .slice(0, 10);
+        const birthsContainer = document.getElementById('lastBirths');
+        birthsContainer.innerHTML = births.length > 0 ?
+          births.map(person => {
+            const displayDate = person.fullBirthDate || person.birthDate;
+            return `
+                        <div class="event-item">
+                            <div class="event-info">
+                                <div class="event-name">${person.firstName} ${person.lastName}</div>
+                                <div class="event-details">
+                                    ${person.birthPlace || 'Lieu inconnu'}
+                                </div>
+                            </div>
+                            <div class="event-date">${formatDate(displayDate)}</div>
+                        </div>
+                    `;
+          }).join('') :
+          '<div class="empty-state"><i class="fas fa-baby"></i><p>Aucune naissance enregistrée</p></div>';
+        const marriages = [];
+        const processedMarriages = new Set();
+        allData.forEach(person => {
+          if (person.marriages) {
+            Object.entries(person.marriages).forEach(([spouseId, marriage]) => {
+              const id = marriage.marriageId || marriage.mariageId;
+              let date = marriage.fullDate || marriage.date || marriage.marriageDate;
+              if (id && !processedMarriages.has(id) && date) {
+                processedMarriages.add(id);
+                const spouse = allData.find(p => p.id == spouseId);
+                marriages.push({
+                  person: person,
+                  spouse: spouse,
+                  date: date,
+                  rawDate: date,
+                  place: marriage.place || marriage.marriagePlace || ''
+                });
+              }
+            });
+          }
+        });
+        marriages.sort((a, b) => {
+          const parseDate = (dateStr) => {
+            if (dateStr.length === 4) {
+              return new Date(parseInt(dateStr), 6, 1);
+            } else if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
+              const [day, month, year] = dateStr.split('-');
+              return new Date(year, month - 1, day);
+            } else {
+              return new Date(dateStr);
+            }
+          };
+          return parseDate(b.rawDate) - parseDate(a.rawDate);
+        });
+        const marriagesContainer = document.getElementById('lastMarriages');
+        marriagesContainer.innerHTML = marriages.slice(0, 10).length > 0 ?
+          marriages.slice(0, 10).map(m => {
+            let displayDate;
+            if (m.date.length === 4) {
+              displayDate = m.date;
+            } else {
+              displayDate = formatDate(m.date);
+            }
+            return `
+                        <div class="event-item">
+                            <div class="event-info">
+                                <div class="event-name">${m.person.firstName} ${m.person.lastName} & ${m.spouse ? m.spouse.firstName + ' ' + m.spouse.lastName : 'Inconnu'}</div>
+                                <div class="event-details">
+                                    ${m.place || 'Lieu inconnu'}
+                                </div>
+                            </div>
+                            <div class="event-date">${displayDate}</div>
+                        </div>
+                    `;
+          }).join('') :
+          '<div class="empty-state"><i class="fas fa-ring"></i><p>Aucune union enregistrée</p></div>';
+        const deaths = allData
+          .filter(p => p.deathDate)
+          .sort((a, b) => {
+            const dateA = new Date(a.isoDeathDate || a.deathDate);
+            const dateB = new Date(b.isoDeathDate || b.deathDate);
+            return dateB - dateA;
+          })
+          .slice(0, 10);
+        const deathsContainer = document.getElementById('lastDeaths');
+        deathsContainer.innerHTML = deaths.length > 0 ?
+          deaths.map(person => {
+            const age = person.birthDate ? calculateAge(person.isoBirthDate || person.birthDate, person.isoDeathDate || person.deathDate) : null;
+            const displayDate = person.fullDeathDate || person.deathDate;
+            return `
+                        <div class="event-item">
+                            <div class="event-info">
+                                <div class="event-name">${person.firstName} ${person.lastName}</div>
+                                <div class="event-details">
+                                    ${person.deathPlace || 'Lieu inconnu'}
+                                    ${age !== null ? ` • ${age} ans` : ''}
+                                </div>
+                            </div>
+                            <div class="event-date">${formatDate(displayDate)}</div>
+                        </div>
+                    `;
+          }).join('') :
+          '<div class="empty-state"><i class="fas fa-cross"></i><p>Aucun décès enregistré</p></div>';
+      }
+
+      function updateLifespanTab() {
+        const currentYear = new Date().getFullYear();
+        const potentiallyAlive = allData
+          .filter(p => p.birthDate && !p.deathDate)
+          .map(p => ({
+            ...p,
+            age: calculateAge(p.birthDate)
+          }))
+          .sort((a, b) => b.age - a.age)
+          .slice(0, 10);
+        const oldestLivingContainer = document.getElementById('oldestLiving');
+        oldestLivingContainer.innerHTML = potentiallyAlive.length > 0 ?
+          potentiallyAlive.map(person => `
+                    <div class="event-item">
+                        <div class="event-info">
+                            <div class="event-name">${person.firstName} ${person.lastName}</div>
+                            <div class="event-details">
+                                Né en ${formatDate(person.birthDate)}
+                                ${person.birthPlace ? ' à ' + person.birthPlace : ''}
+                            </div>
+                        </div>
+                        <div class="event-date">${person.age} ans</div>
+                    </div>
+                `).join('') :
+          '<div class="empty-state"><i class="fas fa-birthday-cake"></i><p>Aucune donnée disponible</p></div>';
+        const longestLived = allData
+          .filter(p => p.birthDate && p.deathDate)
+          .map(p => ({
+            ...p,
+            lifespan: calculateAge(p.birthDate, p.deathDate)
+          }))
+          .sort((a, b) => b.lifespan - a.lifespan)
+          .slice(0, 10);
+        const longestLivedContainer = document.getElementById('longestLived');
+        longestLivedContainer.innerHTML = longestLived.length > 0 ?
+          longestLived.map(person => `
+                    <div class="event-item">
+                        <div class="event-info">
+                            <div class="event-name">${person.firstName} ${person.lastName}</div>
+                            <div class="event-details">
+                                ${formatDate(person.birthDate)} - ${formatDate(person.deathDate)}
+                            </div>
+                        </div>
+                        <div class="event-date">${person.lifespan} ans</div>
+                    </div>
+                `).join('') :
+          '<div class="empty-state"><i class="fas fa-medal"></i><p>Aucune donnée disponible</p></div>';
+      }
+
+      function updateFrequencyTab() {
+        const lastNamesMap = {};
+        allData.forEach(person => {
+          if (person.lastName) {
+            lastNamesMap[person.lastName] = (lastNamesMap[person.lastName] || 0) + 1;
+          }
+        });
+        const lastNameContainer = document.getElementById('lastNameFrequency');
+        const topLastNames = Object.entries(lastNamesMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 50);
+        lastNameContainer.innerHTML = topLastNames.length > 0 ?
+          topLastNames.map(([name, count]) => `
+                    <div class="frequency-item">
+                        <div class="frequency-name">${name}</div>
+                        <div class="frequency-count">${count}</div>
+                    </div>
+                `).join('') :
+          '<div class="empty-state"><i class="fas fa-signature"></i><p>Aucun nom de famille</p></div>';
+        const firstNamesMap = {};
+        allData.forEach(person => {
+          if (person.firstName) {
+            firstNamesMap[person.firstName] = (firstNamesMap[person.firstName] || 0) + 1;
+          }
+        });
+        const firstNameContainer = document.getElementById('firstNameFrequency');
+        const topFirstNames = Object.entries(firstNamesMap)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 50);
+        firstNameContainer.innerHTML = topFirstNames.length > 0 ?
+          topFirstNames.map(([name, count]) => `
+                    <div class="frequency-item">
+                        <div class="frequency-name">${name}</div>
+                        <div class="frequency-count">${count}</div>
+                    </div>
+                `).join('') :
+          '<div class="empty-state"><i class="fas fa-user"></i><p>Aucun prénom</p></div>';
+      }
+
+      function updateUnknownTab() {
+        const isInvalidDate = (dateStr) => {
+          if (!dateStr) return true;
+          const cleaned = dateStr.trim();
+          if (cleaned.includes('/')) {
+            return true;
+          }
+          if (cleaned === '0000' ||
+            cleaned === '9999' ||
+            cleaned.startsWith('0000-') ||
+            cleaned.startsWith('9999-') ||
+            cleaned.includes('-00-00') ||
+            cleaned.includes('-00-') ||
+            cleaned.endsWith('-00') ||
+            cleaned.match(/^00-/) ||
+            cleaned.match(/-00$/) ||
+            cleaned.match(/^\d{2}-00-\d{4}$/) ||
+            cleaned.match(/^\d{4}-00-\d{2}$/)) {
+            return true;
+          }
+          return false;
+        };
+        const formatToFrench = (dateStr) => {
+          if (!dateStr) return 'N/A';
+          const cleaned = dateStr.trim();
+          if (cleaned.match(/^\d{4}[/-]\d{2}[/-]\d{2}$/)) {
+            const parts = cleaned.split(/[/-]/);
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+          }
+          if (cleaned.match(/^\d{2}-\d{2}-\d{4}$/)) {
+            return cleaned.replace(/-/g, '/');
+          }
+          if (cleaned.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+            return cleaned;
+          }
+          return cleaned;
+        };
+        const unknownBirths = allData.filter(p => {
+          return isInvalidDate(p.isoBirthDate) || isInvalidDate(p.fullBirthDate) || !p.isoBirthDate;
+        });
+        const unknownBirthsContainer = document.getElementById('unknownBirths');
+        unknownBirthsContainer.innerHTML = unknownBirths.length > 0 ?
+          unknownBirths.map(person => {
+            const displayDate = formatToFrench(person.isoBirthDate || person.fullBirthDate);
+            return `
+                        <div class="event-item">
+                            <div class="event-info">
+                                <div class="event-name">${person.firstName} ${person.lastName}</div>
+                                <div class="event-details">
+                                    ${person.birthPlace ? person.birthPlace : '<em>Lieu inconnu</em>'}
+                                    ${displayDate !== 'N/A' ? ` • Date enregistrée : ${displayDate}` : ''}
+                                </div>
+                            </div>
+                            <div class="event-date" style="color: #ef4444;">Date invalide</div>
+                        </div>
+                    `;
+          }).join('') :
+          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Toutes les dates de naissance sont renseignées</p></div>';
+        const unknownDeaths = allData.filter(p => {
+          return p.deathDate && (isInvalidDate(p.isoDeathDate) || isInvalidDate(p.fullDeathDate));
+        });
+        const unknownDeathsContainer = document.getElementById('unknownDeaths');
+        unknownDeathsContainer.innerHTML = unknownDeaths.length > 0 ?
+          unknownDeaths.map(person => {
+            const birthInfo = person.fullBirthDate || person.birthDate || 'Date de naissance inconnue';
+            const displayDeathDate = formatToFrench(person.isoDeathDate || person.fullDeathDate);
+            return `
+                        <div class="event-item">
+                            <div class="event-info">
+                                <div class="event-name">${person.firstName} ${person.lastName}</div>
+                                <div class="event-details">
+                                    Né(e) : ${birthInfo}
+                                    ${person.deathPlace ? ` • Décédé(e) à ${person.deathPlace}` : '<em> • Lieu inconnu</em>'}
+                                    ${displayDeathDate !== 'N/A' ? ` • Date enregistrée : ${displayDeathDate}` : ''}
+                                </div>
+                            </div>
+                            <div class="event-date" style="color: #ef4444;">Date invalide</div>
+                        </div>
+                    `;
+          }).join('') :
+          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Toutes les dates de décès sont renseignées</p></div>';
+      }
+    </script>
+  </body>
+
+</html>

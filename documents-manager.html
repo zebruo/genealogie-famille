@@ -1,0 +1,1924 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Gestion documentaire</title>
+  <link rel="icon" href="data:,"> <!--source vide pour le moment-->
+  <link rel="stylesheet" href="styles/family-tree-styles.css" />
+  <link rel="stylesheet" href="styles/person-quick-view.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+
+<body>
+  <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-docs.html -->
+  <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
+
+  <div class="container">
+    <div class="controls-header">
+      <div class="controls-title">
+        <i class="fas fa-file-alt"></i>
+        <span>Gestion documentaire</span>
+      </div>
+    </div>
+    <div class="search-wrapper form-header">
+      <div class="search-input-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input type="text" class="search-input" placeholder="Rechercher une personne par nom, prénom ou lieu..."
+          id="mainSearch" />
+        <div id="clearSearch">
+          <i class="fas fa-times clear-search"></i>
+        </div>
+        <div class="search-suggestions"></div>
+      </div>
+    </div>
+
+    <!-- Filtres de personnes -->
+    <div class="filter-container">
+      <button class="filter-btn active" data-filter="all">
+        <i class="fas fa-users"></i>
+        Toutes les personnes
+        <span class="filter-count" id="count-all">0</span>
+      </button>
+      <button class="filter-btn" data-filter="with-any">
+        <i class="fas fa-check-circle"></i>
+        Avec documents
+        <span class="filter-count" id="count-with-any">0</span>
+      </button>
+      <button class="filter-btn" data-filter="source-naissance">
+        <i class="fas fa-baby"></i>
+        Sources naissance
+        <span class="filter-count" id="count-source-naissance">0</span>
+      </button>
+      <button class="filter-btn" data-filter="note-mariage">
+        <i class="fas fa-ring"></i>
+        Sources mariage
+        <span class="filter-count" id="count-note-mariage">0</span>
+      </button>
+      <button class="filter-btn" data-filter="source-deces">
+        <i class="fas fa-cross"></i>
+        Sources décès
+        <span class="filter-count" id="count-source-deces">0</span>
+      </button>
+      <button class="filter-btn" data-filter="note-membre">
+        <i class="fas fa-sticky-note"></i>
+        Notes membre
+        <span class="filter-count" id="count-note-membre">0</span>
+      </button>
+      <button class="filter-btn" data-filter="documents">
+        <i class="fas fa-file-alt"></i>
+        Documents
+        <span class="filter-count" id="count-documents">0</span>
+      </button>
+      <button class="filter-btn" data-filter="pdf">
+        <i class="fas fa-file-pdf"></i>
+        PDF
+        <span class="filter-count" id="count-pdf">0</span>
+      </button>
+      <button class="filter-btn" data-filter="photos">
+        <i class="fas fa-camera"></i>
+        Photos
+        <span class="filter-count" id="count-photos">0</span>
+      </button>
+    </div>
+
+    <div class="alphabet-index"></div>
+
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Nom</th>
+            <th style="width: 22%;">Prénom</th>
+            <th style="width: 8%; text-align: center;">Naissance</th>
+            <th style="width: 8%; text-align: center;">Décès</th>
+            <th style="width: 5%; text-align: center;"><i class="fas fa-baby"></i> Sources naissance</th>
+            <th style="width: 5%; text-align: center;"><i class="fas fa-ring"></i> Sources mariage</th>
+            <th style="width: 5%; text-align: center;"><i class="fas fa-cross"></i> Sources décès</th>
+            <th style="width: 5%; text-align: center;"><i class="fas fa-sticky-note"></i> Notes membre</th>
+            <th style="width: 5%; text-align: center;"><i class="fas fa-file-alt"></i> Documents</th>
+            <th style="width: 5%; text-align: center;"><i class="fas fa-file-pdf"></i> PDF</th>
+            <th style="width: 5%; text-align: center;"><i class="fas fa-image"></i> Photos</th>
+            <th style="width: 5%; text-align: center;">Actions</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="pagination"></div>
+  </div>
+
+  <div class="modal-overlay" id="documentsModal">
+    <div class="modal-content">
+      <div class="modal-header-qv">
+        <h2><i class="fas fa-file-alt"></i><span id="modalPersonName"></span></h2>
+        <button class="modal-close-qv" onclick="closeDocumentsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="documents-list" id="documentsList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="noteSimpleModal">
+    <div class="modal-content">
+      <button class="btn-back" onclick="backToDocumentsList()" style="margin-right: auto;">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <div class="modal-header-qv">
+        <h2 id="noteSimpleFormTitle"><i class="fas fa-sticky-note"></i> Note</h2>
+        <button class="modal-close-qv" onclick="closeNoteSimpleModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="noteSimpleForm">
+          <input type="hidden" id="simpleDocumentId" />
+          <input type="hidden" id="simplePersonId" />
+          <div class="form-group">
+            <label id="simpleNoteLabel">Contenu de la note</label>
+            <textarea class="form-control" id="simpleNoteContent" rows="15"></textarea>
+          </div>
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeNoteSimpleModal()">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+            <button type="submit" class="btn btn-submit">
+              <i class="fas fa-save"></i> Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="documentFormModal">
+    <div class="modal-content">
+      <button class="btn-back" onclick="backToDocumentsList()" style="margin-right: auto;">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <div class="modal-header-qv">
+        <h2 id="documentFormTitle"><i class="fas fa-plus"></i> Ajouter un document</h2>
+        <button class="modal-close-qv" onclick="closeDocumentFormModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="documentForm">
+          <input type="hidden" id="documentId" />
+          <input type="hidden" id="personId" />
+
+          <div class="type-selector">
+            <button type="button" class="type-btn active" data-type="note">
+              <i class="fas fa-file-alt"></i><br>Document
+            </button>
+            <button type="button" class="type-btn" data-type="pdf">
+              <i class="fas fa-file-pdf"></i><br>PDF
+            </button>
+            <button type="button" class="type-btn" data-type="photo">
+              <i class="fas fa-image"></i><br>Photo
+            </button>
+          </div>
+
+          <div id="noteFields">
+            <div class="form-group">
+              <label>Titre (optionnel)</label>
+              <input type="text" class="form-control" id="noteTitle" />
+            </div>
+            <div class="form-group">
+              <label>Description (optionnel)</label>
+              <input type="text" class="form-control" id="noteDescription" />
+            </div>
+            <div class="form-group">
+              <label>Contenu</label>
+              <textarea class="form-control" id="noteContent" rows="10"></textarea>
+            </div>
+          </div>
+
+          <div id="pdfFields" style="display: none;">
+            <div class="form-group">
+              <label>Titre du PDF (optionnel)</label>
+              <input type="text" class="form-control" id="pdfTitle" />
+            </div>
+            <div class="form-group">
+              <label>Description (optionnel)</label>
+              <input type="text" class="form-control" id="pdfDescription" />
+            </div>
+            <div class="file-upload-zone" id="fileUploadZone">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p style="margin: 10px 0 5px 0; font-weight: 500;">Cliquez ou déposez un fichier PDF</p>
+              <p style="margin: 0; font-size: 0.9em; color: var(--text-secondary);">Taille max: 10 Mo</p>
+            </div>
+            <input type="file" id="pdfFile" accept="application/pdf" style="display: none;" />
+            <div class="file-info" id="fileInfo" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div>
+                  <i class="fas fa-file-pdf" style="color: #e65100; margin-right: 8px;"></i>
+                  <span id="fileName"></span>
+                  <span style="color: var(--text-secondary); margin-left: 10px;" id="fileSize"></span>
+                </div>
+                <button type="button" class="btn btn-secondary" id="fileActionBtn" onclick="clearFile()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+
+          </div>
+
+          <div id="photoFields" style="display: none;">
+            <div class="form-group">
+              <label>Titre de la photo (optionnel)</label>
+              <input type="text" class="form-control" id="photoTitle" />
+            </div>
+            <div class="form-group">
+              <label>Description (optionnel)</label>
+              <input type="text" class="form-control" id="photoDescription" />
+            </div>
+            <div class="file-upload-zone" id="photoUploadZone">
+              <i class="fas fa-cloud-upload-alt"></i>
+              <p style="margin: 10px 0 5px 0; font-weight: 500;">Cliquez ou déposez une photo</p>
+              <p style="margin: 0; font-size: 0.9em; color: var(--text-secondary);">Formats: JPG, PNG, GIF - Taille max:
+                5 Mo</p>
+            </div>
+            <input type="file" id="photoFile" accept="image/jpeg,image/png,image/gif,image/webp"
+              style="display: none;" />
+            <div class="file-info" id="photoInfo" style="display: none;">
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+                <div>
+                  <i class="fas fa-image" style="color: #2e7d32; margin-right: 8px;"></i>
+                  <span id="photoFileName"></span>
+                  <span style="color: var(--text-secondary); margin-left: 10px;" id="photoFileSize"></span>
+                </div>
+                <button type="button" class="btn btn-secondary" id="photoActionBtn" onclick="clearPhotoFile()">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+              <div id="photoPreview" style="max-width: 100%; text-align: center;">
+                <img id="photoPreviewImg"
+                  style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+              </div>
+            </div>
+          </div>
+
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-secondary" onclick="closeDocumentFormModal()">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+            <button type="submit" class="btn btn-submit">
+              <i class="fas fa-save"></i> Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="confirmDeleteModal">
+    <div class="modal-content">
+      <div class="modal-header-qv">
+        <i class="fas fa-exclamation-triangle doc-icon-documents"></i>
+        <!--<h3>Confirmer la suppression</h3>-->
+        <button class="modal-close-qv" onclick="closeDeleteModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p>Êtes-vous sûr de vouloir supprimer ce document ?</p>
+        <div class="modal-buttons">
+          <button class="btn btn-secondary" onclick="closeDeleteModal()">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button type="button" class="btn btn-danger" onclick="confirmDelete();">
+            <i class="fas fa-trash"></i> Supprimer
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de visualisation de note -->
+  <div class="modal-overlay" id="noteViewModal">
+    <div class="modal-content" style="max-width: 600px;">
+      <button class="btn-back" onclick="backToDocumentsList()" style="margin-right: auto;">
+        <i class="fas fa-arrow-left"></i> Retour
+      </button>
+      <div class="modal-header-qv">
+        <h2 id="noteViewTitle"><i class="fas fa-file-alt"></i> Note</h2>
+        <button class="modal-close-qv" onclick="closeNoteViewModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 15px;">
+          <strong>Description :</strong>
+          <div id="noteViewDescription" style="color: var(--text-secondary); margin-top: 5px;"></div>
+        </div>
+        <div>
+          <strong>Contenu :</strong>
+          <div id="noteViewContent"
+            style="margin-top: 10px; padding: 15px; background: var(--bg-tertiary); font-size: 0.8em; border-radius: var(--radius-md); white-space: pre-wrap;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const CONFIG = {
+      apiEndpoint: 'admin/api4.php',
+      itemsPerPage: 20
+    };
+    const state = {
+      members: [],
+      filteredMembers: [],
+      currentPage: 1,
+      selectedPerson: null,
+      documents: [],
+      currentDocumentType: 'note',
+      documentToDelete: null,
+      mariagesList: [],
+      documentFilter: null, // 'note', 'pdf', 'photo' ou null pour tout afficher
+      currentViewType: null, // Track si on est dans une vue filtrée ('note', 'pdf', 'photo') ou null
+      currentFilter: 'all' // Filtre de personnes actif
+    };
+    // ========================================
+    // UTILITAIRES
+    // ========================================
+    function normalizeText(text) {
+      return text
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+    }
+
+    function showTemporaryInfo(message, type = 'info') {
+      const notification = document.createElement('div');
+      notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 15px 20px;
+        background: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 10000;
+        animation: slideIn 0.3s ease;
+      `;
+      notification.textContent = message;
+      document.body.appendChild(notification);
+      setTimeout(() => {
+        notification.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notification.remove(), 300);
+      }, 3000);
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes === 0) return '0 Bytes';
+      const k = 1024;
+      const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    function formatDate(dateString) {
+      if (!dateString) return 'Non renseigné';
+      const date = new Date(dateString);
+      return date.toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    function formatNotes(notes) {
+      if (!notes) return '';
+      // Normaliser les retours à la ligne (supprimer \r)
+      let formatted = notes.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      // Transformer les URLs en liens cliquables avec icône
+      const urlRegex = /(https?:\/\/[^\s]+)/g;
+      formatted = formatted.replace(urlRegex,
+        '<a href="$1" target="_blank" class="note-link" rel="noopener noreferrer">$1 🔗</a>'
+      );
+      // Préserver les sauts de ligne
+      formatted = formatted.replace(/\n/g, '<br>');
+      return formatted;
+    }
+
+    function stripHtml(html) {
+      const div = document.createElement("div");
+      div.innerHTML = html;
+      return div.textContent || div.innerText || "";
+    }
+    // ========================================
+    // CHARGEMENT DES DONNÉES
+    // ========================================
+    async function loadMembers() {
+      try {
+        const response = await fetch(`${CONFIG.apiEndpoint}?action=getMembres`);
+        const data = await response.json();
+        state.members = data.map(m => ({
+          id: Number(m.id), // Forcer en number dès le début
+          nom: m.nom,
+          prenom: m.prenom,
+          birthPlace: m.lieu_naissance,
+          birthDate: m.date_naissance,
+          deathDate: m.date_deces,
+          deathPlace: m.lieu_deces,
+          noteMembre: m.notes ? 1 : 0,
+          sourceNaissance: m.doc_naissance && m.doc_naissance.trim() !== '' ? 1 : 0,
+          sourceDeces: m.doc_deces && m.doc_deces.trim() !== '' ? 1 : 0,
+          noteMariage: 0, // À calculer
+          documents: 0,
+          pdf: 0,
+          photos: 0
+        }));
+        await loadDocumentCounts();
+        // Re-trier après avoir mis à jour les compteurs
+        state.filteredMembers = sortMembers(state.members);
+        // Appliquer le filtre actif
+        applyPersonFilter();
+        // Re-rendre le tableau
+        renderTable();
+        renderPagination();
+        setupAlphabetIndex();
+        updateFilterCounts();
+      } catch (error) {
+        console.error('Erreur lors du chargement des membres:', error);
+        showTemporaryInfo('Erreur lors du chargement des membres', 'error');
+      }
+    }
+    async function loadDocumentCounts() {
+      try {
+        // Charger tous les compteurs en une seule requête
+        const response = await fetch(`${CONFIG.apiEndpoint}?action=getAllDocumentCounts`);
+        const result = await response.json();
+        if (result.success) {
+          // Appliquer les compteurs de sources de mariage
+          state.members.forEach(member => {
+            member.noteMariage = result.mariageCounts[member.id] || 0;
+            // Appliquer les compteurs de documents
+            const counts = result.documentCounts[member.id];
+            if (counts) {
+              member.documents = counts.note || 0;
+              member.pdf = counts.pdf || 0;
+              member.photos = counts.photo || 0;
+            } else {
+              member.documents = 0;
+              member.pdf = 0;
+              member.photos = 0;
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement des compteurs:', error);
+      }
+    }
+
+    function sortMembers(members) {
+      return [...members].sort((a, b) => {
+        const nameA = `${a.nom} ${a.prenom}`.toLowerCase();
+        const nameB = `${b.nom} ${b.prenom}`.toLowerCase();
+        return nameA.localeCompare(nameB);
+      });
+    }
+    // Appliquer le filtre de personnes
+    function applyPersonFilter() {
+      let filtered = [...state.members];
+      switch (state.currentFilter) {
+        case 'all':
+          // Tous les membres
+          break;
+        case 'with-any':
+          // Personnes avec au moins un document
+          filtered = filtered.filter(m =>
+            m.noteMembre > 0 || m.sourceNaissance > 0 || m.sourceDeces > 0 || m.noteMariage > 0 || m.documents > 0 || m.pdf > 0 || m.photos > 0
+          );
+          break;
+        case 'note-membre':
+          filtered = filtered.filter(m => m.noteMembre > 0);
+          break;
+        case 'source-naissance':
+          filtered = filtered.filter(m => m.sourceNaissance > 0);
+          break;
+        case 'source-deces':
+          filtered = filtered.filter(m => m.sourceDeces > 0);
+          break;
+        case 'note-mariage':
+          filtered = filtered.filter(m => m.noteMariage > 0);
+          break;
+        case 'documents':
+          filtered = filtered.filter(m => m.documents > 0);
+          break;
+        case 'pdf':
+          filtered = filtered.filter(m => m.pdf > 0);
+          break;
+        case 'photos':
+          filtered = filtered.filter(m => m.photos > 0);
+          break;
+      }
+      state.filteredMembers = sortMembers(filtered);
+      state.currentPage = 1; // Retour à la première page
+      renderTable();
+      renderPagination();
+      updateFilterCounts();
+    }
+    // Mettre à jour les compteurs des filtres
+    function updateFilterCounts() {
+      document.getElementById('count-all').textContent = state.members.length;
+      const withAny = state.members.filter(m =>
+        m.noteMembre > 0 || m.sourceNaissance > 0 || m.sourceDeces > 0 || m.noteMariage > 0 || m.documents > 0 || m.pdf > 0 || m.photos > 0
+      ).length;
+      document.getElementById('count-with-any').textContent = withAny;
+      const withNoteMembre = state.members.filter(m => m.noteMembre > 0).length;
+      document.getElementById('count-note-membre').textContent = withNoteMembre;
+      const withSourceNaissance = state.members.filter(m => m.sourceNaissance > 0).length;
+      document.getElementById('count-source-naissance').textContent = withSourceNaissance;
+      const withSourceDeces = state.members.filter(m => m.sourceDeces > 0).length;
+      document.getElementById('count-source-deces').textContent = withSourceDeces;
+      const withNoteMariage = state.members.filter(m => m.noteMariage > 0).length;
+      document.getElementById('count-note-mariage').textContent = withNoteMariage;
+      // Correction du problème de comptage des filtres :
+      // On calcule le nombre TOTAL de documents/PDF/photos (somme), au lieu du nombre d'individus qui en possèdent (compte > 0).
+      const totalDocuments = state.members.reduce((sum, m) => sum + m.documents, 0);
+      const totalPdf = state.members.reduce((sum, m) => sum + m.pdf, 0);
+      const totalPhotos = state.members.reduce((sum, m) => sum + m.photos, 0);
+      document.getElementById('count-documents').textContent = totalDocuments;
+      document.getElementById('count-pdf').textContent = totalPdf;
+      document.getElementById('count-photos').textContent = totalPhotos;
+    }
+    // Gérer le clic sur un bouton de filtre
+    function handleFilterClick(filterType) {
+      state.currentFilter = filterType;
+      // Mettre à jour les classes actives
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector(`[data-filter="${filterType}"]`).classList.add('active');
+      applyPersonFilter();
+    }
+    // ========================================
+    // AFFICHAGE TABLEAU
+    // ========================================
+    // Fonction pour formater une date au format JJ-MM-AAAA dans le tableau
+    function formatDateDisplayTab(dateStr) {
+      if (!dateStr || dateStr === '0000-00-00') return '-';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return '-';
+      const [year, month, day] = parts;
+      // GÃ©rer les dates partielles (jour ou mois manquant = 00)
+      if (day === '00' && month === '00') {
+        return year; // Seulement l'annÃ©e
+      } else if (day === '00') {
+        return `${month}-${year}`; // Mois et annÃ©e
+      }
+      return `${day}-${month}-${year}`; // Date complÃ¨te
+    }
+
+    // Fonction pour formater une date au format "6 juin 1944"
+    function formatDateDisplay(dateStr) {
+      if (!dateStr || dateStr === '0000-00-00') return '-';
+      const parts = dateStr.split('-');
+      if (parts.length !== 3) return '-';
+      const [year, month, day] = parts;
+
+      // Noms des mois en français
+      const mois = [
+        '', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
+      ];
+
+      // Gérer les dates partielles (jour ou mois manquant = 00)
+      if (day === '00' && month === '00') {
+        return year; // Seulement l'année
+      } else if (day === '00') {
+        const monthInt = parseInt(month, 10);
+        return `${mois[monthInt]} ${year}`; // Mois et année (ex: "juin 1944")
+      }
+
+      const dayInt = parseInt(day, 10);
+      const monthInt = parseInt(month, 10);
+      return `${dayInt} ${mois[monthInt]} ${year}`; // Date complète (ex: "6 juin 1944")
+    }
+
+    function renderTable() {
+      const tbody = document.querySelector('.table tbody');
+      const start = (state.currentPage - 1) * CONFIG.itemsPerPage;
+      const end = start + CONFIG.itemsPerPage;
+      const pageMembers = state.filteredMembers.slice(start, end);
+      if (pageMembers.length === 0) {
+        tbody.innerHTML = `
+          <tr class="loading">
+            <td colspan="12" style="text-align: center; padding: 40px; color: var(--text-secondary);">
+              <i class="fas fa-search"></i>
+              <p>Aucune personne trouvée</p>
+            </td>
+          </tr>
+        `;
+        return;
+      }
+      tbody.innerHTML = pageMembers.map(member => `
+       <tr>
+  <td>${member.nom}</td>
+  <td>${member.prenom}</td>
+  <td style="text-align: center;">${formatDateDisplayTab(member.birthDate)}</td>
+  <td style="text-align: center;">${member.deathDate && member.deathDate !== '0000-00-00' ? formatDateDisplayTab(member.deathDate) + ' †' : '-'}</td>
+  <td style="text-align: center;">
+    ${member.sourceNaissance > 0
+          ? `<span class="doc-count-badge badge-note-naissance" style="cursor: pointer;" 
+            onclick="openEditSourceNaissance(${member.id})" 
+            title="Modifier les sources de naissance">
+            <i class="fas fa-baby"></i>
+         </span>`
+          : '-'}
+  </td>
+  <td style="text-align: center;">
+    ${member.noteMariage > 0
+          ? `<span class="doc-count-badge badge-note-mariage" style="cursor: pointer;" 
+            onclick="openEditNotesMariage(${member.id})" 
+            title="Modifier les sources de mariage">
+            <i class="fas fa-ring"></i>
+         </span>`
+          : '-'}
+  </td>
+  <td style="text-align: center;">
+    ${member.sourceDeces > 0
+          ? `<span class="doc-count-badge badge-note-deces" style="cursor: pointer;" 
+            onclick="openEditSourceDeces(${member.id})" 
+            title="Modifier les sources de décès">
+            <i class="fas fa-cross"></i>
+         </span>`
+          : '-'}
+  </td>
+  <td style="text-align: center;">
+    ${member.noteMembre > 0
+          ? `<span class="doc-count-badge badge-note-membre" style="cursor: pointer;" 
+            onclick="openEditNoteMembre(${member.id})" 
+            title="Modifier la note du membre">
+            <i class="fas fa-sticky-note"></i>
+         </span>`
+          : '-'}
+  </td>
+  <td style="text-align: center;">
+  ${member.documents > 0
+          ? `<span class="doc-icon doc-icon-documents" onclick="openEditDocuments(${member.id}, 'note')" title="Voir les documents (${member.documents})">
+        <i class="fas fa-file-alt"></i>
+        <span class="doc-icon-count">${member.documents}</span>
+      </span>`
+          : '-'}
+</td>
+
+<td style="text-align: center;">
+  ${member.pdf > 0
+          ? `<span class="doc-icon doc-icon-pdf" onclick="openEditDocuments(${member.id}, 'pdf')" title="Voir les PDF (${member.pdf})">
+        <i class="fas fa-file-pdf"></i>
+        <span class="doc-icon-count">${member.pdf}</span>
+      </span>`
+          : '-'}
+</td>
+
+<td style="text-align: center;">
+  ${member.photos > 0
+          ? `<span class="doc-icon doc-icon-photos" onclick="openEditPhotos(${member.id})" title="Modifier les photos">
+        <i class="fas fa-camera"></i>
+        <span class="doc-icon-count">${member.photos}</span>
+      </span>`
+          : '-'}
+</td>
+
+  <td style="text-align: center;">
+    <i class="fas fa-plus btn-edit" 
+       onclick="openCreateDocumentModal(${member.id})" 
+       title="Ajouter un document (table documents)"></i>
+  </td>
+</tr>
+
+      `).join('');
+    }
+
+    function renderPagination() {
+      const totalPages = Math.ceil(state.filteredMembers.length / CONFIG.itemsPerPage);
+      const pagination = document.querySelector('.pagination');
+      if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+      }
+      let html = '';
+      if (state.currentPage > 1) {
+        html += `<button class="page-btn" onclick="changePage(${state.currentPage - 1})">&laquo; Précédent</button>`;
+      }
+      for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= state.currentPage - 2 && i <= state.currentPage + 2)) {
+          html += `<button class="page-btn ${i === state.currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+        } else if (i === state.currentPage - 3 || i === state.currentPage + 3) {
+          html += '<span class="page-ellipsis">...</span>';
+        }
+      }
+      if (state.currentPage < totalPages) {
+        html += `<button class="page-btn" onclick="changePage(${state.currentPage + 1})">Suivant &raquo;</button>`;
+      }
+      pagination.innerHTML = html;
+    }
+
+    function changePage(page) {
+      state.currentPage = page;
+      renderTable();
+      renderPagination();
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+    // ========================================
+    // RECHERCHE
+    // ========================================
+    // Obtenir les membres de base selon le filtre actif
+    function getBaseFilteredMembers() {
+      let filtered = [...state.members];
+      switch (state.currentFilter) {
+        case 'all':
+          break;
+        case 'with-any':
+          filtered = filtered.filter(m =>
+            m.noteMembre > 0 || m.noteMariage > 0 || m.documents > 0 || m.pdf > 0 || m.photos > 0
+          );
+          break;
+        case 'note-membre':
+          filtered = filtered.filter(m => m.noteMembre > 0);
+          break;
+        case 'note-mariage':
+          filtered = filtered.filter(m => m.noteMariage > 0);
+          break;
+        case 'documents':
+          filtered = filtered.filter(m => m.documents > 0);
+          break;
+        case 'pdf':
+          filtered = filtered.filter(m => m.pdf > 0);
+          break;
+        case 'photos':
+          filtered = filtered.filter(m => m.photos > 0);
+          break;
+      }
+      return filtered;
+    }
+
+    function handleMainSearch(e) {
+      const query = normalizeText(e.target.value);
+      const suggestionsContainer = document.querySelector('.search-suggestions');
+      // Partir des membres filtrés selon le filtre actif
+      const baseFiltered = getBaseFilteredMembers();
+      if (!query || query.length < 2) {
+        state.filteredMembers = sortMembers(baseFiltered);
+        suggestionsContainer.classList.remove('show');
+      } else {
+        state.filteredMembers = baseFiltered.filter(m => {
+          const fullName = normalizeText(`${m.prenom} ${m.nom}`);
+          const birthPlace = normalizeText(m.birthPlace || '');
+          return fullName.includes(query) || birthPlace.includes(query);
+        });
+        const suggestions = state.filteredMembers.slice(0, 10);
+        if (suggestions.length > 0) {
+          suggestionsContainer.innerHTML = suggestions.map(m => {
+            // Extraire l'année de naissance
+            const birthYear = m.birthDate ? m.birthDate.substring(0, 4) : null;
+            // Extraire l'année de décès
+            const deathYear = m.deathDate && m.deathDate !== '0000-00-00' ?
+              m.deathDate.substring(0, 4) :
+              null;
+            // Formater les dates : (aaaa - aaaa) ou (aaaa) si vivant ou (? - aaaa) si pas de naissance
+            let dateInfo = '';
+            if (birthYear && deathYear) {
+              // Personne décédée avec date de naissance connue
+              dateInfo = `(${birthYear} - ${deathYear})`;
+            } else if (birthYear) {
+              // Personne vivante ou décès inconnu
+              dateInfo = `(${birthYear})`;
+            } else if (deathYear) {
+              // Date de naissance inconnue mais décès connu
+              dateInfo = `(? - ${deathYear})`;
+            }
+            // Formater la ville de naissance
+            const birthPlaceInfo = m.birthPlace ?
+              `<span>${highlightMatch(m.birthPlace, e.target.value)}</span>` :
+              '';
+            return `
+              <div class="suggestion-item" onclick="selectMemberFromSuggestion(${m.id})">
+                <div class="suggestion-main">
+                  ${highlightMatch(m.prenom + ' ' + m.nom, e.target.value)}
+                </div>
+                <div class="suggestion-details">
+                  ${dateInfo ? `<span>${dateInfo}</span>` : ''}
+                  ${birthPlaceInfo}
+                </div>
+              </div>
+            `;
+          }).join('');
+          suggestionsContainer.classList.add('show');
+        } else {
+          suggestionsContainer.innerHTML = '<div class="suggestion-item">Aucun résultat</div>';
+          suggestionsContainer.classList.add('show');
+        }
+      }
+      state.currentPage = 1;
+      renderTable();
+      renderPagination();
+    }
+
+    function highlightMatch(text, query) {
+      if (!query) return text;
+      const normalized = normalizeText(query);
+      const index = normalizeText(text).indexOf(normalized);
+      if (index === -1) return text;
+      const start = text.substring(0, index);
+      const match = text.substring(index, index + query.length);
+      const end = text.substring(index + query.length);
+      return `${start}<span class="suggestion-highlight">${match}</span>${end}`;
+    }
+
+    function selectMemberFromSuggestion(id) {
+      document.querySelector('.search-suggestions').classList.remove('show');
+      // Navigation vers la personne dans le tableau
+      const member = state.members.find(m => m.id === id);
+      if (member) {
+        // Réinitialiser le filtre de recherche pour afficher la personne
+        state.filteredMembers = [member];
+        state.currentPage = 1;
+        renderTable();
+        renderPagination();
+        // Scroller vers le tableau
+        document.querySelector('.table-container').scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    }
+    // ========================================
+    // INDEX ALPHABÉTIQUE
+    // ========================================
+    // Index alphabétique
+    function setupAlphabetIndex() {
+      const letters = [...new Set(
+        state.members
+          .map(m => (m.nom || '').charAt(0).toUpperCase())
+          .filter(c => /[A-ZÀ-Ü]/.test(c))
+      )].sort();
+      const indexHtml = `
+          <button class="letter-btn active" onclick="showAllMembers()">
+            <i class="fas fa-file-alt stat-number"></i> Tous
+          </button>
+          ${letters.map(letter => `
+            <button class="letter-btn" onclick="filterByLetter('${letter}')">
+              ${letter}
+            </button>
+          `).join('')}
+        `;
+      document.querySelector('.alphabet-index').innerHTML = indexHtml;
+    }
+
+    // Filtrer par lettre
+    function filterByLetter(letter) {
+      state.filteredMembers = state.members.filter(m =>
+        (m.nom || '').charAt(0).toUpperCase() === letter
+      );
+      state.currentPage = 1;
+      // Mettre à jour l'état actif des boutons
+      document.querySelectorAll('.letter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.trim() === letter) {
+          btn.classList.add('active');
+        }
+      });
+      document.querySelector('.search-input').value = '';
+      document.querySelector('.clear-search').style.display = 'none';
+      renderTable();
+      renderPagination();
+    }
+
+    // Afficher tous les membres
+    function showAllMembers() {
+      // Réinitialiser le filtre de personnes à "Toutes les personnes"
+      state.currentFilter = 'all';
+      // Mettre à jour les classes actives des boutons de filtre
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector('[data-filter="all"]').classList.add('active');
+      // Mettre à jour l'état actif des boutons alphabétiques
+      document.querySelectorAll('.letter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector('.letter-btn').classList.add('active');
+      // Réinitialiser la recherche
+      document.querySelector('.search-input').value = '';
+      document.querySelector('.clear-search').style.display = 'none';
+      // Appliquer le filtre (qui va afficher tous les membres)
+      applyPersonFilter();
+    }
+    // ========================================
+    // ÉDITION VIA COMPTEURS CLIQUABLES
+    // ========================================
+    async function openEditNoteMembre(personId) {
+      state.selectedPerson = state.members.find(m => m.id == personId);
+      if (!state.selectedPerson) return;
+      await loadPersonDocuments(personId);
+      const noteMembre = state.documents.find(d => d.id.toString().startsWith('temp_membre_'));
+      if (noteMembre) {
+        // Afficher la modal de documents avec la note membre
+        document.getElementById('modalPersonName').textContent =
+          `${state.selectedPerson.prenom} ${state.selectedPerson.nom}`;
+        const allDocs = state.documents;
+        state.documents = [noteMembre]; // Afficher seulement la note membre
+        renderDocumentsList(true); // true = mode simple sans bouton "Ajouter"
+        state.documents = allDocs;
+        document.getElementById('documentsModal').style.display = 'flex';
+      } else {
+        showTemporaryInfo('Aucune note trouvée pour ce membre. Elles sont gérées par la table "membres".', 'info');
+      }
+    }
+
+    async function openEditSourceNaissance(personId) {
+      state.selectedPerson = state.members.find(m => m.id == personId);
+      if (!state.selectedPerson) return;
+      await loadPersonDocuments(personId);
+      const sourceNaissance = state.documents.find(d => d.id.toString().startsWith('temp_naissance_'));
+      if (sourceNaissance) {
+        document.getElementById('modalPersonName').textContent =
+          `${state.selectedPerson.prenom} ${state.selectedPerson.nom}`;
+        const allDocs = state.documents;
+        state.documents = [sourceNaissance];
+        renderDocumentsList(true); // true = mode simple sans bouton "Ajouter"
+        state.documents = allDocs;
+        document.getElementById('documentsModal').style.display = 'flex';
+      } else {
+        showTemporaryInfo('Aucune source de naissance trouvée. Elles sont gérées dans le formulaire d\'ajout de personne.', 'info');
+      }
+    }
+
+    async function openEditSourceDeces(personId) {
+      state.selectedPerson = state.members.find(m => m.id == personId);
+      if (!state.selectedPerson) return;
+      await loadPersonDocuments(personId);
+      const sourceDeces = state.documents.find(d => d.id.toString().startsWith('temp_deces_'));
+      if (sourceDeces) {
+        document.getElementById('modalPersonName').textContent =
+          `${state.selectedPerson.prenom} ${state.selectedPerson.nom}`;
+        const allDocs = state.documents;
+        state.documents = [sourceDeces];
+        renderDocumentsList(true); // true = mode simple sans bouton "Ajouter"
+        state.documents = allDocs;
+        document.getElementById('documentsModal').style.display = 'flex';
+      } else {
+        showTemporaryInfo('Aucune source de décès trouvée. Elles sont gérées dans le formulaire d\'ajout de personne.', 'info');
+      }
+    }
+
+    async function openEditNotesMariage(personId) {
+      state.selectedPerson = state.members.find(m => m.id == personId);
+      if (!state.selectedPerson) return;
+      await loadPersonDocuments(personId);
+      const notesMariage = state.documents.filter(d =>
+        d.id.toString().startsWith('temp_mariage_') && d.type === 'note'
+      );
+      if (notesMariage.length === 0) {
+        showTemporaryInfo('Aucune source de mariage trouvée', 'info');
+      } else {
+        // Toujours afficher la modal de documents avec la liste (même pour 1 seule note)
+        document.getElementById('modalPersonName').textContent =
+          `${state.selectedPerson.prenom} ${state.selectedPerson.nom}`;
+        const allDocs = state.documents;
+        state.documents = notesMariage;
+        renderDocumentsList(true); // true = mode simple sans bouton "Ajouter"
+        state.documents = allDocs;
+        document.getElementById('documentsModal').style.display = 'flex';
+      }
+    }
+    async function openEditDocuments(personId, type) {
+      state.selectedPerson = state.members.find(m => m.id == personId);
+      if (!state.selectedPerson) return;
+      await loadPersonDocuments(personId);
+      // Simplement définir les filtres, renderDocumentsList fera le reste
+      state.currentViewType = type;
+      state.documentFilter = type;
+      document.getElementById('modalPersonName').textContent =
+        `${state.selectedPerson.prenom} ${state.selectedPerson.nom}`;
+      renderDocumentsList(false);
+      // Vérifier s'il y a des résultats après filtrage
+      const hasDocs = state.documents.some(d =>
+        !d.id.toString().startsWith('temp_') &&
+        d.type === type &&
+        d.source !== 'membre' &&
+        !d.source.startsWith('mariage_')
+      );
+      if (!hasDocs) {
+        showTemporaryInfo(`Aucun ${type === 'note' ? 'document' : 'PDF'} trouvé dans la table documents`, 'info');
+      } else {
+        document.getElementById('documentsModal').style.display = 'flex';
+      }
+    }
+    async function openEditPhotos(personId) {
+      state.selectedPerson = state.members.find(m => m.id == personId);
+      if (!state.selectedPerson) return;
+      await loadPersonDocuments(personId);
+      // Simplement définir les filtres, renderDocumentsList fera le reste
+      state.currentViewType = 'photo';
+      state.documentFilter = 'photo';
+      document.getElementById('modalPersonName').textContent =
+        `${state.selectedPerson.prenom} ${state.selectedPerson.nom}`;
+      renderDocumentsList(false);
+      // Vérifier s'il y a des résultats après filtrage
+      const hasPhotos = state.documents.some(d =>
+        !d.id.toString().startsWith('temp_') &&
+        d.type === 'photo' &&
+        d.source !== 'membre' &&
+        !d.source.startsWith('mariage_')
+      );
+      if (!hasPhotos) {
+        showTemporaryInfo('Aucune photo trouvée dans la table documents', 'info');
+      } else {
+        document.getElementById('documentsModal').style.display = 'flex';
+      }
+    }
+    // ========================================
+    // GESTION DES MODALS GÉNÉRALES
+    // ========================================
+    async function loadPersonDocuments(personId) {
+      try {
+        const response = await fetch(`${CONFIG.apiEndpoint}?action=getDocuments&person_id=${personId}`);
+        const result = await response.json();
+        if (result.success) {
+          state.documents = result.documents || [];
+          // Note: Ne pas appeler renderDocumentsList ici, car il est appelé par openPersonQuickView
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        showTemporaryInfo('Erreur lors du chargement des documents', 'error');
+      }
+    }
+
+    function closeDocumentsModal() {
+      document.getElementById('documentsModal').style.display = 'none';
+      resetDocumentFilters();
+    }
+    // Fonction pour revenir à la liste des documents
+    async function backToDocumentsList() {
+      // Fermer toutes les modales secondaires
+      closeNoteSimpleModal();
+      closeDocumentFormModal();
+      closeNoteViewModal();
+      // Réinitialiser les filtres pour afficher TOUS les documents
+      state.documentFilter = null;
+      state.currentViewType = null;
+      // Rouvrir la modal principale si une personne est sélectionnée
+      if (state.selectedPerson) {
+        // Recharger TOUS les documents depuis le serveur
+        await loadPersonDocuments(state.selectedPerson.id);
+        // Afficher la liste complète des documents
+        renderDocumentsList(false);
+        document.getElementById('documentsModal').style.display = 'flex';
+      }
+    }
+    // Réinitialiser les filtres de documents
+    function resetDocumentFilters() {
+      state.documentFilter = null;
+      state.currentViewType = null;
+    }
+
+    function renderDocumentsList(isSimpleList = false) {
+      const container = document.getElementById('documentsList');
+      if (!container) {
+        console.error('Élément documentsList non trouvé');
+        return;
+      }
+      // Appliquer tous les filtres de manière centralisée
+      let filteredDocs = state.documents;
+      // Filtre par type si spécifié
+      if (state.documentFilter) {
+        filteredDocs = filteredDocs.filter(doc => doc.type === state.documentFilter);
+      }
+      // Filtre pour exclure les documents "temp" et sources membre/mariage
+      // (seulement si currentViewType est défini = vue filtrée active)
+      if (state.currentViewType) {
+        filteredDocs = filteredDocs.filter(d =>
+          !d.id.toString().startsWith('temp_') &&
+          d.source !== 'membre' &&
+          !d.source.startsWith('mariage_')
+        );
+      }
+
+      // Trier les documents selon un ordre logique chronologique
+      filteredDocs = filteredDocs.sort((a, b) => {
+        const getOrder = (doc) => {
+          if (doc.source === 'naissance') return 1;
+          if (doc.source && doc.source.startsWith('mariage_')) return 2;
+          if (doc.source === 'deces') return 3;
+          if (doc.source === 'membre') return 4;
+          if (doc.type === 'note') return 5;
+          if (doc.type === 'pdf') return 6;
+          if (doc.type === 'photo') return 7;
+          return 8;
+        };
+        return getOrder(a) - getOrder(b);
+      });
+
+      if (filteredDocs.length === 0) {
+        const filterText = state.documentFilter ?
+          (state.documentFilter === 'photo' ? 'photos' : state.documentFilter === 'pdf' ? 'PDFs' : 'notes') :
+          'documents';
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+            <i class="fas fa-inbox" style="font-size: 3em; margin-bottom: 15px; opacity: 0.3;"></i>
+            <p>Aucun${state.documentFilter === 'photo' ? 'e' : ''} ${filterText} pour cette personne</p>
+          </div>
+        `;
+        if (!isSimpleList) {
+          container.innerHTML += `
+            <div style="border-top: 2px solid var(--input-border); padding-top: 20px; margin-top: 20px;">
+              <button class="btn btn-submit" onclick="openCreateDocumentModal(${state.selectedPerson.id})">
+                <i class="fas fa-plus"></i> Ajouter un document
+              </button>
+            </div>
+          `;
+        }
+        return;
+      }
+      container.innerHTML = filteredDocs.map(doc => {
+        const isTemp = doc.id.toString().startsWith('temp_');
+        let typeBadge = '';
+        // Déterminer le badge selon le type et la source
+        if (isTemp) {
+          // Notes temporaires (membre ou mariage)
+          if (doc.source === 'membre') {
+            typeBadge = '<span class="document-type-badge document-type-note"><i class="fas fa-sticky-note"></i></span><span class="document-meta">Note</span>';
+          } else if (doc.source === 'naissance') {
+            typeBadge = '<span class="document-type-badge document-type-naissance"><i class="fas fa-baby"></i></span><span class="document-meta">Naissance</span>';
+          } else if (doc.source === 'deces') {
+            typeBadge = '<span class="document-type-badge document-type-deces"><i class="fas fa-cross"></i></span><span class="document-meta">Décès</span>';
+          } else if (doc.source && doc.source.startsWith('mariage_')) {
+            typeBadge = '<span class="document-type-badge document-type-mariage"><i class="fas fa-ring"></i></span><span class="document-meta">Mariage</span>';
+          }
+        } else {
+          // Documents normaux (table documents)
+          if (doc.type === 'note') {
+            typeBadge = '<span class="document-type-badge document-type-document"><i class="fas fa-file-alt"></i></span><span class="document-meta">Document</span>';
+          } else if (doc.type === 'pdf') {
+            typeBadge = '<span class="document-type-badge document-type-pdf"><i class="fas fa-file-pdf"></i></span><span class="document-meta">PDF</span>';
+          } else if (doc.type === 'photo') {
+            typeBadge = '<span class="document-type-badge document-type-photo"><i class="fas fa-image"></i></span><span class="document-meta">Photo</span>';
+          }
+        }
+        let title = '';
+        let meta = '';
+        if (isTemp) {
+          if (doc.source === 'membre') {
+            title = 'Note du membre';
+            // Afficher les 20 premières lettres de la note
+            if (doc.content) {
+              const cleanContent = stripHtml(doc.content).trim();
+              meta = cleanContent.substring(0, 20) + (cleanContent.length > 20 ? ' ...' : '');
+            } else {
+              meta = 'Aucune note';
+            }
+          } else if (doc.source === 'naissance') {
+            title = 'Source naissance';
+            meta = state.selectedPerson.birthDate ? `Le ${formatDateDisplay(state.selectedPerson.birthDate)}, ${state.selectedPerson.birthPlace} ...` : 'Naissance';
+          } else if (doc.source === 'deces') {
+            title = 'Source décès';
+            meta = state.selectedPerson.deathDate ? `Le  ${formatDateDisplay(state.selectedPerson.deathDate)}, ${state.selectedPerson.deathPlace} ... ` : 'Décès';
+          } else if (doc.source && doc.source.startsWith('mariage_')) {
+            title = doc.title || 'Note de mariage';
+            // Afficher la date de mariage si disponible
+            if (doc.date_mariage && doc.date_mariage !== '0000-00-00') {
+              meta = `Le  ${formatDateDisplay(doc.date_mariage)}`;
+              // Ajouter le nom du conjoint après la date
+              if (doc.source_label) {
+                // Supprimer "Mariage " du début de source_label pour garder uniquement "avec [nom]"
+                const labelClean = doc.source_label.replace(/^Mariage\s+/i, '');
+                meta += ` ${labelClean} ...`;
+              }
+            } else {
+              // Si pas de date, supprimer "Mariage " aussi
+              const labelClean = doc.source_label ? doc.source_label.replace(/^Mariage\s+/i, '') : 'Mariage';
+              meta = labelClean;
+            }
+          }
+        } else {
+          title = doc.title || doc.file_name || 'Document';
+          meta = doc.description ? `${doc.description} ... ` : '';
+          //meta += `Créé le ${formatDate(doc.created_at)}`;
+        }
+        // Bouton d'ouverture spécifique selon le type
+        let viewButton = '';
+        if (doc.type === 'note') {
+          if (isTemp) {
+            // Notes temp (membre/mariage) : utiliser viewNoteSimpleById avec l'ID
+            viewButton = `<i class="fas fa-eye btn-edit" onclick="viewNoteSimpleById('${doc.id}')" title="Voir la note"></i>`;
+          } else {
+            // Notes normales : utiliser viewDocument
+            viewButton = `<i class="fas fa-eye btn-edit" onclick="viewDocument('${doc.id}')" title="Voir la note"></i>`;
+          }
+        } else if (doc.type === 'pdf' && doc.file_path) {
+          viewButton = `<i class="fas fa-eye btn-edit" onclick="openPDF('${doc.file_path}')" title="Ouvrir le PDF en plein écran"></i>`;
+        } else if (doc.type === 'photo' && doc.file_path) {
+          viewButton = `<i class="fas fa-eye btn-edit" onclick="openPDF('${doc.file_path}')" title="Voir la photo"></i>`;
+        }
+        return `
+          <div class="document-item">
+            <div class="document-info">
+              ${typeBadge}
+              <!--<div class="document-title">${title}</div>-->
+              <div class="document-meta">${meta}</div>
+            </div>
+            <div class="document-actions">
+              ${viewButton}
+              <i class="fas fa-edit btn-edit" onclick="editDocument('${doc.id}')" title="Modifier"></i>
+              ${!isTemp ? `<i class="fas fa-trash btn-delete" onclick="confirmDeleteDocument('${doc.id}')" title="Supprimer"></i>` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+      if (!isSimpleList) {
+        container.innerHTML += `
+          <div style="border-top: padding-top: 20px; margin-top: 20px;">
+            <button class="btn btn-submit" onclick="openCreateDocumentModal(${state.selectedPerson.id})">
+              <i class="fas fa-plus"></i> Ajouter un document
+            </button>
+          </div>
+        `;
+      }
+    }
+    // ========================================
+    // MODAL SIMPLE (NOTES MEMBRE/MARIAGE)
+    // ========================================
+    function openNoteSimpleModal(doc) {
+      if (!state.selectedPerson) return;
+      const isMemberNote = doc.source === 'membre';
+      const isMariageNote = doc.source && doc.source.startsWith('mariage_');
+      document.getElementById('noteSimpleFormTitle').innerHTML =
+        `<div><i class="fas fa-file-alt"></i>${state.selectedPerson.prenom} ${state.selectedPerson.nom}</div>`;
+      if (isMemberNote) {
+        document.getElementById('simpleNoteLabel').textContent = '(Notes)';
+      } else if (isMariageNote) {
+        document.getElementById('simpleNoteLabel').textContent = `(${doc.source_label || 'Mariage'})`;
+      } else {
+        document.getElementById('simpleNoteLabel').textContent = 'Contenu de la source';
+      }
+      document.getElementById('simpleDocumentId').value = doc.id;
+      document.getElementById('simplePersonId').value = state.selectedPerson.id;
+      document.getElementById('simpleNoteContent').value = doc.content || '';
+      // Ne plus fermer documentsModal car elle reste en arrière-plan
+      // closeDocumentsModal();
+      document.getElementById('noteSimpleModal').style.display = 'flex';
+      document.getElementById('simpleNoteContent').focus();
+    }
+
+    function closeNoteSimpleModal() {
+      document.getElementById('noteSimpleModal').style.display = 'none';
+      // Correction: Ne pas rouvrir la modal de liste des documents
+    }
+    async function handleNoteSimpleSubmit(e) {
+      e.preventDefault();
+      const documentId = document.getElementById('simpleDocumentId').value;
+      const personId = document.getElementById('simplePersonId').value;
+      const content = document.getElementById('simpleNoteContent').value;
+      const doc = state.documents.find(d => d.id == documentId);
+      if (!doc) {
+        showTemporaryInfo('Erreur: Document source introuvable', 'error');
+        return;
+      }
+      const formData = new FormData();
+      formData.append('action', 'updateDocument');
+      formData.append('document_id', documentId);
+      formData.append('person_id', personId);
+      formData.append('type', 'note');
+      formData.append('source', doc.source);
+      // Normaliser les retours à la ligne (remplacer \r\n par \n)
+      const normalizedContent = content.replace(/\r\n/g, '\n');
+      formData.append('content', normalizedContent);
+      // Les notes simples (membre/mariage) n'ont pas de titre/description
+      formData.append('title', doc.title || '');
+      formData.append('description', doc.description || '');
+      try {
+        const response = await fetch(CONFIG.apiEndpoint, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          showTemporaryInfo('Note mise à jour !', 'success');
+          closeNoteSimpleModal();
+          await loadMembers(); // Recharger pour rafraichir les compteurs (notes membre/mariage)
+          // Recharger les documents de la personne pour rafraîchir la liste
+          if (state.selectedPerson) {
+            await loadPersonDocuments(state.selectedPerson.id);
+            // Ré-afficher la liste des documents dans la modal principale
+            renderDocumentsList(false);
+            document.getElementById('documentsModal').style.display = 'flex';
+          }
+        } else {
+          throw new Error(result.message || 'Erreur lors de la sauvegarde de la note');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        showTemporaryInfo(error.message, 'error');
+      }
+    }
+    // ========================================
+    // MODAL COMPLÈTE (DOCUMENTS/PDF)
+    // ========================================
+    // Ajoute/retire l'attribut 'required' pour la validation HTML5
+    function updateDocumentFormFields(type) {
+      const noteFields = document.getElementById('noteFields');
+      const pdfFields = document.getElementById('pdfFields');
+      const photoFields = document.getElementById('photoFields');
+      const docId = document.getElementById('documentId').value;
+      // 1. Réinitialiser tous les attributs 'required'
+      document.getElementById('noteTitle').removeAttribute('required');
+      document.getElementById('noteContent').removeAttribute('required');
+      document.getElementById('pdfTitle').removeAttribute('required');
+      document.getElementById('pdfFile').removeAttribute('required');
+      if (document.getElementById('photoTitle')) {
+        document.getElementById('photoTitle').removeAttribute('required');
+        document.getElementById('photoFile').removeAttribute('required');
+      }
+      if (type === 'note') {
+        noteFields.style.display = 'block';
+        pdfFields.style.display = 'none';
+        if (photoFields) photoFields.style.display = 'none';
+        // 2. Ajouter 'required' pour les champs Note
+        // Titre n'est plus requis
+        document.getElementById('noteContent').setAttribute('required', 'required');
+      } else if (type === 'pdf') {
+        noteFields.style.display = 'none';
+        pdfFields.style.display = 'block';
+        if (photoFields) photoFields.style.display = 'none';
+        // 2. Ajouter 'required' pour les champs PDF
+        // Titre n'est plus requis
+        // Le fichier est requis SEULEMENT à la CRÉATION
+        if (!docId) {
+          document.getElementById('pdfFile').setAttribute('required', 'required');
+        }
+      } else if (type === 'photo') {
+        noteFields.style.display = 'none';
+        pdfFields.style.display = 'none';
+        if (photoFields) photoFields.style.display = 'block';
+        // Le fichier est requis SEULEMENT à la CRÉATION
+        if (!docId && document.getElementById('photoFile')) {
+          document.getElementById('photoFile').setAttribute('required', 'required');
+        }
+      }
+    }
+
+    function openAddDocumentModal() {
+      if (!state.selectedPerson) return;
+      document.getElementById('documentFormTitle').innerHTML =
+        `<div><i class="fas fa-plus"></i> Nouv. document pour ${state.selectedPerson.prenom} ${state.selectedPerson.nom}</div>`;
+      document.getElementById('documentForm').reset();
+      document.getElementById('documentId').value = '';
+      document.getElementById('personId').value = state.selectedPerson.id;
+      // Initialisation du sélecteur de type
+      document.querySelectorAll('#documentFormModal .type-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector('#documentFormModal [data-type="note"]').classList.add('active');
+      state.currentDocumentType = 'note';
+      // S'assurer que tous les champs required sont réinitialisés AVANT d'appeler updateDocumentFormFields
+      document.getElementById('noteTitle').removeAttribute('required');
+      document.getElementById('noteContent').removeAttribute('required');
+      document.getElementById('pdfTitle').removeAttribute('required');
+      document.getElementById('pdfFile').removeAttribute('required');
+      if (document.getElementById('photoTitle')) {
+        document.getElementById('photoTitle').removeAttribute('required');
+        document.getElementById('photoFile').removeAttribute('required');
+      }
+      updateDocumentFormFields('note');
+      document.getElementById('noteTitle').value = 'Nouveau document';
+      document.getElementById('pdfTitle').value = '';
+      if (document.getElementById('photoTitle')) {
+        document.getElementById('photoTitle').value = '';
+      }
+      clearFile();
+      if (typeof clearPhotoFile === 'function') {
+        clearPhotoFile();
+      }
+      // Ne plus fermer documentsModal car elle est maintenant ouverte en arrière-plan
+      // closeDocumentsModal();
+      document.getElementById('documentFormModal').style.display = 'flex';
+    }
+
+    function closeDocumentFormModal() {
+      document.getElementById('documentFormModal').style.display = 'none';
+      document.getElementById('fileInfo').style.display = 'none';
+      // Correction: Ne pas rouvrir la modal de liste des documents
+    }
+    async function editDocument(documentId) {
+      const doc = state.documents.find(d => d.id == documentId);
+      if (!doc) return;
+      // ROULEMENT VERS MODAL SIMPLE SI C'EST UNE NOTE MEMBRE/MARIAGE
+      const isTempNote = doc.id.toString().startsWith('temp_');
+      if (isTempNote) {
+        openNoteSimpleModal(doc);
+        return;
+      }
+      // S'assurer que tous les champs required sont réinitialisés AVANT d'appeler updateDocumentFormFields
+      document.getElementById('noteTitle').removeAttribute('required');
+      document.getElementById('noteContent').removeAttribute('required');
+      document.getElementById('pdfTitle').removeAttribute('required');
+      document.getElementById('pdfFile').removeAttribute('required');
+      if (document.getElementById('photoTitle')) {
+        document.getElementById('photoTitle').removeAttribute('required');
+        document.getElementById('photoFile').removeAttribute('required');
+      }
+      // === MODAL COMPLÈTE ===
+      document.getElementById('documentFormTitle').innerHTML =
+        `<div><i class="fas fa-edit"></i>${state.selectedPerson.prenom} ${state.selectedPerson.nom}</div>`;
+      document.getElementById('documentId').value = doc.id;
+      document.getElementById('personId').value = state.selectedPerson.id;
+      document.querySelectorAll('#documentFormModal .type-btn').forEach(btn => btn.classList.remove('active'));
+      document.querySelector(`#documentFormModal [data-type="${doc.type}"]`).classList.add('active');
+      state.currentDocumentType = doc.type;
+      updateDocumentFormFields(doc.type);
+      // Remplissage des champs (assure que les champs cachés sont vidés)
+      if (doc.type === 'note') {
+        document.getElementById('noteTitle').value = doc.title || '';
+        document.getElementById('noteDescription').value = doc.description || '';
+        document.getElementById('noteContent').value = doc.content || '';
+        document.getElementById('pdfTitle').value = '';
+        document.getElementById('pdfDescription').value = '';
+        clearFile();
+        if (document.getElementById('photoTitle')) {
+          document.getElementById('photoTitle').value = '';
+          document.getElementById('photoDescription').value = '';
+          clearPhotoFile();
+        }
+      } else if (doc.type === 'pdf') {
+        document.getElementById('pdfTitle').value = doc.title || '';
+        document.getElementById('pdfDescription').value = doc.description || '';
+        if (doc.file_name) {
+          document.getElementById('fileName').textContent = doc.file_name;
+          document.getElementById('fileSize').textContent = doc.file_size ? formatFileSize(doc.file_size) : '';
+          document.getElementById('fileInfo').style.display = 'block';
+          // Changer le bouton en icône poubelle pour supprimer
+          const fileActionBtn = document.getElementById('fileActionBtn');
+          fileActionBtn.onclick = deleteCurrentPdf;
+          fileActionBtn.innerHTML = '<i class="fas fa-trash"></i>';
+          fileActionBtn.className = 'btn btn-danger';
+          fileActionBtn.title = 'Supprimer ce PDF';
+        } else {
+          clearFile();
+        }
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteDescription').value = '';
+        document.getElementById('noteContent').value = '';
+        if (document.getElementById('photoTitle')) {
+          document.getElementById('photoTitle').value = '';
+          document.getElementById('photoDescription').value = '';
+          clearPhotoFile();
+        }
+      } else if (doc.type === 'photo') {
+        if (document.getElementById('photoTitle')) {
+          document.getElementById('photoTitle').value = doc.title || '';
+          document.getElementById('photoDescription').value = doc.description || '';
+          if (doc.file_name) {
+            document.getElementById('photoFileName').textContent = doc.file_name;
+            document.getElementById('photoFileSize').textContent = doc.file_size ? formatFileSize(doc.file_size) : '';
+            document.getElementById('photoInfo').style.display = 'block';
+            // Afficher la prévisualisation
+            if (doc.file_path) {
+              document.getElementById('photoPreviewImg').src = doc.file_path;
+              document.getElementById('photoPreview').style.display = 'block';
+            }
+            // Changer le bouton en icône poubelle pour supprimer
+            const photoActionBtn = document.getElementById('photoActionBtn');
+            photoActionBtn.onclick = deleteCurrentPhoto;
+            photoActionBtn.innerHTML = '<i class="fas fa-trash"></i>';
+            photoActionBtn.className = 'btn btn-danger';
+            photoActionBtn.title = 'Supprimer cette photo';
+          } else {
+            clearPhotoFile();
+          }
+        }
+        document.getElementById('noteTitle').value = '';
+        document.getElementById('noteDescription').value = '';
+        document.getElementById('noteContent').value = '';
+        document.getElementById('pdfTitle').value = '';
+        document.getElementById('pdfDescription').value = '';
+        clearFile();
+      }
+      // Ne plus fermer documentsModal car elle reste en arrière-plan
+      // closeDocumentsModal();
+      document.getElementById('documentFormModal').style.display = 'flex';
+    }
+    async function handleDocumentSubmit(e) {
+      e.preventDefault();
+      if (!state.selectedPerson) {
+        showTemporaryInfo('Erreur: Aucune personne sélectionnée', 'error');
+        return;
+      }
+      // La vérification HTML5 est gérée par les attributs required dynamiques
+      if (!e.target.checkValidity()) {
+        e.target.reportValidity();
+        return;
+      }
+      const documentId = document.getElementById('documentId').value;
+      const formData = new FormData();
+      if (documentId) {
+        formData.append('action', 'updateDocument');
+        formData.append('document_id', documentId);
+      } else {
+        formData.append('action', 'addDocument');
+      }
+      formData.append('person_id', state.selectedPerson.id);
+      formData.append('source', 'document');
+      formData.append('type', state.currentDocumentType);
+      if (state.currentDocumentType === 'note') {
+        formData.append('title', document.getElementById('noteTitle').value);
+        formData.append('description', document.getElementById('noteDescription').value); // Description envoyée
+        // Normaliser les retours à la ligne (remplacer \r\n par \n)
+        const noteContent = document.getElementById('noteContent').value.replace(/\r\n/g, '\n');
+        formData.append('content', noteContent);
+      } else if (state.currentDocumentType === 'pdf') {
+        const pdfFile = document.getElementById('pdfFile').files[0];
+        if (pdfFile) {
+          // Vérifier la taille du fichier (10 Mo max)
+          const maxSize = 10 * 1024 * 1024; // 10 MB
+          if (pdfFile.size > maxSize) {
+            showTemporaryInfo('Le fichier PDF ne doit pas dépasser 10 Mo (taille actuelle: ' + (pdfFile.size / 1024 / 1024).toFixed(2) + ' Mo)', 'error');
+            return;
+          }
+          formData.append('pdf_file', pdfFile);
+        }
+        formData.append('title', document.getElementById('pdfTitle').value);
+        formData.append('description', document.getElementById('pdfDescription').value);
+      } else if (state.currentDocumentType === 'photo') {
+        const photoFile = document.getElementById('photoFile').files[0];
+        if (photoFile) {
+          // Vérifier la taille du fichier (10 Mo max)
+          const maxSize = 10 * 1024 * 1024; // 10 MB
+          if (photoFile.size > maxSize) {
+            showTemporaryInfo('La photo ne doit pas dépasser 10 Mo (taille actuelle: ' + (photoFile.size / 1024 / 1024).toFixed(2) + ' Mo)', 'error');
+            return;
+          }
+          formData.append('photo_file', photoFile);
+        }
+        formData.append('title', document.getElementById('photoTitle').value);
+        formData.append('description', document.getElementById('photoDescription').value);
+      }
+      try {
+        const response = await fetch(CONFIG.apiEndpoint, {
+          method: 'POST',
+          body: formData
+        });
+        // Vérifier d'abord le statut HTTP
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Erreur serveur (HTTP ' + response.status + '):', errorText);
+          // Tenter de parser comme JSON si possible
+          try {
+            const errorJson = JSON.parse(errorText);
+            throw new Error(errorJson.message || 'Erreur serveur (HTTP ' + response.status + ')');
+          } catch (parseError) {
+            // Si ce n'est pas du JSON, afficher un message générique
+            throw new Error('Erreur serveur (HTTP ' + response.status + '). Le fichier est peut-être trop volumineux ou le serveur a rencontré un problème.');
+          }
+        }
+        const result = await response.json();
+        if (result.success) {
+          showTemporaryInfo(documentId ? 'Document modifié !' : 'Document ajouté !', 'success');
+          closeDocumentFormModal();
+          // Recharger les membres pour mettre à jour les compteurs
+          await loadMembers();
+          // Rafraîchir la modal si elle est ouverte
+          await refreshCurrentView();
+        } else {
+          throw new Error(result.message || 'Erreur lors de l\'enregistrement');
+        }
+      } catch (error) {
+        console.error('Erreur complète:', error);
+        showTemporaryInfo(error.message, 'error');
+      }
+    }
+    // ========================================
+    // GESTION DU FORMULAIRE ET DES FICHIERS
+    // ========================================
+    function setupDocumentForm() {
+      // Configuration pour la MODAL COMPLÈTE (documentFormModal)
+      // Sélecteur de type
+      document.querySelectorAll('#documentFormModal .type-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#documentFormModal .type-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          state.currentDocumentType = btn.dataset.type;
+          updateDocumentFormFields(state.currentDocumentType);
+        });
+      });
+      // Upload de fichier (Modal Complexe)
+      const uploadZone = document.getElementById('fileUploadZone');
+      const fileInput = document.getElementById('pdfFile');
+      uploadZone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          const file = e.target.files[0];
+          document.getElementById('fileName').textContent = file.name;
+          document.getElementById('fileSize').textContent = formatFileSize(file.size);
+          document.getElementById('fileInfo').style.display = 'block';
+          // Restaurer le bouton croix (pas poubelle) car c'est un nouveau fichier
+          const fileActionBtn = document.getElementById('fileActionBtn');
+          fileActionBtn.onclick = clearFile;
+          fileActionBtn.innerHTML = '<i class="fas fa-times"></i>';
+          fileActionBtn.className = 'btn btn-secondary';
+          fileActionBtn.title = '';
+          // En cas de modification, si un nouveau fichier est sélectionné, on retire le required
+          if (document.getElementById('documentId').value) {
+            document.getElementById('pdfFile').removeAttribute('required');
+          }
+        }
+      });
+      // Soumission des formulaires
+      document.getElementById('documentForm').addEventListener('submit', handleDocumentSubmit);
+      document.getElementById('noteSimpleForm').addEventListener('submit', handleNoteSimpleSubmit);
+      // Upload de photos
+      const photoUploadZone = document.getElementById('photoUploadZone');
+      const photoInput = document.getElementById('photoFile');
+      if (photoUploadZone && photoInput) {
+        photoUploadZone.addEventListener('click', () => photoInput.click());
+        photoInput.addEventListener('change', (e) => {
+          if (e.target.files.length > 0) {
+            const file = e.target.files[0];
+            document.getElementById('photoFileName').textContent = file.name;
+            document.getElementById('photoFileSize').textContent = formatFileSize(file.size);
+            document.getElementById('photoInfo').style.display = 'block';
+            // Afficher la prévisualisation
+            const reader = new FileReader();
+            reader.onload = function (e) {
+              document.getElementById('photoPreviewImg').src = e.target.result;
+              document.getElementById('photoPreview').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+            // Restaurer le bouton croix car c'est un nouveau fichier
+            const photoActionBtn = document.getElementById('photoActionBtn');
+            photoActionBtn.onclick = clearPhotoFile;
+            photoActionBtn.innerHTML = '<i class="fas fa-times"></i>';
+            photoActionBtn.className = 'btn btn-secondary';
+            photoActionBtn.title = '';
+            // En cas de modification, si une nouvelle photo est sélectionnée, on retire le required
+            if (document.getElementById('documentId').value) {
+              document.getElementById('photoFile').removeAttribute('required');
+            }
+          }
+        });
+      }
+    }
+
+    function clearPhotoFile() {
+      document.getElementById('photoFile').value = '';
+      document.getElementById('photoInfo').style.display = 'none';
+      document.getElementById('photoPreview').style.display = 'none';
+      document.getElementById('photoPreviewImg').src = '';
+      // Restaurer le bouton croix par défaut
+      const photoActionBtn = document.getElementById('photoActionBtn');
+      photoActionBtn.onclick = clearPhotoFile;
+      photoActionBtn.innerHTML = '<i class="fas fa-times"></i>';
+      photoActionBtn.className = 'btn btn-secondary';
+      photoActionBtn.title = '';
+      // Si on est en mode ajout, le fichier redevient 'required'
+      if (!document.getElementById('documentId').value && state.currentDocumentType === 'photo') {
+        document.getElementById('photoFile').setAttribute('required', 'required');
+      }
+    }
+
+    function clearFile() {
+      document.getElementById('pdfFile').value = '';
+      document.getElementById('fileInfo').style.display = 'none';
+      // Restaurer le bouton croix par défaut
+      const fileActionBtn = document.getElementById('fileActionBtn');
+      fileActionBtn.onclick = clearFile;
+      fileActionBtn.innerHTML = '<i class="fas fa-times"></i>';
+      fileActionBtn.className = 'btn btn-secondary';
+      fileActionBtn.title = '';
+      // Si on est en mode ajout, le fichier redevient 'required'
+      if (!document.getElementById('documentId').value && state.currentDocumentType === 'pdf') {
+        document.getElementById('pdfFile').setAttribute('required', 'required');
+      }
+    }
+    async function openCreateDocumentModal(personId) {
+      state.selectedPerson = state.members.find(m => m.id === personId);
+      if (!state.selectedPerson) return;
+      // Charger les documents de la personne
+      await loadPersonDocuments(personId);
+      // Afficher la modal de liste des documents en arrière-plan
+      document.getElementById('modalPersonName').textContent =
+        `${state.selectedPerson.prenom} ${state.selectedPerson.nom}`;
+      renderDocumentsList(false);
+      document.getElementById('documentsModal').style.display = 'flex';
+      // Puis ouvrir directement la modal de création
+      openAddDocumentModal();
+    }
+
+    function viewDocument(documentId) {
+      const doc = state.documents.find(d => d.id == documentId); // == au lieu de === pour gérer string/number
+      if (!doc) {
+        console.error('Document not found:', documentId, 'Available docs:', state.documents.map(d => d.id));
+        return;
+      }
+      if (doc.type === 'note') {
+        // Ne plus fermer la modal de documents car elle reste en arrière-plan
+        // closeDocumentsModal();
+        // Utiliser la modal de visualisation avec liens cliquables
+        document.getElementById('noteViewTitle').innerHTML =
+          `<i class="fas fa-file-alt"></i> ${doc.title || 'Note'}`;
+        // Afficher la section description pour les notes normales
+        const descriptionSection = document.querySelector('#noteViewModal .modal-body > div:first-child');
+        if (descriptionSection) {
+          descriptionSection.style.display = 'block';
+        }
+        document.getElementById('noteViewDescription').textContent = doc.description || 'Aucune description';
+        document.getElementById('noteViewContent').innerHTML = formatNotes(doc.content);
+        document.getElementById('noteViewModal').style.display = 'flex';
+      } else if (doc.type === 'pdf' && doc.file_path) {
+        window.open(doc.file_path, '_blank');
+      } else if (doc.type === 'photo' && doc.file_path) {
+        window.open(doc.file_path, '_blank');
+      }
+    }
+
+    function closeNoteViewModal() {
+      document.getElementById('noteViewModal').style.display = 'none';
+    }
+
+    function viewNoteSimple(doc) {
+      if (!doc) return;
+      // Ne plus fermer la modal de documents car elle reste en arrière-plan
+      // closeDocumentsModal();
+      // Utiliser la même modal de visualisation mais avec du contenu formaté
+      let title = 'Source';
+      if (doc.source === 'membre') {
+        title = 'Note(s)';
+      } else if (doc.source && doc.source.startsWith('mariage_')) {
+        title = doc.source_label || 'Note de mariage';
+      }
+      document.getElementById('noteViewTitle').innerHTML =
+        `<i class="fas fa-file-alt"></i> ${title}`;
+      // Cacher la section description pour les notes membre/mariage
+      const descriptionSection = document.querySelector('#noteViewModal .modal-body > div:first-child');
+      if (descriptionSection) {
+        descriptionSection.style.display = 'none';
+      }
+      document.getElementById('noteViewContent').innerHTML = formatNotes(doc.content || '');
+      document.getElementById('noteViewModal').style.display = 'flex';
+    }
+
+    function viewNoteSimpleById(documentId) {
+      const doc = state.documents.find(d => d.id == documentId);
+      if (!doc) {
+        console.error('Document not found:', documentId);
+        return;
+      }
+      viewNoteSimple(doc);
+    }
+
+    function openPDF(filePath) {
+      // Ouvre le PDF dans un nouvel onglet, ce qui est l'équivalent du "plein écran" pour un fichier PDF.
+      window.open(filePath, '_blank');
+    }
+    // Fonction helper pour rafraîchir la vue actuelle après une modification
+    async function refreshCurrentView() {
+      if (!state.selectedPerson) return;
+      await loadPersonDocuments(state.selectedPerson.id);
+      // renderDocumentsList utilise automatiquement
+      // state.documentFilter et state.currentViewType pour filtrer
+      renderDocumentsList(false);
+    }
+    async function deleteCurrentPdf() {
+      const documentId = document.getElementById('documentId').value;
+      if (!documentId) {
+        showTemporaryInfo('Erreur: Aucun document à supprimer', 'error');
+        return;
+      }
+      if (!confirm('Êtes-vous sûr de vouloir supprimer ce PDF ?')) {
+        return;
+      }
+      try {
+        const formData = new FormData();
+        formData.append('action', 'deleteDocument');
+        formData.append('document_id', documentId);
+        const response = await fetch(CONFIG.apiEndpoint, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          showTemporaryInfo('PDF supprimé !', 'success');
+          closeDocumentFormModal();
+          await loadMembers();
+          await refreshCurrentView();
+        } else {
+          throw new Error(result.message || 'Erreur lors de la suppression');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        showTemporaryInfo(error.message, 'error');
+      }
+    }
+    async function deleteCurrentPhoto() {
+      const documentId = document.getElementById('documentId').value;
+      if (!documentId) {
+        showTemporaryInfo('Erreur: Aucun document à supprimer', 'error');
+        return;
+      }
+      if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
+        return;
+      }
+      try {
+        const formData = new FormData();
+        formData.append('action', 'deleteDocument');
+        formData.append('document_id', documentId);
+        const response = await fetch(CONFIG.apiEndpoint, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          showTemporaryInfo('Photo supprimée !', 'success');
+          closeDocumentFormModal();
+          await loadMembers();
+          await refreshCurrentView();
+        } else {
+          throw new Error(result.message || 'Erreur lors de la suppression');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        showTemporaryInfo(error.message, 'error');
+      }
+    }
+
+    function confirmDeleteDocument(documentId) {
+      state.documentToDelete = documentId;
+      document.getElementById('confirmDeleteModal').style.display = 'flex';
+    }
+
+    function closeDeleteModal() {
+      document.getElementById('confirmDeleteModal').style.display = 'none';
+      state.documentToDelete = null;
+    }
+    async function confirmDelete() {
+      if (!state.documentToDelete) return;
+      try {
+        const formData = new FormData();
+        formData.append('action', 'deleteDocument');
+        formData.append('document_id', state.documentToDelete);
+        const response = await fetch(CONFIG.apiEndpoint, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          showTemporaryInfo('Document supprimé !', 'success');
+          closeDeleteModal();
+          await loadMembers();
+          await refreshCurrentView();
+        } else {
+          throw new Error(result.message || 'Erreur lors de la suppression');
+        }
+      } catch (error) {
+        console.error('Erreur:', error);
+        showTemporaryInfo(error.message, 'error');
+      }
+    }
+    // ========================================
+    // INITIALISATION
+    // ========================================
+    document.addEventListener('DOMContentLoaded', async () => {
+      // loadDarkModeScript est appelé automatiquement par menu-loader.js après chargement du menu
+      setupDocumentForm();
+      // Configuration de la recherche
+      const mainSearch = document.getElementById('mainSearch');
+      const clearBtn = document.getElementById('clearSearch');
+      clearBtn.style.display = 'none';
+      mainSearch.addEventListener('input', (e) => {
+        clearBtn.style.display = e.target.value.trim() !== '' ? 'block' : 'none';
+        handleMainSearch(e);
+      });
+      clearBtn.addEventListener('click', () => {
+        mainSearch.value = '';
+        clearBtn.style.display = 'none';
+        document.querySelector('.search-suggestions').classList.remove('show');
+        // Réappliquer le filtre actif
+        applyPersonFilter();
+      });
+      // Configuration des filtres de personnes
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          handleFilterClick(btn.dataset.filter);
+        });
+      });
+      // Charger les membres
+      await loadMembers();
+    });
+  </script>
+  <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+  <script src="js/darkMode.js"></script>
+  <script src="js/burger.js"></script>
+</body>
+
+</html>

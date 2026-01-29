@@ -5,20 +5,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Gestion de la famille</title>
+    <link rel="icon" href="data:,"> <!--source vide pour le moment-->
     <link rel="stylesheet" href="styles/family-tree-styles.css" />
     <link rel="stylesheet" href="styles/person-quick-view.css" />
     <link rel="stylesheet" href="styles/modal-system.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
-    <!--<style>
-      /* Cacher les modals existantes par défaut */
-      #marriageModal {
-        display: none;
-      }
-      #marriageModal.active {
-        display: flex;
-      }
-    </style>-->
+    
   <body>
     <!-- Menu de navigation chargé dynamiquement depuis menu-navigation.html -->
     <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
@@ -943,10 +936,10 @@
           return;
         }
         let html = '<h4><i class="fas fa-link"></i> Relations existantes</h4>';
-        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 10px;">';
+        html += '<div style="display: flex; flex-direction: column;">';
         if (hasParents) {
+          html += '<h4><i class="fas fa-user-tie"></i> Parents</h4>';
           html += '<div class="relation-type-group">';
-          html += '<div style="font-weight: 600; margin-bottom: 8px; color: var(--accent-color);"><i class="fas fa-user-tie"></i> Parents</div>';
           member.parentIds.forEach(parentId => {
             const parent = state.members.find(m => m.id === parentId);
             if (parent) {
@@ -965,8 +958,8 @@
           html += '</div>';
         }
         if (children.length > 0) {
+          html += '<h4><i class="fas fa-child"></i> Enfants</h4>';
           html += '<div class="relation-type-group">';
-          html += '<div style="font-weight: 600; margin-bottom: 8px; color: var(--accent-color);"><i class="fas fa-child"></i> Enfants</div>';
           children.forEach(child => {
             const birthYear = child.birthDate ? child.birthDate : '';
             const deathYear = child.deathDate ? child.deathDate : '';
@@ -982,8 +975,8 @@
           html += '</div>';
         }
         if (hasSiblings) {
+          html += '<h4><i class="fas fa-users"></i> Frères et sœurs</h4>';
           html += '<div class="relation-type-group">';
-          html += '<div style="font-weight: 600; margin-bottom: 8px; color: var(--accent-color);"><i class="fas fa-users"></i> Frères et sœurs</div>';
           member.siblingIds.forEach(siblingId => {
             const sibling = state.members.find(m => m.id === siblingId);
             if (sibling) {
