@@ -1,4 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Lato:wght@300;400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;700&display=swap");
 
 /* ========================================
 VARIABLES CSS - THÈME CLAIR
@@ -81,7 +83,8 @@ VARIABLES CSS - MODE SOMBRE
     --bg-color: #1e293b;
     --bg-primary: #1e293b;
     --bg-secondary: #293d58;
-    --bg-tertiary: #334155;
+    /*--bg-tertiary: #334155;*/
+    --bg-tertiary: #1a1a2e;
     --form-section-bg: #2a2a2a;
     --card-bg: #2a2a2a;
 
@@ -133,8 +136,10 @@ RESET ET STYLES DE BASE
 body {
     background-color: var(--bg-color);
     color: var(--text-color);
-    font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial,
-        sans-serif;
+    /*font-family: "Roboto", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial,
+        sans-serif;*/
+    /*font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;*/
+    font-family: "Poppins", -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
     padding: 10px 30px;
     transition: all var(--transition-base);
     margin-left: 60px;
@@ -370,7 +375,7 @@ CONTENEURS PRINCIPAUX
     left: 0;
     overflow: hidden;
     z-index: 1;
-    font-size: 16px;  /* Taille de base pour les textes des nœuds */
+    /*font-size: 14px;*/  /* Taille de base pour les textes des nœuds */
 }
 
 /* ========================================
@@ -1648,8 +1653,8 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 
 /* Nœud racine avec bordure verte */
 .node.root-node rect {
-    fill: var(--bg-color);
-    stroke: #166534 !important;
+    fill: #15d91d3d;
+    stroke: #166534;
     stroke-width: 2.5px;
 }
 
@@ -1684,22 +1689,22 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 
 .node-text-firstname {
     /*font-weight: 500;*/
-    font-size: 0.95em;  /* 9px relatif au 10px de .tree-container */
+    font-size: 1.2em;  /* 9px relatif au 10px de .tree-container */
 }
 
 .node-text-lastname {
     /*font-weight: 500;*/
     text-transform: uppercase;
-    font-size: 0.95em;  /* 9px relatif au 10px de .tree-container */
+    font-size: 1.2em;  /* 9px relatif au 10px de .tree-container */
 }
 
 .node-text-dates {
-    font-size: 0.95em;  /* 8px relatif au 10px de .tree-container */
+    font-size: 1.2em;  /* 8px relatif au 10px de .tree-container */
     fill: var(--text-secondary);
 }
 
 /* Legacy: cercles (pour compatibilité) */
-.node circle {
+/*.node circle {
     stroke-width: 2px;
     transition: all var(--transition-fast);
     cursor: pointer;
@@ -1707,9 +1712,9 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 
 .node:hover circle {
     filter: brightness(1.1);
-}
+}*/
 
-.person-name {
+/*.person-name {
     font-size: 0.75rem;
     fill: var(--text-primary);
     pointer-events: none;
@@ -1729,12 +1734,12 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 
 .person-name-border.male {
     fill: var(--bg-color);
-    stroke: #5b9bd5;  /* Bleu */
+    stroke: #5b9bd5;
 }
 
 .person-name-border.female {
     fill: var(--bg-color);
-    stroke: #e57373;  /* Rose */
+    stroke: #e57373;
 }
 
 .person-dates {
@@ -1745,7 +1750,7 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 
 .vertical-mode .person-dates {
     font-size: 1.1rem;
-}
+}*/
 
 /* Liens entre les nœuds */
 .link {
@@ -1776,8 +1781,8 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 /* Numéros et symboles de mariage */
 .marriage-number {
     font-size: 0.95rem;
-    fill: var(--text-primary);
-    font-weight: 600;
+    fill: var(--text-secondary);
+    /*font-weight: 600;*/
 }
 
 .marriage-symbol-year {
@@ -1795,7 +1800,7 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 }
 
 /* Couleurs des nœuds par profondeur */
-.depth-0 circle {
+/*.depth-0 circle {
     fill: #ff6b6b;
     stroke: #e06060;
 }
@@ -1825,7 +1830,6 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
     stroke: #184f4b;
 }
 
-/* Couleurs spécifiques pour conjoints, enfants et fratrie */
 .root-spouse circle,
 .node.spouse circle,
 .root-child circle,
@@ -1835,7 +1839,7 @@ NŒUDS ET ÉLÉMENTS D'ARBRE (D3.js)
 .sibling-group .depth-1 {
     fill: #4ecdc4;
     stroke: #45b7af;
-}
+}*/
 
 /* ========================================
 TOOLTIPS GÉNÉRAUX

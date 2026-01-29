@@ -836,7 +836,7 @@ class FamilyTreeApp {
 
     // Dessiner d'abord tous les liens (arrière-plan)
     this.drawTreeLinks(g, treeData);
-    this.visualizer.drawMarriageLinks(g, nodes);
+    //this.visualizer.drawMarriageLinks(g, nodes);                  à supprimer
 
     // Dessiner les fratries avant les nœuds principaux
     if (this.showSiblings) {
@@ -911,7 +911,7 @@ class FamilyTreeApp {
     this.drawRootFamily(g, rootNode);
 
     // Re-dessiner le nœud racine en dernier pour qu'il soit au-dessus de tous les liens
-    this.drawNode(g, rootNode.x, rootNode.y, rootNode.data, true, "#166534");
+    this.drawNode(g, rootNode.x, rootNode.y, rootNode.data, true);
   }
   drawRootFamily(g, rootNode) {
     var self = this;
@@ -983,7 +983,7 @@ class FamilyTreeApp {
         g.append("text")
           .attr("class", "marriage-date")
           .attr("x", midX)
-          .attr("y", rootNode.y - 8)
+          .attr("y", rootNode.y - 5)
           .attr("text-anchor", "middle")
           .text("× " + marriageYear);
       }
@@ -993,7 +993,7 @@ class FamilyTreeApp {
         g.append("text")
           .attr("class", "marriage-number")
           .attr("x", currentSpouseX)
-          .attr("y", rootNode.y + h / 2 + 15)
+          .attr("y", rootNode.y + h / 2 + 16)
           .attr("text-anchor", "middle")
           .text(index + 1);
       }
@@ -1096,10 +1096,6 @@ class FamilyTreeApp {
     });
   }
 
-  // =====================================================
-  // NOUVELLES MÉTHODES - Structure test.html
-  // =====================================================
-
   /**
    * Dessine un nœud rectangle avec texte (nouvelle structure)
    * @param {d3.Selection} g - Groupe SVG parent
@@ -1130,8 +1126,8 @@ class FamilyTreeApp {
       .attr("y", -CONFIG.node.height / 2)
       .attr("width", CONFIG.node.width)
       .attr("height", CONFIG.node.height)
-      .attr("rx", 6)
-      .attr("ry", 6)
+      .attr("rx", 8)
+      .attr("ry", 8)
       .attr("class", sexClass)
       .style("stroke", strokeColor || null);
 
@@ -1172,8 +1168,8 @@ class FamilyTreeApp {
     // Construire les lignes avec gaps
     var lines = [];
     var lineHeight = 15;
-    var gapAfterFirstnames = 3;  // Gap entre prénoms et nom
-    var gapAfterLastname = 4;    // Gap entre nom et dates
+    var gapAfterFirstnames = 6;  // Gap entre prénoms et nom
+    var gapAfterLastname = 8;    // Gap entre nom et dates
 
     // Prénoms - chaque prénom sur sa propre ligne
     var firstNames = person.firstNames || person.firstName || "";

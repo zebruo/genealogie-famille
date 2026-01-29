@@ -31,17 +31,9 @@ document.addEventListener("DOMContentLoaded", () => {
 // Gestionnaire de redimensionnement de la fenêtre
 window.addEventListener("resize", function() {
   if (familyTreeApp.visualizer && familyTreeApp.familyTree) {
-    var svg = d3.select("#tree-container svg");
-    var dims = familyTreeApp.visualizer.getDimensions();
-    var modeConfig = familyTreeApp.isHorizontal ? CONFIG.horizontal : CONFIG.vertical;
-    svg.attr("viewBox", [
-      0,
-      0,
-      dims.width + CONFIG.margins.left + CONFIG.margins.right + modeConfig.viewBoxWidthAdjustment,
-      dims.height + CONFIG.margins.top + CONFIG.margins.bottom + modeConfig.viewBoxHeightAdjustment,
-    ]);
     setTimeout(function() {
       familyTreeApp.centerView();
     }, 100);
   }
 });
+

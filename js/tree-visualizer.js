@@ -12,8 +12,8 @@ class TreeVisualizer {
 
   getDimensions() {
     return {
-      width: this.container.clientWidth - CONFIG.margins.left - CONFIG.margins.right,
-      height: this.container.clientHeight - CONFIG.margins.top - CONFIG.margins.bottom,
+      width: this.container.clientWidth,
+      height: this.container.clientHeight,
     };
   }
 
@@ -24,7 +24,7 @@ class TreeVisualizer {
       .append("svg")
       .attr("width", "100%")
       .attr("height", "100%")
-      .attr("viewBox", [0, 0, dims.width + CONFIG.margins.left + CONFIG.margins.right, dims.height + CONFIG.margins.top + CONFIG.margins.bottom])
+      .attr("viewBox", [0, 0, dims.width, dims.height])
       .attr("preserveAspectRatio", "xMidYMid meet")
       .classed("vertical-mode", true);
     return svg;
@@ -55,8 +55,8 @@ class TreeVisualizer {
     var centerX = (bounds.minX + bounds.maxX) / 2;
     var centerY = (bounds.minY + bounds.maxY) / 2;
 
-    var translateX = dims.width / 2 - centerX * scale + CONFIG.margins.left;
-    var translateY = dims.height / 2 - centerY * scale + CONFIG.margins.top;
+    var translateX = dims.width / 2 - centerX * scale;
+    var translateY = dims.height / 2 - centerY * scale;
 
     // Stocker le transform optimal pour le réutiliser
     this.lastOptimalTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
@@ -97,7 +97,7 @@ class TreeVisualizer {
     return bounds;
   }
 
-  drawMarriageLinks(g, nodes) {
+  /*drawMarriageLinks(g, nodes) {
     // Non utilisé dans la nouvelle structure - les liens de mariage sont dessinés dans drawRootFamily
-  }
+  }*/
 }

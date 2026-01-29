@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Gestion de la famille</title>
+    <link rel="stylesheet" href="styles/family-tree-styles.css" />
+    <link rel="stylesheet" href="styles/person-quick-view.css" />
+    <link rel="stylesheet" href="styles/modal-system.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  </head>
+    <!--<style>
+      /* Cacher les modals existantes par défaut */
+      #marriageModal {
+        display: none;
+      }
+      #marriageModal.active {
+        display: flex;
+      }
+    </style>-->
+  <body>
+    <!-- Menu de navigation chargé dynamiquement depuis menu-navigation.html -->
+    <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
+
+    <div class="container">
+      <div class="controls-header">
+        <div class="controls-title">
+          <i class="fas fa-users"></i>
+          <span>Gestion de la famille</span>
+        </div>
+      </div>
+      <form id="familyForm">
+        <input type="hidden" name="memberId" value="" />
+
+        <div class="form-header">
+          <div class="status-group">
+            <button type="button" class="status-button active" data-status="alive">
+              <i class="fas fa-heart badge-note-heart"></i>En vie
+            </button>
+            <button type="button" class="status-button" data-status="deceased">
+              <i class="fas fa-cross badge-note-deces"></i>Décédé
+            </button>
+          </div>
+          <select class="gender-select form-control" name="gender" required>
+            <option value="">Genre</option>
+            <option value="M">Masculin</option>
+            <option value="F">Féminin</option>
+            <option value="U">Je ne sais pas</option>
+          </select>
+          <div class="search-input-wrapper header-search">
+            <input type="text" class="search-input" placeholder="Rechercher un membre de la famille (nom, prénom, lieu...)" />
+            <i class="fas fa-search search-icon"></i>
+            <i class="fas fa-times clear-search"></i>
+            <div class="search-suggestions"></div>
+          </div>
+        </div>
+
+        <div class="form-body">
+          <!-- Informations de base -->
+          <div class="form-section">
+            <div class="form-group">
+              <label>Nom</label>
+              <input type="text" class="form-control" name="lastName" required />
+            </div>
+            <div class="form-group">
+              <label>Prénom(s)</label>
+              <input type="text" class="form-control" name="firstName" required />
+            </div>
+            <div class="form-group">
+              <label>Surnom</label>
+              <input type="text" class="form-control" name="surnom" placeholder="Optionnel" />
+            </div>
+          </div>
+
+          <!-- Naissance -->
+          <div class="form-section">
+            <div class="form-group">
+              <label>Date de naissance</label>
+              <input type="date" class="form-control" name="birthDate" />
+            </div>
+            <div class="form-group">
+              <label>Lieu de naissance</label>
+              <input type="text" class="form-control" name="birthPlace" />
+            </div>
+            <div class="form-group">
+              <label>Doc. naissance</label>
+              <textarea class="form-control" name="doc_naissance" rows="4" placeholder="archives état civil, registres paroissiaux..."></textarea>
+            </div>
+          </div>
+
+          <!-- Décès -->
+          <div class="form-section death-info" style="display: none">
+            <div class="form-group">
+              <label>Date de décès</label>
+              <input type="date" class="form-control" name="deathDate" />
+            </div>
+            <div class="form-group">
+              <label>Lieu de décès</label>
+              <input type="text" class="form-control" name="deathPlace" />
+            </div>
+            <div class="form-group">
+              <label>Doc. décès</label>
+              <textarea class="form-control" name="doc_deces" rows="4" placeholder="archives état civil, registres paroissiaux..."></textarea>
+            </div>
+          </div>
+
+          <!-- Profession et notes -->
+          <div class="form-section">
+            <div class="form-group">
+              <label>Profession</label>
+              <input type="text" class="form-control" name="occupation" placeholder="Ex: Agriculteur, Médecin..." />
+            </div>
+            <div class="form-group">
+              <label>Notes</label>
+              <textarea class="form-control" name="notes" rows="4" placeholder="Informations complémentaires..."></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section Relations -->
+        <div class="relation-section">
+          <h3><i class="fas fa-link"></i> Relations Familiales</h3>
+
+          <select class="relation-select" name="relationType">
+            <option value="">Ajouter une relation...</option>
+            <optgroup label="Relations Parent/Enfant">
+              <option value="parent">Est le parent de</option>
+              <option value="child">Est l'enfant de</option>
+            </optgroup>
+            <option value="sibling">Frère/Sœur</option>
+            <option value="spouse">Conjoint(e) / Mariage</option>
+          </select>
+
+          <div class="relation-search-container">
+            <input type="text" class="relation-search-input" placeholder="Rechercher un membre..." autocomplete="off" style="display: none" />
+            <div class="relation-search-results"></div>
+          </div>
+
+          <!-- Relations temporaires (en cours d'ajout) -->
+          <div class="temp-relations-container"></div>
+
+          <!-- Mariages temporaires (en cours d'ajout) -->
+          <div class="temp-marriages-container"></div>
+
+          <!-- Relations existantes (en mode édition) -->
+          <div class="existing-relations"></div>
+
+          <!-- Liste des mariages existants -->
+          <div class="existing-marriages-list"></div>
+        </div>
+
+        <div class="form-buttons-container">
+          <button class="btn-submit" id="resetBtn" type="button">
+            <i class="fas fa-undo"></i>Réinitialiser
+          </button>
+          <button type="submit" class="btn-submit">
+            <i class="fas fa-save"></i>Enregistrer
+          </button>
+        </div>
+      </form>
+
+      <div class="alphabet-index"></div>
+
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Nom</th>
+              <th>Prénom</th>
+              <th style="text-align: center;">Genre</th>
+              <th style="text-align: center;">Naissance</th>
+              <th style="text-align: center;">Décès</th>
+              <th>Relations</th>
+              <th style="text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="pagination"></div>
+    </div>
+
+    <!-- Modal pour ajouter/éditer un mariage -->
+    <div id="marriageModal" class="modal-overlay" style="display: none;">
+      <div class="modal-content">
+        <h3 id="marriageModalTitle"><i class="fas fa-ring"></i> Ajouter un mariage</h3>
+        <form id="marriageForm">
+          <input type="hidden" id="marriageId" value="" />
+          <input type="hidden" id="marriagePersonId" value="" />
+          <input type="hidden" id="marriageSpouseId" value="" />
+
+          <div class="form-group">
+            <label>Conjoint(e)</label>
+            <select id="marriageSpouseSelect" class="form-control" required>
+              <option value="">Sélectionner...</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Date de mariage</label>
+            <input type="date" id="marriageDate" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>Lieu de mariage</label>
+            <input type="text" id="marriagePlace" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>Date (divorce/décès)</label>
+            <input type="date" id="marriageEndDate" class="form-control" />
+          </div>
+
+          <div class="form-group">
+            <label>Type</label>
+            <select id="marriageEndType" class="form-control">
+              <option value="">Aucun</option>
+              <option value="divorce">Divorce</option>
+              <option value="deces">Décès</option>
+              <option value="annulation">Annulation</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label>Notes</label>
+            <textarea id="marriageNotes" class="form-control" rows="3"></textarea>
+          </div>
+
+          <div class="modal-buttons">
+            <button type="button" class="btn-submit" onclick="closeMarriageModal()">
+              <i class="fas fa-times"></i> Annuler
+            </button>
+            <button type="submit" class="btn-submit">
+              <i class="fas fa-save"></i> Enregistrer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+    <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+    <script src="js/modal-system.js"></script>
+    <script src="js/search-engine.js"></script>
+    <script src="js/darkMode.js"></script>
+    <script src="js/burger.js"></script>
+    <script>
+      const CONFIG = {
+        apiEndpoint: "admin/api3.php",
+        itemsPerPage: 20
+      };
+      const state = {
+        members: [],
+        filteredMembers: [],
+        editingMember: null,
+        tempRelations: [],
+        tempMarriages: [],
+        currentStatus: "alive",
+        currentPage: 1,
+        editingMarriageId: null
+      };
+
+      // Initialiser le moteur de recherche
+      const searchEngine = new UniversalSearchEngine(state);
+
+      // Fonctions globales pour les callbacks onclick dans les résultats de recherche
+      window.selectMemberFromSuggestion = function(id) {
+        const member = state.members.find(m => m.id === Number(id));
+        if (!member) return;
+        document.querySelector('.search-suggestions').classList.remove('show');
+        document.querySelector('.search-input').value = '';
+        startEditMember(id);
+      };
+
+      window.selectRelation = function(id) {
+        const member = state.members.find(m => m.id === Number(id));
+        if (!member) return;
+        const type = document.querySelector('.relation-select').value;
+        if (!type) {
+          showTemporaryInfo('Veuillez sélectionner un type de relation', 'error');
+          return;
+        }
+        if (type === 'spouse') {
+          openMarriageModal(member);
+        } else {
+          addTemporaryRelation(member, type);
+        }
+        document.querySelector('.relation-search-input').value = '';
+        document.querySelector('.relation-search-results').classList.remove('show');
+      };
+
+      function formatDate(dateStr, fullFormat = false) {
+        if (!dateStr) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          if (fullFormat) {
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('fr-FR');
+          }
+          return dateStr;
+        }
+        if (/^\d{4}$/.test(dateStr)) {
+          return fullFormat ? dateStr : dateStr;
+        }
+        const date = new Date(dateStr);
+        if (fullFormat) {
+          return date.toLocaleDateString('fr-FR');
+        }
+        return dateStr;
+      }
+
+      function convertDateToISO(dateStr) {
+        if (!dateStr) return '';
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          return dateStr;
+        }
+        if (/^\d{4}$/.test(dateStr)) {
+          return '';
+        }
+        if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+          const [day, month, year] = dateStr.split('-');
+          return `${year}-${month}-${day}`;
+        }
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
+          const [day, month, year] = dateStr.split('/');
+          return `${year}-${month}-${day}`;
+        }
+        return '';
+      }
+
+      // normalizeText supprimée - maintenant dans AddPersonSearchEngine
+      async function loadMembers() {
+        try {
+          const response = await fetch(`${CONFIG.apiEndpoint}?action=getFamilyData`);
+          const data = await response.json();
+          state.members = Object.values(data).map(member => ({
+            ...member,
+            id: Number(member.id),
+            marriages: member.marriages || {}
+          }));
+          state.filteredMembers = sortMembers(state.members);
+          state.currentPage = 1;
+          renderTable();
+          renderPagination();
+          setupAlphabetIndex();
+        } catch (error) {
+          console.error('Erreur chargement:', error);
+          showTemporaryInfo('Erreur lors du chargement des données', 'error');
+        }
+      }
+
+      function sortMembers(members) {
+        return [...members].sort((a, b) => {
+          const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
+          const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
+          return nameA.localeCompare(nameB);
+        });
+      }
+      async function handleFormSubmit(e) {
+        e.preventDefault();
+        const formData = new FormData();
+        formData.append('action', 'saveMembre');
+        if (state.editingMember) {
+          formData.append('id', state.editingMember.id);
+        }
+        formData.append('prenom', document.querySelector('[name="firstName"]').value);
+        formData.append('nom', document.querySelector('[name="lastName"]').value);
+        formData.append('surnom', document.querySelector('[name="surnom"]').value || '');
+        formData.append('sex', document.querySelector('[name="gender"]').value);
+        formData.append('date_naissance', document.querySelector('[name="birthDate"]').value || '');
+        formData.append('lieu_naissance', document.querySelector('[name="birthPlace"]').value || '');
+        // Normaliser les retours à la ligne (remplacer \r\n par \n)
+        const docNaissance = (document.querySelector('[name="doc_naissance"]').value || '').replace(/\r\n/g, '\n');
+        formData.append('doc_naissance', docNaissance);
+        formData.append('date_deces', document.querySelector('[name="deathDate"]').value || '');
+        formData.append('lieu_deces', document.querySelector('[name="deathPlace"]').value || '');
+        // Normaliser les retours à la ligne (remplacer \r\n par \n)
+        const docDeces = (document.querySelector('[name="doc_deces"]').value || '').replace(/\r\n/g, '\n');
+        formData.append('doc_deces', docDeces);
+        formData.append('occupation', document.querySelector('[name="occupation"]').value || '');
+        // Normaliser les retours à la ligne pour les notes aussi
+        const notes = (document.querySelector('[name="notes"]').value || '').replace(/\r\n/g, '\n');
+        formData.append('notes', notes);
+        try {
+          const response = await fetch(CONFIG.apiEndpoint, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (!result.success) {
+            throw new Error(result.error || 'Erreur lors de l\'enregistrement');
+          }
+          const savedId = state.editingMember ? state.editingMember.id : result.id;
+          for (const rel of state.tempRelations) {
+            await saveRelation(savedId, rel);
+          }
+          for (const marriage of state.tempMarriages) {
+            await saveMarriage(savedId, marriage);
+          }
+          showTemporaryInfo('Membre enregistré avec succès !', 'success');
+          state.tempRelations = [];
+          state.tempMarriages = [];
+          await loadMembers();
+          resetForm();
+        } catch (error) {
+          console.error(error);
+          showTemporaryInfo(error.message || 'Erreur lors de l\'enregistrement', 'error');
+        }
+      }
+      async function saveRelation(personId, relation) {
+        const formData = new FormData();
+        formData.append('action', 'saveRelation');
+        formData.append('type', relation.type === 'child' || relation.type === 'parent' ? 'parent' : relation.type);
+        if (relation.type === 'parent') {
+          formData.append('parent_id', personId);
+          formData.append('enfant_id', relation.id);
+        } else if (relation.type === 'child') {
+          formData.append('parent_id', relation.id);
+          formData.append('enfant_id', personId);
+        } else if (relation.type === 'sibling') {
+          formData.append('enfant_id', personId);
+          formData.append('parent_id', relation.id);
+        }
+        if (relation.marriageId) {
+          formData.append('mariage_id', relation.marriageId);
+        }
+        try {
+          const response = await fetch(CONFIG.apiEndpoint, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (!result.success) {
+            console.warn('Erreur sauvegarde relation:', result);
+          }
+        } catch (error) {
+          console.warn('Erreur sauvegarde relation:', error);
+        }
+      }
+      async function saveMarriage(personId, marriage) {
+        const formData = new FormData();
+        formData.append('action', marriage.id ? 'updateMariage' : 'addMariage');
+        if (marriage.id) {
+          formData.append('mariage_id', marriage.id);
+        } else {
+          const person = state.members.find(m => m.id === personId) || {
+            sex: document.querySelector('[name="gender"]').value
+          };
+          if (person.sex === 'M') {
+            formData.append('epoux_id', personId);
+            formData.append('epouse_id', marriage.spouseId);
+          } else {
+            formData.append('epoux_id', marriage.spouseId);
+            formData.append('epouse_id', personId);
+          }
+        }
+        if (marriage.date) formData.append('date_mariage', marriage.date);
+        if (marriage.place) formData.append('lieu_mariage', marriage.place);
+        if (marriage.endDate) formData.append('date_fin', marriage.endDate);
+        if (marriage.endType) formData.append('type_fin', marriage.endType);
+        if (marriage.notes) formData.append('notes', marriage.notes);
+        try {
+          const response = await fetch(CONFIG.apiEndpoint, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (!result.success) {
+            console.warn('Erreur sauvegarde mariage:', result);
+          }
+        } catch (error) {
+          console.warn('Erreur sauvegarde mariage:', error);
+        }
+      }
+
+      function resetForm() {
+        const form = document.getElementById('familyForm');
+        form.reset();
+        state.editingMember = null;
+        state.tempRelations = [];
+        state.tempMarriages = [];
+        state.currentStatus = 'alive';
+        document.querySelector('[data-status="alive"]').classList.add('active');
+        document.querySelector('[data-status="deceased"]').classList.remove('active');
+        document.querySelector('.death-info').style.display = 'none';
+        document.querySelector('[name="deathDate"]').required = false;
+        document.querySelector('.relation-select').value = '';
+        document.querySelector('.relation-search-input').style.display = 'none';
+        document.querySelector('.relation-search-input').value = '';
+        document.querySelector('.temp-relations-container').innerHTML = '';
+        document.querySelector('.temp-marriages-container').innerHTML = '';
+        document.querySelector('.existing-relations').innerHTML = '';
+        document.querySelector('.existing-marriages-list').innerHTML = '';
+        document.querySelector('.search-input').value = '';
+        state.filteredMembers = sortMembers(state.members);
+        state.currentPage = 1;
+        renderTable();
+        renderPagination();
+      }
+
+      function addTemporaryRelation(member, type) {
+        const exists = state.tempRelations.some(r => r.id === member.id && r.type === type);
+        if (exists) {
+          showTemporaryInfo('Cette relation existe déjà', 'error');
+          return;
+        }
+        state.tempRelations.push({
+          id: member.id,
+          type: type,
+          firstName: member.firstNames,
+          lastName: member.lastName,
+          sex: member.sex
+        });
+        renderTempRelations();
+      }
+
+      function removeTemporaryRelation(index) {
+        state.tempRelations.splice(index, 1);
+        renderTempRelations();
+      }
+
+      function renderTempRelations() {
+        const container = document.querySelector('.temp-relations-container');
+        if (state.tempRelations.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+        const relationIcons = {
+          'parent': 'fa-user-tie',
+          'child': 'fa-child',
+          'sibling': 'fa-users'
+        };
+        const relationLabels = {
+          'parent': 'Parent de',
+          'child': 'Enfant de',
+          'sibling': 'Frère/Sœur'
+        };
+        container.innerHTML = `
+                <h4><i class="fas fa-clock"></i> Relations à ajouter</h4>
+                <div class="temp-relations">
+                    ${state.tempRelations.map((rel, index) => {
+                        const relatedPerson = state.members.find(m => m.id === rel.id);
+                        const birthYear = relatedPerson && relatedPerson.birthDate ? relatedPerson.birthDate : '';
+                        const deathYear = relatedPerson && relatedPerson.deathDate ? relatedPerson.deathDate : '';
+                        const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+                        
+                        return `
+                            <div class="temp-relation">
+                                <i class="fas ${relationIcons[rel.type]}"></i>
+                                <span>${relationLabels[rel.type]}: ${rel.firstName} ${rel.lastName}${dates}</span>
+                                <i class="fas fa-times btn-delete" onclick="removeTemporaryRelation(${index})" title="Supprimer"></i>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+      }
+
+      function addTemporaryMarriage(spouse, marriageData) {
+        const exists = state.tempMarriages.some(m => m.spouseId === spouse.id);
+        if (exists) {
+          showTemporaryInfo('Un mariage avec cette personne existe déjà', 'error');
+          return;
+        }
+        state.tempMarriages.push({
+          spouseId: spouse.id,
+          spouseName: `${spouse.firstNames} ${spouse.lastName}`,
+          ...marriageData
+        });
+        renderTempMarriages();
+        showTemporaryInfo('Mariage ajouté (sera enregistré avec le membre)', 'success');
+      }
+
+      function removeTemporaryMarriage(index) {
+        state.tempMarriages.splice(index, 1);
+        renderTempMarriages();
+      }
+
+      function renderTempMarriages() {
+        const container = document.querySelector('.temp-marriages-container');
+        if (state.tempMarriages.length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+        container.innerHTML = `
+                <h4><i class="fas fa-ring"></i> Mariages à ajouter</h4>
+                <div class="temp-relations">
+                    ${state.tempMarriages.map((marriage, index) => {
+                        const spouse = state.members.find(m => m.id === marriage.spouseId);
+                        const birthYear = spouse && spouse.birthDate ? spouse.birthDate : '';
+                        const deathYear = spouse && spouse.deathDate ? spouse.deathDate : '';
+                        const spouseDates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - †' + deathYear : ''})` : '';
+                        const marriageDate = marriage.date ? ` • ${formatDate(marriage.date, true)}` : '';
+                        const marriagePlace = marriage.place ? ` • ${marriage.place}` : '';
+                        
+                        return `
+                            <div class="temp-relation">
+                                <i class="fas fa-ring"></i>
+                                <span>Mariage avec ${marriage.spouseName}${spouseDates}${marriageDate}${marriagePlace}</span>
+                                <i class="fas fa-times btn-delete" onclick="removeTemporaryMarriage(${index})" title="Supprimer"></i>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+      }
+
+      // handleRelationSearch supprimée - maintenant dans AddPersonSearchEngine
+
+      function openMarriageModal(spouse = null, existingMarriage = null) {
+        const modal = document.getElementById('marriageModal');
+        const form = document.getElementById('marriageForm');
+        const select = document.getElementById('marriageSpouseSelect');
+        form.reset();
+        document.getElementById('marriageId').value = '';
+        document.getElementById('marriageSpouseId').value = '';
+        select.innerHTML = '<option value="">Sélectionner...</option>';
+        state.members
+          .filter(m => m.id !== (state.editingMember ? state.editingMember.id : null))
+          .forEach(m => {
+            const option = document.createElement('option');
+            option.value = m.id;
+            const dates = m.birthDate ?
+              m.birthDate + (m.deathDate ? ' - ' + m.deathDate : '') :
+              '';
+            option.textContent = `${m.firstNames} ${m.lastName}${dates ? ' (' + dates + ')' : ''}`;
+            select.appendChild(option);
+          });
+        if (existingMarriage) {
+          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Modifier le mariage';
+          document.getElementById('marriageId').value = existingMarriage.marriageId;
+          document.getElementById('marriageSpouseId').value = existingMarriage.spouseId;
+          select.value = existingMarriage.spouseId;
+          select.disabled = true;
+          // Gérer la date de mariage
+          let marriageDateValue = '';
+          if (existingMarriage.fullMarriageDate) {
+            // Format DD-MM-YYYY -> YYYY-MM-DD
+            const parts = existingMarriage.fullMarriageDate.split('-');
+            if (parts.length === 3) {
+              marriageDateValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+          } else if (existingMarriage.marriageDate) {
+            const dateStr = String(existingMarriage.marriageDate);
+            if (/^\d{4}$/.test(dateStr)) {
+              marriageDateValue = dateStr + '-01-01';
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+              marriageDateValue = dateStr;
+            }
+          }
+          document.getElementById('marriageDate').value = marriageDateValue;
+          document.getElementById('marriagePlace').value = existingMarriage.place || existingMarriage.marriagePlace || '';
+          // Gérer la date de fin
+          let endDateValue = '';
+          if (existingMarriage.fullDivorceDate) {
+            // Format DD-MM-YYYY -> YYYY-MM-DD
+            const parts = existingMarriage.fullDivorceDate.split('-');
+            if (parts.length === 3) {
+              endDateValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+          } else if (existingMarriage.endDate || existingMarriage.divorceDate) {
+            const dateStr = String(existingMarriage.endDate || existingMarriage.divorceDate);
+            if (/^\d{4}$/.test(dateStr)) {
+              endDateValue = dateStr + '-01-01';
+            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+              endDateValue = dateStr;
+            }
+          }
+          document.getElementById('marriageEndDate').value = endDateValue;
+          document.getElementById('marriageEndType').value = existingMarriage.endType || '';
+          document.getElementById('marriageNotes').value = existingMarriage.notes || '';
+        } else if (spouse) {
+          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Ajouter un mariage';
+          select.value = spouse.id;
+          document.getElementById('marriageSpouseId').value = spouse.id;
+          select.disabled = false;
+        } else {
+          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Ajouter un mariage';
+          select.disabled = false;
+        }
+        modal.style.display = 'flex';
+      }
+
+      function closeMarriageModal() {
+        document.getElementById('marriageModal').style.display = 'none';
+      }
+      async function handleMarriageSubmit(e) {
+  e.preventDefault();
+  const marriageId = document.getElementById('marriageId').value;
+  const spouseId = document.getElementById('marriageSpouseSelect').value;
+  const date = document.getElementById('marriageDate').value;
+  const place = document.getElementById('marriagePlace').value;
+  const endDate = document.getElementById('marriageEndDate').value;
+  const endType = document.getElementById('marriageEndType').value;
+  const notes = document.getElementById('marriageNotes').value;
+  
+  console.log('=== HANDLE MARRIAGE SUBMIT ===');
+  console.log('marriageId:', marriageId);
+  console.log('marriageId ? true/false:', marriageId ? true : false);
+  console.log('state.editingMember:', state.editingMember);
+  
+  if (!spouseId) {
+    showTemporaryInfo('Veuillez sélectionner un conjoint', 'error');
+    return;
+  }
+  
+  if (state.editingMember) {
+    const formData = new FormData();
+    const action = marriageId ? 'updateMariage' : 'addMariage';
+    console.log('ACTION CHOISIE:', action);
+    formData.append('action', action);
+    
+    if (marriageId) {
+      console.log('MODE UPDATE - mariage_id:', marriageId);
+      formData.append('mariage_id', marriageId);
+    } else {
+      console.log('MODE ADD');
+      const person = state.editingMember;
+      if (person.sex === 'M') {
+        formData.append('epoux_id', person.id);
+        formData.append('epouse_id', spouseId);
+      } else {
+        formData.append('epoux_id', spouseId);
+        formData.append('epouse_id', person.id);
+      }
+    }
+    
+    if (date) formData.append('date_mariage', date);
+    if (place) formData.append('lieu_mariage', place);
+    if (endDate) formData.append('date_fin', endDate);
+    if (endType) formData.append('type_fin', endType);
+    if (notes) formData.append('notes', notes);
+    
+    // DEBUG: Afficher toutes les données envoyées
+    console.log('=== DONNÉES ENVOYÉES ===');
+    for (let pair of formData.entries()) {
+      console.log(pair[0] + ': ' + pair[1]);
+    }
+    
+    try {
+      const response = await fetch(CONFIG.apiEndpoint, {
+        method: 'POST',
+        body: formData
+      });
+      const result = await response.json();
+      console.log('RÉSULTAT API:', result);
+      
+      if (result.success) {
+        showTemporaryInfo('Mariage enregistré !', 'success');
+        await loadMembers();
+        if (state.editingMember) {
+          const updated = state.members.find(m => m.id === state.editingMember.id);
+          if (updated) {
+            state.editingMember = updated;
+            loadExistingMarriages(updated);
+          }
+        }
+        closeMarriageModal();
+      } else {
+        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
+      }
+    } catch (error) {
+      console.error('ERREUR:', error);
+      showTemporaryInfo(error.message, 'error');
+    }
+  } else {
+    const spouse = state.members.find(m => m.id === Number(spouseId));
+    if (spouse) {
+      addTemporaryMarriage(spouse, {
+        id: marriageId || null,
+        date,
+        place,
+        endDate,
+        endType,
+        notes
+      });
+    }
+    closeMarriageModal();
+  }
+}
+      async function deleteMarriage(marriageId) {
+        const confirmed = await showConfirmDelete('Voulez-vous vraiment supprimer ce mariage ?'); if (!confirmed) {
+          return;
+        }
+        const formData = new FormData();
+        formData.append('action', 'deleteMariage');
+        formData.append('mariage_id', marriageId);
+        try {
+          const response = await fetch(CONFIG.apiEndpoint, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (result.success) {
+            showTemporaryInfo('Mariage supprimé', 'success');
+            await loadMembers();
+            if (state.editingMember) {
+              const updated = state.members.find(m => m.id === state.editingMember.id);
+              if (updated) {
+                state.editingMember = updated;
+                loadExistingMarriages(updated);
+              }
+            }
+          } else {
+            throw new Error(result.message || 'Erreur lors de la suppression');
+          }
+        } catch (error) {
+          showTemporaryInfo(error.message, 'error');
+        }
+      }
+      async function deleteExistingRelation(type, relatedId) {
+        const confirmed = await showConfirmDelete('Voulez-vous vraiment supprimer cette relation ?'); if (!confirmed) {
+          return;
+        }
+        const formData = new FormData();
+        formData.append('action', 'deleteRelation');
+        if (type === 'parent') {
+          formData.append('enfant_id', state.editingMember.id);
+          formData.append('parent_id', relatedId);
+        } else if (type === 'child') {
+          formData.append('enfant_id', relatedId);
+          formData.append('parent_id', state.editingMember.id);
+        } else if (type === 'sibling') {
+          formData.append('enfant_id', state.editingMember.id);
+          formData.append('parent_id', relatedId);
+        }
+        try {
+          const response = await fetch(CONFIG.apiEndpoint, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (result.success) {
+            showTemporaryInfo('Relation supprimée', 'success');
+            await loadMembers();
+            const updated = state.members.find(m => m.id === state.editingMember.id);
+            if (updated) {
+              state.editingMember = updated;
+              loadExistingRelations(updated);
+            }
+          } else {
+            throw new Error(result.message || 'Erreur lors de la suppression');
+          }
+        } catch (error) {
+          showTemporaryInfo(error.message, 'error');
+        }
+      }
+
+      function loadExistingMarriages(member) {
+        const container = document.querySelector('.existing-marriages-list');
+        if (!member.marriages || Object.keys(member.marriages).length === 0) {
+          container.innerHTML = '';
+          return;
+        }
+        const marriages = Object.entries(member.marriages).map(([spouseId, marriage]) => {
+          const spouse = state.members.find(m => m.id === Number(spouseId));
+          return {
+            ...marriage,
+            spouseId: Number(spouseId),
+            spouseName: spouse ? `${spouse.firstNames} ${spouse.lastName}` : 'Inconnu',
+            spouseBirthYear: spouse && spouse.birthDate ? spouse.birthDate : '',
+            spouseDeathYear: spouse && spouse.deathDate ? spouse.deathDate : ''
+          };
+        });
+        container.innerHTML = `
+                <h4><i class="fas fa-ring"></i> Mariages (${marriages.length})</h4>
+                <div class="existing-relations">
+                    ${marriages.map((marriage, index) => {
+                        const spouseDates = marriage.spouseBirthYear || marriage.spouseDeathYear 
+                            ? ` (${marriage.spouseBirthYear}${marriage.spouseDeathYear ? ' - ' + marriage.spouseDeathYear : ''})` 
+                            : '';
+                        return `
+                            <div class="existing-relation">
+                                <i class="fas fa-ring"></i>
+                                <span>
+                                    <strong>${marriage.spouseName}${spouseDates}</strong>
+                                    ${marriage.fullMarriageDate ? ` • ${marriage.fullMarriageDate}` : ''}
+                                    ${marriage.place ? ` • ${marriage.place}` : ''}
+                                </span>
+                                <div style="margin-left: auto; display: flex; gap: 12px;">
+                              <i class="fas fa-edit btn-edit" onclick="editMarriage(${marriage.marriageId})" title="Modifier"></i>
+                              <i class="fas fa-times btn-delete" onclick="deleteMarriage(${marriage.marriageId})" title="Supprimer"></i>
+                            </div>
+                          </div>
+                        `;
+                    }).join('')}
+                </div>
+            `;
+      }
+      window.editMarriage = function(marriageId) {
+        const member = state.editingMember;
+        if (!member) return;
+        const marriageEntry = Object.entries(member.marriages).find(([_, m]) => m.marriageId === marriageId);
+        if (!marriageEntry) return;
+        const [spouseId, marriage] = marriageEntry;
+        openMarriageModal(null, {
+          ...marriage,
+          spouseId: Number(spouseId)
+        });
+      };
+
+      function startEditMember(id) {
+        const member = state.members.find(m => m.id === Number(id));
+        if (!member) return;
+        state.editingMember = member;
+        document.querySelector('[name="memberId"]').value = member.id;
+        document.querySelector('[name="firstName"]').value = member.firstNames || member.firstName;
+        document.querySelector('[name="lastName"]').value = member.lastName;
+        document.querySelector('[name="surnom"]').value = member.surnom || '';
+        document.querySelector('[name="gender"]').value = member.sex;
+        document.querySelector('[name="birthDate"]').value = member.isoBirthDate || '';
+        document.querySelector('[name="birthPlace"]').value = member.birthPlace || '';
+        document.querySelector('[name="doc_naissance"]').value = member.doc_naissance || '';
+        document.querySelector('[name="deathDate"]').value = member.isoDeathDate || '';
+        document.querySelector('[name="deathPlace"]').value = member.deathPlace || '';
+        document.querySelector('[name="doc_deces"]').value = member.doc_deces || '';
+        document.querySelector('[name="occupation"]').value = member.occupation || '';
+        document.querySelector('[name="notes"]').value = member.notes || '';
+        if (member.deathDate) {
+          state.currentStatus = 'deceased';
+          document.querySelector('[data-status="deceased"]').classList.add('active');
+          document.querySelector('[data-status="alive"]').classList.remove('active');
+          document.querySelector('.death-info').style.display = 'block';
+        } else {
+          state.currentStatus = 'alive';
+          document.querySelector('[data-status="alive"]').classList.add('active');
+          document.querySelector('[data-status="deceased"]').classList.remove('active');
+          document.querySelector('.death-info').style.display = 'none';
+        }
+        loadExistingRelations(member);
+        loadExistingMarriages(member);
+        document.querySelector('.container').scrollIntoView({
+          behavior: 'smooth'
+        });
+      }
+
+      function loadExistingRelations(member) {
+        const container = document.querySelector('.existing-relations');
+        const hasParents = member.parentIds && member.parentIds.length > 0;
+        const children = state.members.filter(m => m.parentIds && m.parentIds.includes(member.id));
+        const hasSiblings = member.siblingIds && member.siblingIds.length > 0;
+        if (!hasParents && children.length === 0 && !hasSiblings) {
+          container.innerHTML = '';
+          return;
+        }
+        let html = '<h4><i class="fas fa-link"></i> Relations existantes</h4>';
+        html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px; margin-top: 10px;">';
+        if (hasParents) {
+          html += '<div class="relation-type-group">';
+          html += '<div style="font-weight: 600; margin-bottom: 8px; color: var(--accent-color);"><i class="fas fa-user-tie"></i> Parents</div>';
+          member.parentIds.forEach(parentId => {
+            const parent = state.members.find(m => m.id === parentId);
+            if (parent) {
+              const birthYear = parent.birthDate ? parent.birthDate : '';
+              const deathYear = parent.deathDate ? parent.deathDate : '';
+              const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+              html += `
+                            <div class="existing-relation">
+                              <i class="fas fa-user-tie"></i>
+                              <span>${parent.firstNames} ${parent.lastName}${dates}</span>
+                              <i class="fas fa-times btn-delete" onclick="deleteExistingRelation('parent', ${parentId})" title="Supprimer"></i>
+                            </div>
+                        `;
+            }
+          });
+          html += '</div>';
+        }
+        if (children.length > 0) {
+          html += '<div class="relation-type-group">';
+          html += '<div style="font-weight: 600; margin-bottom: 8px; color: var(--accent-color);"><i class="fas fa-child"></i> Enfants</div>';
+          children.forEach(child => {
+            const birthYear = child.birthDate ? child.birthDate : '';
+            const deathYear = child.deathDate ? child.deathDate : '';
+            const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+            html += `
+                        <div class="existing-relation">
+                          <i class="fas fa-child"></i>
+                          <span>${child.firstNames} ${child.lastName}${dates}</span>
+                          <i class="fas fa-times btn-delete" onclick="deleteExistingRelation('child', ${child.id})" title="Supprimer"></i>
+                        </div>
+                    `;
+          });
+          html += '</div>';
+        }
+        if (hasSiblings) {
+          html += '<div class="relation-type-group">';
+          html += '<div style="font-weight: 600; margin-bottom: 8px; color: var(--accent-color);"><i class="fas fa-users"></i> Frères et sœurs</div>';
+          member.siblingIds.forEach(siblingId => {
+            const sibling = state.members.find(m => m.id === siblingId);
+            if (sibling) {
+              const birthYear = sibling.birthDate ? sibling.birthDate : '';
+              const deathYear = sibling.deathDate ? sibling.deathDate : '';
+              const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+              html += `
+                            <div class="existing-relation">
+                              <i class="fas fa-users"></i>
+                              <span>${sibling.firstNames} ${sibling.lastName}${dates}</span>
+                              <i class="fas fa-times btn-delete" onclick="deleteExistingRelation('sibling', ${siblingId})" title="Supprimer"></i>
+                            </div>
+                        `;
+            }
+          });
+          html += '</div>';
+        }
+        html += '</div>';
+        container.innerHTML = html;
+      }
+      async function confirmDeleteMember(id) {
+        const confirmed = await showConfirmDelete('Êtes-vous sûr de vouloir supprimer ce membre et toutes ses relations ?'); if (!confirmed) {
+          return;
+        }
+        const formData = new FormData();
+        formData.append('action', 'deleteMembre');
+        formData.append('id', id);
+        try {
+          const response = await fetch(CONFIG.apiEndpoint, {
+            method: 'POST',
+            body: formData
+          });
+          const result = await response.json();
+          if (result.success) {
+            showTemporaryInfo('Membre supprimé', 'success');
+            await loadMembers();
+          } else {
+            throw new Error(result.error || 'Erreur lors de la suppression');
+          }
+        } catch (error) {
+          showTemporaryInfo(error.message, 'error');
+        }
+      }
+
+      function renderTable() {
+        const tbody = document.querySelector('.table tbody');
+        const start = (state.currentPage - 1) * CONFIG.itemsPerPage;
+        const end = start + CONFIG.itemsPerPage;
+        const pageMembers = state.filteredMembers.slice(start, end);
+        tbody.innerHTML = pageMembers.map(member => {
+          const relations = [];
+          if (member.parentIds && member.parentIds.length > 0) {
+            const count = member.parentIds.length;
+            relations.push(
+              `<span class="lieu-badge badge-parent">${count} ${count > 1 ? "parents" : "parent"}</span>`
+            );
+          }
+          const childrenCount = state.members.filter(m =>
+            m.parentIds && m.parentIds.includes(member.id)
+          ).length;
+          if (childrenCount > 0) {
+            relations.push(
+              `<span class="lieu-badge badge-enfant">${childrenCount} ${childrenCount > 1 ? "enfants" : "enfant"}</span>`
+            );
+          }
+          if (member.siblingIds && member.siblingIds.length > 0) {
+            const count = member.siblingIds.length;
+            relations.push(
+              `<span class="lieu-badge badge-fratrie">${count} ${count > 1 ? "fratries" : "fratrie"}</span>`
+            );
+          }
+          if (member.marriages && Object.keys(member.marriages).length > 0) {
+            const count = Object.keys(member.marriages).length;
+            relations.push(
+              `<span class="lieu-badge badge-mariage">${count} ${count > 1 ? "mariages" : "mariage"}</span>`
+            );
+          }
+          const birthDisplay = member.fullBirthDate || member.birthDate || '';
+          const deathDisplay = member.fullDeathDate ? member.fullDeathDate + ' †' : (member.deathDate ? member.deathDate + ' †' : '');
+          return `
+                    <tr>
+                        <td>${member.lastName}</td>
+                        <td>${member.firstNames}</td>
+                        <td style="text-align: center;">${member.sex === 'M' ? 'M' : member.sex === 'F' ? 'F' : 'Non spécifié'}</td>
+                        <td style="text-align: center;">${birthDisplay}</td>
+                        <td style="text-align: center;">${deathDisplay}</td>
+                        <td>${relations.join(' ') || '<span class="lieu-badge badge-deces">Aucune</span>'}</td>
+                        <td style="text-align: center;">
+                          <i class="fas fa-edit btn-edit" onclick="startEditMember(${member.id})" title="Modifier"></i>
+                          <i class="fas fa-times btn-delete" onclick="confirmDeleteMember(${member.id})" title="Supprimer"></i>
+                        </td>
+                    </tr>
+                `;
+        }).join('');
+      }
+
+      function renderPagination() {
+        const totalPages = Math.ceil(state.filteredMembers.length / CONFIG.itemsPerPage);
+        const pagination = document.querySelector('.pagination');
+        if (totalPages <= 1) {
+          pagination.innerHTML = '';
+          return;
+        }
+        let html = '';
+        if (state.currentPage > 1) {
+          html += `<button class="page-btn" onclick="changePage(${state.currentPage - 1})">&laquo; Précédent</button>`;
+        }
+        for (let i = 1; i <= totalPages; i++) {
+          if (i === 1 || i === totalPages || (i >= state.currentPage - 2 && i <= state.currentPage + 2)) {
+            html += `<button class="page-btn ${i === state.currentPage ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+          } else if (i === state.currentPage - 3 || i === state.currentPage + 3) {
+            html += '<span class="page-ellipsis">...</span>';
+          }
+        }
+        if (state.currentPage < totalPages) {
+          html += `<button class="page-btn" onclick="changePage(${state.currentPage + 1})">Suivant &raquo;</button>`;
+        }
+        pagination.innerHTML = html;
+      }
+
+      function changePage(page) {
+        state.currentPage = page;
+        renderTable();
+        renderPagination();
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }
+
+      // handleMainSearch supprimée - maintenant dans AddPersonSearchEngine
+
+      // highlightMatch supprimée - maintenant dans AddPersonSearchEngine
+
+      // selectMemberFromSuggestion et selectRelation maintenant définies comme fonctions globales window.*
+
+      // Index alphabétique
+      function setupAlphabetIndex() {
+        const letters = [...new Set(
+          state.members
+          .map(m => (m.lastName || '').charAt(0).toUpperCase())
+          .filter(c => /[A-ZÀ-Ü]/.test(c))
+        )].sort();
+        const indexHtml = `
+          <button class="letter-btn active" onclick="showAllMembers()">
+            <i class="fas fa-users stat-number"></i> Tous
+          </button>
+          ${letters.map(letter => `
+            <button class="letter-btn" onclick="filterByLetter('${letter}')">
+              ${letter}
+            </button>
+          `).join('')}
+        `;
+        document.querySelector('.alphabet-index').innerHTML = indexHtml;
+      }
+
+      // Filtrer par lettre
+      function filterByLetter(letter) {
+        state.filteredMembers = state.members.filter(m =>
+          (m.lastName || '').charAt(0).toUpperCase() === letter
+        );
+        state.currentPage = 1;
+        // Mettre à jour l'état actif des boutons
+        document.querySelectorAll('.letter-btn').forEach(btn => {
+          btn.classList.remove('active');
+          if (btn.textContent.trim() === letter) {
+            btn.classList.add('active');
+          }
+        });
+        document.querySelector('.search-input').value = '';
+        document.querySelector('.clear-search').style.display = 'none';
+        renderTable();
+        renderPagination();
+      }
+
+      // Afficher tous les membres
+      function showAllMembers() {
+        state.filteredMembers = sortMembers(state.members);
+        state.currentPage = 1;
+        document.querySelectorAll('.letter-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        document.querySelector('.letter-btn').classList.add('active');
+        document.querySelector('.search-input').value = '';
+        document.querySelector('.clear-search').style.display = 'none';
+        renderTable();
+        renderPagination();
+      }
+
+      function setupUI() {
+        // loadDarkModeScript est appelé automatiquement par menu-loader.js après chargement du menu
+        document.querySelectorAll('.status-button').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.querySelectorAll('.status-button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.currentStatus = btn.dataset.status || 'alive';
+            if (state.currentStatus === 'deceased') {
+              document.querySelector('.death-info').style.display = 'block';
+              document.querySelector('[name="deathDate"]').required = true;
+            } else {
+              document.querySelector('.death-info').style.display = 'none';
+              document.querySelector('[name="deathDate"]').required = false;
+            }
+          });
+        });
+        const mainSearch = document.querySelector('.search-input');
+        const clearBtn = document.querySelector('.clear-search');
+        clearBtn.style.display = 'none';
+        
+        // Initialiser le moteur de recherche
+        searchEngine.setupElements();
+        searchEngine.setupEventListeners();
+        
+        // Afficher/masquer le bouton clear
+        mainSearch.addEventListener('input', (e) => {
+          clearBtn.style.display = e.target.value.trim() !== '' ? 'block' : 'none';
+        });
+        
+        const relationSelect = document.querySelector('.relation-select');
+        const relationInput = document.querySelector('.relation-search-input');
+        relationSelect.addEventListener('change', (e) => {
+          relationInput.style.display = e.target.value ? 'block' : 'none';
+          relationInput.value = '';
+          if (e.target.value) {
+            relationInput.focus();
+          }
+        });
+        document.getElementById('familyForm').addEventListener('submit', handleFormSubmit);
+        document.getElementById('resetBtn').addEventListener('click', (e) => {
+          e.preventDefault();
+          resetForm();
+        });
+        document.getElementById('marriageForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const marriageId = document.getElementById('marriageId').value;
+          const spouseId = parseInt(document.getElementById('marriageSpouseSelect').value);
+          const spouse = state.members.find(m => m.id === spouseId);
+          
+          if (!spouse) {
+            showTemporaryInfo('Veuillez sélectionner un conjoint', 'error');
+            return;
+          }
+          
+          const marriageData = {
+            date: document.getElementById('marriageDate').value,
+            place: document.getElementById('marriagePlace').value,
+            endDate: document.getElementById('marriageEndDate').value,
+            endType: document.getElementById('marriageEndType').value,
+            notes: document.getElementById('marriageNotes').value
+          };
+          
+          // Si on édite un membre existant ET qu'on a un marriageId, c'est une mise à jour
+          if (state.editingMember && marriageId) {
+            const formData = new FormData();
+            formData.append('action', 'updateMariage');
+            formData.append('mariage_id', marriageId);
+            formData.append('date_mariage', marriageData.date || '');
+            formData.append('lieu_mariage', marriageData.place || '');
+            formData.append('date_fin', marriageData.endDate || '');
+            formData.append('type_fin', marriageData.endType || '');
+            formData.append('notes', marriageData.notes || '');
+            
+            try {
+              const response = await fetch(CONFIG.apiEndpoint, {
+                method: 'POST',
+                body: formData
+              });
+              const result = await response.json();
+              
+              if (result.success) {
+                showTemporaryInfo('Mariage modifié !', 'success');
+                await loadMembers();
+                if (state.editingMember) {
+                  const updated = state.members.find(m => m.id === state.editingMember.id);
+                  if (updated) {
+                    state.editingMember = updated;
+                    loadExistingMarriages(updated);
+                  }
+                }
+                document.getElementById('marriageForm').reset();
+                closeMarriageModal();
+              } else {
+                throw new Error(result.message || 'Erreur lors de la modification');
+              }
+            } catch (error) {
+              showTemporaryInfo(error.message, 'error');
+            }
+          }
+          // Si on édite un membre existant SANS marriageId, c'est un nouvel ajout
+          else if (state.editingMember && !marriageId) {
+            const formData = new FormData();
+            formData.append('action', 'addMariage');
+            const person = state.editingMember;
+            if (person.sex === 'M') {
+              formData.append('epoux_id', person.id);
+              formData.append('epouse_id', spouseId);
+            } else {
+              formData.append('epoux_id', spouseId);
+              formData.append('epouse_id', person.id);
+            }
+            if (marriageData.date) formData.append('date_mariage', marriageData.date);
+            if (marriageData.place) formData.append('lieu_mariage', marriageData.place);
+            if (marriageData.endDate) formData.append('date_fin', marriageData.endDate);
+            if (marriageData.endType) formData.append('type_fin', marriageData.endType);
+            if (marriageData.notes) formData.append('notes', marriageData.notes);
+            
+            try {
+              const response = await fetch(CONFIG.apiEndpoint, {
+                method: 'POST',
+                body: formData
+              });
+              const result = await response.json();
+              
+              if (result.success) {
+                showTemporaryInfo('Mariage enregistré !', 'success');
+                await loadMembers();
+                if (state.editingMember) {
+                  const updated = state.members.find(m => m.id === state.editingMember.id);
+                  if (updated) {
+                    state.editingMember = updated;
+                    loadExistingMarriages(updated);
+                  }
+                }
+                document.getElementById('marriageForm').reset();
+                closeMarriageModal();
+              } else {
+                throw new Error(result.message || 'Erreur lors de l\'enregistrement');
+              }
+            } catch (error) {
+              showTemporaryInfo(error.message, 'error');
+            }
+          }
+          // Sinon, c'est un mariage temporaire (nouveau membre pas encore enregistré)
+          else {
+            addTemporaryMarriage(spouse, marriageData);
+            document.getElementById('marriageForm').reset();
+            closeMarriageModal();
+          }
+        });
+      }
+      window.selectRelation = selectRelation;
+      window.selectMemberFromSuggestion = selectMemberFromSuggestion;
+      window.startEditMember = startEditMember;
+      window.confirmDeleteMember = confirmDeleteMember;
+      window.resetForm = resetForm;
+      window.changePage = changePage;
+      window.filterByLetter = filterByLetter;
+      window.showAllMembers = showAllMembers;
+      window.removeTemporaryRelation = removeTemporaryRelation;
+      window.removeTemporaryMarriage = removeTemporaryMarriage;
+      window.openMarriageModal = openMarriageModal;
+      window.closeMarriageModal = closeMarriageModal;
+      window.editMarriage = editMarriage;
+      window.deleteMarriage = deleteMarriage;
+      window.deleteExistingRelation = deleteExistingRelation;
+      document.addEventListener('DOMContentLoaded', async () => {
+        setupUI();
+        await loadMembers();
+      });
+    </script>
+  </body>
+
+</html>
