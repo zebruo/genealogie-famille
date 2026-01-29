@@ -1,6 +1,6 @@
 # Arbre Généalogique Familial
 
-**Version 2.1**
+**Version 2.3**
 
 Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne.
 
@@ -8,15 +8,17 @@ Application web professionnelle et interactive pour visualiser et gérer un arbr
 
 ### Visualisation
 - Arbre généalogique interactif avec D3.js
-- Zoom et navigation fluide
+- Nœuds rectangulaires avec bordures colorées (bleu/rose selon sexe)
+- Zoom et navigation fluide (limites configurables 0.2x - 3x)
 - Affichage de 2 à 6 générations
 - Connexions visuelles entre parents et enfants
-- Affichage des mariages avec dates
+- Affichage des mariages avec dates (liens pointillés si plusieurs conjoints)
+- Affichage des fratries
 
 ### Interface utilisateur
 - Design moderne et responsive
 - Mode sombre / clair
-- Menu de navigation avec hamburger
+- Menu de navigation avec hamburger (mobile)
 - Panneau latéral avec informations détaillées
 - Quick View pour les documents
 - Recherche universelle avec autocomplétion
@@ -32,40 +34,44 @@ Application web professionnelle et interactive pour visualiser et gérer un arbr
 
 ```
 genealogie-famille/
-├── index.html                      # Page principale (109 lignes)
+├── index.html                      # Page principale - Arbre généalogique
+├── add-person.html                 # Formulaire d'ajout de personne
+├── menu-navigation.html            # Menu de navigation principal
+├── menu-navigation-users.html      # Menu de navigation utilisateurs
 ├── README.md                       # Documentation
 │
 ├── admin/                          # Backend PHP
 │   ├── api3.php                    # API principale pour les données
 │   ├── api4.php                    # API pour les documents
 │   ├── api-backup.php              # API de backup
+│   ├── config.php                  # Configuration (non versionné)
 │   ├── config.example.php          # Template de configuration
 │   ├── backup-database.html        # Interface de backup
 │   ├── gedcom-debug.php            # Débogueur GEDCOM
 │   └── mariage_manager.php         # Gestionnaire de mariages
 │
 ├── js/                             # JavaScript modulaire
-│   ├── config.js                   # Configuration globale
+│   ├── config.js                   # Configuration globale (dimensions, espacements, zoom)
 │   ├── family-member.js            # Classe FamilyMember
 │   ├── ui-manager.js               # Gestionnaire d'interface
-│   ├── tree-visualizer.js          # Visualisation D3.js
-│   ├── family-tree-app.js          # Application principale
+│   ├── tree-visualizer.js          # Visualisation D3.js (SVG, zoom, centrage)
+│   ├── family-tree-app.js          # Application principale (dessin arbre, liens, nœuds)
 │   ├── helpers.js                  # Fonctions utilitaires
-│   ├── init.js                     # Initialisation
+│   ├── init.js                     # Initialisation et événements
 │   ├── search-engine.js            # Moteur de recherche
 │   ├── modal-system.js             # Système de modales
 │   ├── person-quick-view.js        # Quick View des personnes
 │   ├── menu-loader.js              # Chargeur de menu
 │   ├── darkMode.js                 # Mode sombre
-│   └── burger.js                   # Menu hamburger
+│   └── burger.js                   # Menu hamburger mobile
 │
 ├── styles/                         # Feuilles de style CSS
-│   ├── family-tree-styles.css      # Styles de l'arbre
+│   ├── family-tree-styles.css      # Styles principaux (2800+ lignes)
 │   ├── person-quick-view.css       # Styles Quick View
 │   ├── modal-system.css            # Styles des modales
 │   └── convertisseur-styles.css    # Styles convertisseur
 │
-└── menu-navigation.html            # Menu de navigation
+└── uploads/                        # Dossier uploads (non versionné)
 ```
 
 ## Installation
@@ -140,10 +146,11 @@ genealogie-famille/
 
 ### Frontend
 - HTML5
-- CSS3 (Flexbox, Grid, animations)
+- CSS3 (Flexbox, Grid, animations, variables CSS)
 - JavaScript ES6+ (architecture modulaire)
 - D3.js v7.8.5 (visualisation)
 - Font Awesome 6.4.0 (icônes)
+- Google Fonts (Poppins, Inter, Lato)
 
 ### Backend
 - PHP 7.4+
@@ -161,11 +168,11 @@ genealogie-famille/
 
 Le code JavaScript est organisé en modules séparés pour une meilleure maintenabilité:
 
-- **config.js**: Configuration centralisée
+- **config.js**: Configuration centralisée (dimensions nœuds, espacements, zoom)
 - **family-member.js**: Modèle de données pour les membres de la famille
-- **ui-manager.js**: Gestion de l'interface utilisateur
-- **tree-visualizer.js**: Logique de visualisation D3.js
-- **family-tree-app.js**: Orchestration de l'application
+- **ui-manager.js**: Gestion de l'interface utilisateur et panneau latéral
+- **tree-visualizer.js**: Logique de visualisation D3.js (SVG, zoom, calcul bounds)
+- **family-tree-app.js**: Orchestration de l'application (dessin arbre, liens, nœuds)
 - **helpers.js**: Fonctions utilitaires réutilisables
 - **init.js**: Point d'entrée de l'application
 
@@ -174,7 +181,15 @@ Le code JavaScript est organisé en modules séparés pour une meilleure mainten
 - Credentials de base de données non versionnés (.gitignore)
 - Fichier `config.example.php` pour template
 - Backups SQL exclus du versioning
+- Dossier uploads exclu du versioning
 - Requêtes préparées PDO contre les injections SQL
+
+## Historique des versions
+
+- **v2.3** - Nettoyage code obsolète, nouvelles pages (add-person, menu-users)
+- **v2.2** - Améliorations UI panel et zoom optimal
+- **v2.1** - Gaps texte, liens mariage conditionnels, nettoyage
+- **v2.0** - Refonte majeure avec rectangles et liens orthogonaux
 
 ## Contribution
 
@@ -186,10 +201,10 @@ Usage personnel - Tous droits réservés
 
 ## Auteur
 
-Développé avec l'assistance de Claude Sonnet 4.5
+Développé avec l'assistance de Claude
 
 ---
 
 **© 2026 - Généalogie Durel**
 
-Créé avec ❤️ pour préserver l'histoire familiale
+Créé avec soin pour préserver l'histoire familiale
