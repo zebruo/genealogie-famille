@@ -28,3 +28,5 @@ uploads/
 
 # Fichiers de test
 test.html
+admin/git-api.php
+admin/git-manager.html
