@@ -4,10 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Arbre Généalogique Ascendant</title>
-    <link rel="icon" href="data:,"> <!--source vide pour le moment-->
+    <link rel="icon" href="data:," />
+    <!--source vide pour le moment-->
     <link rel="stylesheet" href="styles/family-tree-styles.css" />
     <link rel="stylesheet" href="styles/person-quick-view.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
     <link rel="stylesheet" href="styles/modal-system.css" />
   </head>
@@ -103,6 +107,45 @@
       </div>
 
       <div class="tree-container" id="tree-container"></div>
+
+      <!-- Contrôles de zoom mobile -->
+      <div class="zoom-controls" id="zoomControls">
+        <button class="zoom-btn" id="zoomInBtn" aria-label="Zoom avant">
+          <i class="fas fa-plus"></i>
+        </button>
+        <button
+          class="zoom-btn center-btn"
+          id="centerBtnMobile"
+          aria-label="Centrer"
+        >
+          <i class="fas fa-crosshairs"></i>
+        </button>
+        <button class="zoom-btn" id="zoomOutBtn" aria-label="Zoom arrière">
+          <i class="fas fa-minus"></i>
+        </button>
+        <button
+          class="zoom-btn"
+          id="toggleOrientationMobile"
+          aria-label="Orientation"
+        >
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+        <button
+          class="zoom-btn"
+          id="returnToDefaultMobile"
+          aria-label="Retour"
+          style="display: none"
+        >
+          <i class="fa-solid fa-bullseye"></i>
+        </button>
+        <button
+          class="zoom-btn"
+          id="setDefaultMobile"
+          aria-label="Point de départ"
+        >
+          <i class="fas fa-flag"></i>
+        </button>
+      </div>
     </div>
     <!-- Scripts de l'application -->
     <script src="js/config.js"></script>

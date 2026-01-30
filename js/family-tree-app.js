@@ -169,6 +169,7 @@ class FamilyTreeApp {
     var returnButton = document.getElementById("returnToDefaultButton");
     var storedDefaultId = localStorage.getItem("defaultPersonId");
     var currentPerson = this.familyDatabase[this.currentPersonId];
+    var returnButtonMobile = document.getElementById("returnToDefaultMobile");
     if (storedDefaultId) {
       var defaultPerson = this.familyDatabase[storedDefaultId];
       var referenceFullName = defaultPerson ? (defaultPerson.firstName + " " + defaultPerson.lastName) : "";
@@ -178,8 +179,10 @@ class FamilyTreeApp {
         "</span></span>";
       returnButton.innerHTML = '<i class="fa-solid fa-bullseye"></i>' + refInfo;
       returnButton.style.display = "inline-flex";
+      if (returnButtonMobile) returnButtonMobile.style.display = "flex";
     } else {
       returnButton.style.display = "none";
+      if (returnButtonMobile) returnButtonMobile.style.display = "none";
     }
     if (storedDefaultId && this.currentPersonId) {
       if (storedDefaultId === this.currentPersonId.toString()) {
