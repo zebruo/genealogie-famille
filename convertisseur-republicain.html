@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Convertisseur du Calendrier Républicain</title>
+    <link rel="icon" href="data:,"> <!--source vide pour le moment-->
+    <link rel="stylesheet" href="../styles/family-tree-styles.css">
+    <link rel="stylesheet" href="../styles/convertisseur-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-tools.html -->
+    <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Page Header -->
+        <div class="controls-header">
+            <div class="controls-title">
+                <i class="fas fa-calendar-alt"></i>
+                <span>Convertisseur du Calendrier Républicain</span>
+            </div>
+            <p>Convertissez les dates entre le calendrier républicain français et le calendrier grégorien</p>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;">
+                <i class="fas fa-info-circle"></i> Période couverte : du 22 septembre 1792 (1 Vendémiaire An I) au 31
+                décembre 1805 (10 Nivôse An XIV) — Aboli le 1er janvier 1806
+            </p>
+        </div>
+
+        <!-- Zone de résultat centralisée -->
+        <div class="relation-section" id="resultGlobal">
+            <h3 style="margin-bottom: 15px; color: var(--accent-color); font-size: 1.1rem;">
+                <i class="fas fa-arrow-right"></i> Résultat de la conversion
+            </h3>
+            <p class="result-text" id="resultText">Sélectionnez une date pour voir le résultat de la conversion</p>
+        </div>
+
+        <!-- Converters Grid -->
+        <div class="converter-grid">
+            <!-- Républicain vers Grégorien -->
+            <div class="stats-box">
+                <div class="card-header">
+                    <i class="fas fa-arrow-right"></i>
+                    <h3>Républicain → Grégorien</h3>
+                </div>
+                <div class="form-group">
+                    <label>Sélectionnez une date républicaine :</label>
+                    <div class="form-row">
+                        <select name="jour1" id="jour1">
+                            <option value="-1">Jour</option>
+                        </select>
+                        <select name="mois1" id="mois1">
+                            <option value="-1">Mois</option>
+                        </select>
+                        <select name="annee1" id="annee1">
+                            <option value="-1">Année</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Jours Complémentaires vers Grégorien -->
+            <div class="stats-box">
+                <div class="card-header">
+                    <i class="fas fa-star"></i>
+                    <h3>Jours Complémentaires</h3>
+                    <p>5 ou 6 jours placés à la fin du dernier mois de Fructidor.</p>
+                </div>
+                <div class="form-group">
+                    <label>Jour complémentaire :</label>
+                    <select name="jour2" id="jour2">
+                        <option value="-1">Sélectionner le jour</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mois :</label>
+                    <span style="font-weight: 600; font-size: 3 rem;">Fructidor</span>
+                </div>
+                <div class="form-group">
+                    <label>Année :</label>
+                    <select name="annee2" id="annee2">
+                        <option value="-1">Sélectionner l'année</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Grégorien vers Républicain -->
+            <div class="stats-box">
+                <div class="card-header">
+                    <i class="fas fa-arrow-left"></i>
+                    <h3>Grégorien → Républicain</h3>
+                </div>
+                <div class="form-group">
+                    <label>Sélectionnez une date grégorienne :</label>
+                    <div class="form-row">
+                        <select name="jour3" id="jour3">
+                            <option value="-1">Jour</option>
+                        </select>
+                        <select name="mois3" id="mois3">
+                            <option value="-1">Mois</option>
+                        </select>
+                        <select name="annee3" id="annee3">
+                            <option value="-1">Année</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Information Section -->
+        <div class="info-section">
+            <h2><i class="fas fa-info-circle"></i> À propos du Calendrier Républicain</h2>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <h4><i class="fas fa-calendar-check"></i> Création et période d'utilisation</h4>
+                    <p>Le calendrier républicain fut instauré le 6 octobre 1793 (15 vendémiaire an II) par la
+                        Convention.
+                        Sa date de début fut fixée rétroactivement au <strong>22 septembre 1792</strong> (1 Vendémiaire
+                        An I),
+                        jour de la proclamation de la Ire République et de l'équinoxe d'automne. Napoléon Ier l'abolit
+                        par
+                        décret impérial du 9 septembre 1805 (22 fructidor an XIII), le calendrier grégorien reprenant le
+                        <strong>1er janvier 1806</strong> (11 Nivôse An XIV). Le calendrier républicain aura été en
+                        vigueur pendant 13 ans.
+                    </p>
+                </div>
+
+                <div class="info-card">
+                    <h4><i class="fas fa-calculator"></i> Structure du calendrier</h4>
+                    <p>Le calendrier comportait 12 mois de 30 jours, soit 360 jours. Pour atteindre l'année solaire de
+                        365¼ jours, on ajoutait 5 jours complémentaires (6 pour les années sextiles) après fructidor,
+                        afin de faire correspondre le jour de l'an avec le passage de l'équinoxe d'automne au méridien
+                        de Paris.</p>
+                </div>
+
+                <div class="info-card">
+                    <h4><i class="fas fa-clock"></i> La décade</h4>
+                    <p>La décade remplace la semaine. Ses jours sont dénommés primidi, duodi, tridi, quartidi, quintidi,
+                        sextidi, septidi, octidi, nonidi et décadi. Chaque mois comprend trois décades de 10 jours.</p>
+                </div>
+
+                <div class="info-card">
+                    <h4><i class="fas fa-leaf"></i> Origine des noms de mois</h4>
+                    <p>Le poète Fabre d'Églantine (1750-1794) s'est inspiré du rythme des saisons et des événements
+                        naturels : vendémiaire (vendanges), brumaire (brumes), frimaire (frimas), nivôse (neiges),
+                        pluviôse (pluies), ventôse (vent), germinal (germination), floréal (fleurs), prairial
+                        (prairies), messidor (moissons), thermidor (chaleurs) et fructidor (fruits).</p>
+                </div>
+            </div>
+
+            <div class="complementary-days">
+                <h4><i class="fas fa-star"></i> Les jours complémentaires</h4>
+                <p style="color: var(--text-secondary); margin-bottom: 15px; line-height: 1.6;">
+                    Ces 5 ou 6 jours étaient chômés et placés à la fin du dernier mois, fructidor. Initialement nommés
+                    <em>sans-culottides</em> par le décret du 4 frimaire an II (référence aux sans-culottes), ils furent
+                    rebaptisés <em>jours complémentaires</em> par le décret du 7 fructidor an III.
+                </p>
+                <ul class="days-list">
+                    <li><strong>31 Fructidor (primidi)</strong> - Jour de la vertu</li>
+                    <li><strong>32 Fructidor (duodi)</strong> - Jour du génie</li>
+                    <li><strong>33 Fructidor (tridi)</strong> - Jour du travail</li>
+                    <li><strong>34 Fructidor (quartidi)</strong> - Jour de l'opinion</li>
+                    <li><strong>35 Fructidor (quintidi)</strong> - Jour des récompenses</li>
+                    <li><strong>36 Fructidor (sextidi)</strong> - Jour de la révolution <em>(années sextiles An III, VII
+                            et XI uniquement)</em></li>
+                </ul>
+            </div>
+
+            <div class="complementary-days">
+                <h4><i class="fas fa-calendar-alt"></i> Les 12 mois républicains</h4>
+                <div class="months-list">
+                    <div class="month-item"><strong>Vendémiaire</strong><br>22 sept - 21 oct</div>
+                    <div class="month-item"><strong>Brumaire</strong><br>22 oct - 20 nov</div>
+                    <div class="month-item"><strong>Frimaire</strong><br>21 nov - 20 déc</div>
+                    <div class="month-item"><strong>Nivôse</strong><br>21 déc - 19 jan</div>
+                    <div class="month-item"><strong>Pluviôse</strong><br>20 jan - 18 fév</div>
+                    <div class="month-item"><strong>Ventôse</strong><br>19 fév - 20 mar</div>
+                    <div class="month-item"><strong>Germinal</strong><br>21 mar - 19 avr</div>
+                    <div class="month-item"><strong>Floréal</strong><br>20 avr - 19 mai</div>
+                    <div class="month-item"><strong>Prairial</strong><br>20 mai - 18 juin</div>
+                    <div class="month-item"><strong>Messidor</strong><br>19 juin - 18 juil</div>
+                    <div class="month-item"><strong>Thermidor</strong><br>19 juil - 17 août</div>
+                    <div class="month-item"><strong>Fructidor</strong><br>18 août - 16 sept</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Données pour les mois républicains
+        const moisRepublicains = [
+            'Vendémiaire', 'Brumaire', 'Frimaire', 'Nivôse', 'Pluviôse', 'Ventôse',
+            'Germinal', 'Floréal', 'Prairial', 'Messidor', 'Thermidor', 'Fructidor'
+        ];
+
+        const moisGregoriens = [
+            'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+        ];
+
+        // Table de correspondance complète - début de chaque mois républicain en date grégorienne
+        // Format: année républicaine -> mois républicain (0-11) -> {année grégorienne, mois (1-12), jour}
+        const tableCorrespondance = {
+            0: [ // An I (1792-1793)
+                { a: 1792, m: 9, j: 22 },   // Vendémiaire
+                { a: 1792, m: 10, j: 22 },  // Brumaire
+                { a: 1792, m: 11, j: 21 },  // Frimaire
+                { a: 1792, m: 12, j: 21 },  // Nivôse
+                { a: 1793, m: 1, j: 20 },   // Pluviôse
+                { a: 1793, m: 2, j: 19 },   // Ventôse
+                { a: 1793, m: 3, j: 21 },   // Germinal
+                { a: 1793, m: 4, j: 20 },   // Floréal
+                { a: 1793, m: 5, j: 20 },   // Prairial
+                { a: 1793, m: 6, j: 19 },   // Messidor
+                { a: 1793, m: 7, j: 19 },   // Thermidor
+                { a: 1793, m: 8, j: 18 }    // Fructidor
+            ],
+            1: [ // An II (1793-1794)
+                { a: 1793, m: 9, j: 22 },
+                { a: 1793, m: 10, j: 22 },
+                { a: 1793, m: 11, j: 21 },
+                { a: 1793, m: 12, j: 21 },
+                { a: 1794, m: 1, j: 20 },
+                { a: 1794, m: 2, j: 19 },
+                { a: 1794, m: 3, j: 21 },
+                { a: 1794, m: 4, j: 20 },
+                { a: 1794, m: 5, j: 20 },
+                { a: 1794, m: 6, j: 19 },
+                { a: 1794, m: 7, j: 19 },
+                { a: 1794, m: 8, j: 18 }
+            ],
+            2: [ // An III (1794-1795)
+                { a: 1794, m: 9, j: 22 },
+                { a: 1794, m: 10, j: 22 },
+                { a: 1794, m: 11, j: 21 },
+                { a: 1794, m: 12, j: 21 },
+                { a: 1795, m: 1, j: 20 },
+                { a: 1795, m: 2, j: 19 },
+                { a: 1795, m: 3, j: 21 },
+                { a: 1795, m: 4, j: 20 },
+                { a: 1795, m: 5, j: 20 },
+                { a: 1795, m: 6, j: 19 },
+                { a: 1795, m: 7, j: 19 },
+                { a: 1795, m: 8, j: 18 }
+            ],
+            3: [ // An IV (1795-1796) - année bissextile
+                { a: 1795, m: 9, j: 23 },
+                { a: 1795, m: 10, j: 23 },
+                { a: 1795, m: 11, j: 22 },
+                { a: 1795, m: 12, j: 22 },
+                { a: 1796, m: 1, j: 21 },
+                { a: 1796, m: 2, j: 20 },
+                { a: 1796, m: 3, j: 21 },
+                { a: 1796, m: 4, j: 20 },
+                { a: 1796, m: 5, j: 20 },
+                { a: 1796, m: 6, j: 19 },
+                { a: 1796, m: 7, j: 19 },
+                { a: 1796, m: 8, j: 18 }
+            ],
+            4: [ // An V (1796-1797)
+                { a: 1796, m: 9, j: 22 },
+                { a: 1796, m: 10, j: 22 },
+                { a: 1796, m: 11, j: 21 },
+                { a: 1796, m: 12, j: 21 },
+                { a: 1797, m: 1, j: 20 },
+                { a: 1797, m: 2, j: 19 },
+                { a: 1797, m: 3, j: 21 },
+                { a: 1797, m: 4, j: 20 },
+                { a: 1797, m: 5, j: 20 },
+                { a: 1797, m: 6, j: 19 },
+                { a: 1797, m: 7, j: 19 },
+                { a: 1797, m: 8, j: 18 }
+            ],
+            5: [ // An VI (1797-1798)
+                { a: 1797, m: 9, j: 22 },
+                { a: 1797, m: 10, j: 22 },
+                { a: 1797, m: 11, j: 21 },
+                { a: 1797, m: 12, j: 21 },
+                { a: 1798, m: 1, j: 20 },
+                { a: 1798, m: 2, j: 19 },
+                { a: 1798, m: 3, j: 21 },
+                { a: 1798, m: 4, j: 20 },
+                { a: 1798, m: 5, j: 20 },
+                { a: 1798, m: 6, j: 19 },
+                { a: 1798, m: 7, j: 19 },
+                { a: 1798, m: 8, j: 18 }
+            ],
+            6: [ // An VII (1798-1799)
+                { a: 1798, m: 9, j: 22 },
+                { a: 1798, m: 10, j: 22 },
+                { a: 1798, m: 11, j: 21 },
+                { a: 1798, m: 12, j: 21 },
+                { a: 1799, m: 1, j: 20 },
+                { a: 1799, m: 2, j: 19 },
+                { a: 1799, m: 3, j: 21 },
+                { a: 1799, m: 4, j: 20 },
+                { a: 1799, m: 5, j: 20 },
+                { a: 1799, m: 6, j: 19 },
+                { a: 1799, m: 7, j: 19 },
+                { a: 1799, m: 8, j: 18 }
+            ],
+            7: [ // An VIII (1799-1800) - année bissextile
+                { a: 1799, m: 9, j: 23 },
+                { a: 1799, m: 10, j: 23 },
+                { a: 1799, m: 11, j: 22 },
+                { a: 1799, m: 12, j: 22 },
+                { a: 1800, m: 1, j: 21 },
+                { a: 1800, m: 2, j: 20 },
+                { a: 1800, m: 3, j: 21 },
+                { a: 1800, m: 4, j: 20 },
+                { a: 1800, m: 5, j: 20 },
+                { a: 1800, m: 6, j: 19 },
+                { a: 1800, m: 7, j: 19 },
+                { a: 1800, m: 8, j: 18 }
+            ],
+            8: [ // An IX (1800-1801)
+                { a: 1800, m: 9, j: 23 },
+                { a: 1800, m: 10, j: 23 },
+                { a: 1800, m: 11, j: 22 },
+                { a: 1800, m: 12, j: 22 },
+                { a: 1801, m: 1, j: 21 },
+                { a: 1801, m: 2, j: 20 },
+                { a: 1801, m: 3, j: 22 },
+                { a: 1801, m: 4, j: 21 },
+                { a: 1801, m: 5, j: 21 },
+                { a: 1801, m: 6, j: 20 },
+                { a: 1801, m: 7, j: 20 },
+                { a: 1801, m: 8, j: 19 }
+            ],
+            9: [ // An X (1801-1802)
+                { a: 1801, m: 9, j: 23 },
+                { a: 1801, m: 10, j: 23 },
+                { a: 1801, m: 11, j: 22 },
+                { a: 1801, m: 12, j: 22 },
+                { a: 1802, m: 1, j: 21 },
+                { a: 1802, m: 2, j: 20 },
+                { a: 1802, m: 3, j: 22 },
+                { a: 1802, m: 4, j: 21 },
+                { a: 1802, m: 5, j: 21 },
+                { a: 1802, m: 6, j: 20 },
+                { a: 1802, m: 7, j: 20 },
+                { a: 1802, m: 8, j: 19 }
+            ],
+            10: [ // An XI (1802-1803)
+                { a: 1802, m: 9, j: 23 },
+                { a: 1802, m: 10, j: 23 },
+                { a: 1802, m: 11, j: 22 },
+                { a: 1802, m: 12, j: 22 },
+                { a: 1803, m: 1, j: 21 },
+                { a: 1803, m: 2, j: 20 },
+                { a: 1803, m: 3, j: 22 },
+                { a: 1803, m: 4, j: 21 },
+                { a: 1803, m: 5, j: 21 },
+                { a: 1803, m: 6, j: 20 },
+                { a: 1803, m: 7, j: 20 },
+                { a: 1803, m: 8, j: 19 }
+            ],
+            11: [ // An XII (1803-1804) - année bissextile
+                { a: 1803, m: 9, j: 24 },
+                { a: 1803, m: 10, j: 24 },
+                { a: 1803, m: 11, j: 23 },
+                { a: 1803, m: 12, j: 23 },
+                { a: 1804, m: 1, j: 22 },
+                { a: 1804, m: 2, j: 21 },
+                { a: 1804, m: 3, j: 22 },
+                { a: 1804, m: 4, j: 21 },
+                { a: 1804, m: 5, j: 21 },
+                { a: 1804, m: 6, j: 20 },
+                { a: 1804, m: 7, j: 20 },
+                { a: 1804, m: 8, j: 19 }
+            ],
+            12: [ // An XIII (1804-1805)
+                { a: 1804, m: 9, j: 23 },
+                { a: 1804, m: 10, j: 23 },
+                { a: 1804, m: 11, j: 22 },
+                { a: 1804, m: 12, j: 22 },
+                { a: 1805, m: 1, j: 21 },
+                { a: 1805, m: 2, j: 20 },
+                { a: 1805, m: 3, j: 22 },
+                { a: 1805, m: 4, j: 21 },
+                { a: 1805, m: 5, j: 21 },
+                { a: 1805, m: 6, j: 20 },
+                { a: 1805, m: 7, j: 20 },
+                { a: 1805, m: 8, j: 19 }
+            ],
+            13: [ // An XIV (1805-1806)
+                { a: 1805, m: 9, j: 23 },
+                { a: 1805, m: 10, j: 23 },
+                { a: 1805, m: 11, j: 22 },
+                { a: 1805, m: 12, j: 22 },
+                { a: 1806, m: 1, j: 21 },
+                { a: 1806, m: 2, j: 20 },
+                { a: 1806, m: 3, j: 22 },
+                { a: 1806, m: 4, j: 21 },
+                { a: 1806, m: 5, j: 21 },
+                { a: 1806, m: 6, j: 20 },
+                { a: 1806, m: 7, j: 20 },
+                { a: 1806, m: 8, j: 19 }
+            ]
+        };
+
+        // Jours complémentaires pour chaque année
+        const joursComplementaires = {
+            0: { a: 1793, m: 9, j: 17 },   // An I (5 jours: 17-21 sept)
+            1: { a: 1794, m: 9, j: 17 },   // An II (5 jours: 17-21 sept)
+            2: { a: 1795, m: 9, j: 17 },   // An III (6 jours: 17-22 sept)
+            3: { a: 1796, m: 9, j: 17 },   // An IV (5 jours: 17-21 sept)
+            4: { a: 1797, m: 9, j: 17 },   // An V (5 jours: 17-21 sept)
+            5: { a: 1798, m: 9, j: 17 },   // An VI (5 jours: 17-21 sept)
+            6: { a: 1799, m: 9, j: 17 },   // An VII (6 jours: 17-22 sept)
+            7: { a: 1800, m: 9, j: 18 },   // An VIII (5 jours: 18-22 sept)
+            8: { a: 1801, m: 9, j: 18 },   // An IX (5 jours: 18-22 sept)
+            9: { a: 1802, m: 9, j: 18 },   // An X (5 jours: 18-22 sept)
+            10: { a: 1803, m: 9, j: 18 },  // An XI (6 jours: 18-23 sept)
+            11: { a: 1804, m: 9, j: 18 },  // An XII (5 jours: 18-22 sept)
+            12: { a: 1805, m: 9, j: 18 }   // An XIII (5 jours: 18-22 sept)
+        };
+
+        // Convertir en chiffres romains
+        function romanize(num) {
+            const lookup = { M: 1000, CM: 900, D: 500, CD: 400, C: 100, XC: 90, L: 50, XL: 40, X: 10, IX: 9, V: 5, IV: 4, I: 1 };
+            let roman = '';
+            for (let i in lookup) {
+                while (num >= lookup[i]) {
+                    roman += i;
+                    num -= lookup[i];
+                }
+            }
+            return roman;
+        }
+
+        // Conversion Républicain -> Grégorien
+        function convertirRepublicainVersGregorien(jour, mois, annee) {
+            if (!tableCorrespondance[annee] || !tableCorrespondance[annee][mois]) {
+                return "Date invalide";
+            }
+
+            // Restriction pour An XIV : uniquement jusqu'au 11 Nivôse (1er janvier 1806)
+            if (annee === 13) { // An XIV (index 13 = An XIV)
+                if (mois > 3) { // Après Nivôse (index 3 = Nivôse)
+                    return "Le calendrier républicain a été aboli le 11 Nivôse An XIV (1er janvier 1806)";
+                }
+                if (mois === 3 && jour > 11) { // Après le 11 Nivôse
+                    return "Le calendrier républicain a été aboli le 11 Nivôse An XIV (1er janvier 1806)";
+                }
+            }
+
+            const debutMois = tableCorrespondance[annee][mois];
+            const jourGreg = debutMois.j + jour - 1;
+            let moisGreg = debutMois.m;
+            let anneeGreg = debutMois.a;
+
+            // Gérer les dépassements de mois
+            const joursParMois = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            // Vérifier si année bissextile
+            if ((anneeGreg % 4 === 0 && anneeGreg % 100 !== 0) || anneeGreg % 400 === 0) {
+                joursParMois[1] = 29;
+            }
+
+            let jourFinal = jourGreg;
+            let moisFinal = moisGreg;
+            let anneeFinal = anneeGreg;
+
+            while (jourFinal > joursParMois[moisFinal - 1]) {
+                jourFinal -= joursParMois[moisFinal - 1];
+                moisFinal++;
+                if (moisFinal > 12) {
+                    moisFinal = 1;
+                    anneeFinal++;
+                }
+            }
+
+            return `${jourFinal} ${moisGregoriens[moisFinal - 1]} ${anneeFinal}`;
+        }
+
+        // Validation des dates grégoriennes
+        function estDateGregorienneValide(jour, mois, annee) {
+            // Vérifier que le mois est valide
+            if (mois < 1 || mois > 12) {
+                return false;
+            }
+
+            // Nombre de jours par mois
+            const joursParMois = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            // Vérifier si l'année est bissextile
+            if ((annee % 4 === 0 && annee % 100 !== 0) || annee % 400 === 0) {
+                joursParMois[1] = 29; // Février a 29 jours en année bissextile
+            }
+
+            // Vérifier que le jour est valide pour ce mois
+            if (jour < 1 || jour > joursParMois[mois - 1]) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // Conversion Grégorien -> Républicain
+        function convertirGregorienVersRepublicain(jour, mois, annee) {
+            // Valider d'abord que la date grégorienne est valide
+            if (!estDateGregorienneValide(jour, mois, annee)) {
+                return "Date grégorienne invalide (ex: 31 février n'existe pas)";
+            }
+
+            // Vérifier que la date est dans la période d'utilisation du calendrier républicain
+            const dateGreg = new Date(annee, mois - 1, jour);
+            const dateDebut = new Date(1792, 8, 22); // 22 septembre 1792
+            const dateFin = new Date(1806, 0, 1); // 1er janvier 1806 (jour de l'abolition, non inclus)
+
+            if (dateGreg < dateDebut) {
+                return "Le calendrier républicain n'existait pas avant le 22 septembre 1792 (1 Vendémiaire An I)";
+            }
+
+            // Le calendrier s'arrête le 31 décembre 1805 (10 Nivôse An XIV)
+            // Le 1er janvier 1806 (11 Nivôse An XIV) est le premier jour où il n'est plus en vigueur
+            if (dateGreg >= dateFin) {
+                return "Le calendrier républicain a été aboli le 1er janvier 1806 (11 Nivôse An XIV)";
+            }
+
+            // Trouver l'année républicaine correspondante
+            for (let an = 0; an <= 13; an++) {
+                for (let m = 0; m < 12; m++) {
+                    const debut = tableCorrespondance[an][m];
+                    const dateDebut = new Date(debut.a, debut.m - 1, debut.j);
+
+                    // Date de fin du mois (30 jours)
+                    const dateFin = new Date(dateDebut);
+                    dateFin.setDate(dateFin.getDate() + 30);
+
+                    if (dateGreg >= dateDebut && dateGreg < dateFin) {
+                        const diff = Math.floor((dateGreg - dateDebut) / (1000 * 60 * 60 * 24));
+                        const jourRepub = diff + 1;
+                        return `${jourRepub} ${moisRepublicains[m]} An ${romanize(an + 1)}`;
+                    }
+                }
+
+                // Vérifier les jours complémentaires
+                const jc = joursComplementaires[an];
+                if (jc) {
+                    const dateJC = new Date(jc.a, jc.m - 1, jc.j);
+                    const dateFinJC = new Date(dateJC);
+                    // An III (index 2), An VII (index 6), An XI (index 10) ont 6 jours complémentaires
+                    const nbJoursComp = (an === 2 || an === 6 || an === 10) ? 6 : 5;
+                    dateFinJC.setDate(dateFinJC.getDate() + nbJoursComp);
+
+                    if (dateGreg >= dateJC && dateGreg < dateFinJC) {
+                        const diff = Math.floor((dateGreg - dateJC) / (1000 * 60 * 60 * 24));
+                        const nomsJC = [
+                            'Jour de la vertu', 'Jour du génie', 'Jour du travail',
+                            'Jour de l\'opinion', 'Jour des récompenses', 'Jour de la révolution'
+                        ];
+                        const jourFructidor = 31 + diff; // 31, 32, 33, 34, 35 ou 36
+                        return `${jourFructidor} Fructidor An ${romanize(an + 1)} (${nomsJC[diff]})`;
+                    }
+                }
+            }
+
+            return "Date non trouvée dans le calendrier républicain";
+        }
+
+        // Remplir les sélecteurs
+        function remplirSelecteurs() {
+            // Jours (1-30) pour républicain
+            for (let i = 1; i <= 30; i++) {
+                document.getElementById('jour1').add(new Option(i, i));
+            }
+
+            // Jours (1-31) pour grégorien
+            for (let i = 1; i <= 31; i++) {
+                document.getElementById('jour3').add(new Option(i, i));
+            }
+
+            // Mois républicains
+            moisRepublicains.forEach((mois, index) => {
+                document.getElementById('mois1').add(new Option(mois, index));
+            });
+
+            // Mois grégoriens
+            moisGregoriens.forEach((mois, index) => {
+                document.getElementById('mois3').add(new Option(mois, index + 1));
+            });
+
+            // Années républicaines (An I à An XIV)
+            for (let i = 0; i <= 13; i++) {
+                const anOption = new Option(`An ${romanize(i + 1)}`, i);
+                document.getElementById('annee1').add(anOption);
+
+                // Pour les jours complémentaires, An XIV n'est pas disponible (pas de jours complémentaires)
+                if (i < 13) {
+                    document.getElementById('annee2').add(new Option(`An ${romanize(i + 1)}`, i));
+                }
+            }
+
+            // Années grégoriennes (1792-1806)
+            for (let i = 1792; i <= 1806; i++) {
+                document.getElementById('annee3').add(new Option(i, i));
+            }
+
+            // Initialiser les jours complémentaires avec tous les jours possibles (1-6)
+            const joursComplementairesInit = [
+                '31 (1er j. complémentaire, primidi, jour de la vertu)',
+                '32 (2e j. complémentaire, duodi, jour du génie)',
+                '33 (3e j. complémentaire, tridi, jour du travail)',
+                '34 (4e j. complémentaire, quartidi, jour de l\'opinion)',
+                '35 (5e j. complémentaire, quintidi, jour des récompenses)',
+                '36 (6e j. complémentaire, sextidi, jour de la révolution)'
+            ];
+            for (let i = 0; i < 6; i++) {
+                document.getElementById('jour2').add(new Option(joursComplementairesInit[i], i + 1));
+            }
+        }
+
+        // Mettre à jour les jours complémentaires selon l'année sélectionnée
+        function updateJoursComplementaires() {
+            const annee = parseInt(document.getElementById('annee2').value);
+            const selectJour = document.getElementById('jour2');
+            const jourActuel = parseInt(selectJour.value);
+
+            // Vider la liste
+            selectJour.innerHTML = '<option value="-1">Sélectionner le jour</option>';
+
+            // Si pas d'année sélectionnée, afficher tous les jours possibles (1-6)
+            if (annee === -1) {
+                const joursComplementairesNomsSansAnnee = [
+                    '31 (1er j. complémentaire, primidi, jour de la vertu)',
+                    '32 (2e j. complémentaire, duodi, jour du génie)',
+                    '33 (3e j. complémentaire, tridi, jour du travail)',
+                    '34 (4e j. complémentaire, quartidi, jour de l\'opinion)',
+                    '35 (5e j. complémentaire, quintidi, jour des récompenses)',
+                    '36 (6e j. complémentaire, sextidi, jour de la révolution)'
+                ];
+                for (let i = 0; i < 6; i++) {
+                    selectJour.add(new Option(joursComplementairesNomsSansAnnee[i], i + 1));
+                }
+                // Restaurer la valeur précédente si elle est valide
+                if (jourActuel > 0 && jourActuel <= 6) {
+                    selectJour.value = jourActuel;
+                }
+                return;
+            }
+
+            const joursComplementairesNoms = [
+                '31 (1er j. complémentaire, primidi, jour de la vertu)',
+                '32 (2e j. complémentaire, duodi, jour du génie)',
+                '33 (3e j. complémentaire, tridi, jour du travail)',
+                '34 (4e j. complémentaire, quartidi, jour de l\'opinion)',
+                '35 (5e j. complémentaire, quintidi, jour des récompenses)',
+                '36 (6e j. complémentaire, sextidi, jour de la révolution)'
+            ];
+
+            // Années III (index 2), VII (index 6), XI (index 10) ont 6 jours complémentaires
+            const nbJours = (annee === 2 || annee === 6 || annee === 10) ? 6 : 5;
+
+            for (let i = 0; i < nbJours; i++) {
+                selectJour.add(new Option(joursComplementairesNoms[i], i + 1));
+            }
+
+            // Restaurer la valeur précédente si elle est encore valide
+            if (jourActuel > 0 && jourActuel <= nbJours) {
+                selectJour.value = jourActuel;
+            }
+        }
+
+        // Mettre à jour les jours grégoriens selon le mois et l'année sélectionnés
+        function updateJoursGregoriens() {
+            const mois = parseInt(document.getElementById('mois3').value);
+            const annee = parseInt(document.getElementById('annee3').value);
+            const selectJour = document.getElementById('jour3');
+            const jourActuel = parseInt(selectJour.value);
+
+            // Vider la liste
+            selectJour.innerHTML = '<option value="-1">Jour</option>';
+
+            // Si ni mois ni année n'est sélectionné, afficher tous les jours jusqu'à 31
+            if (mois === -1 && annee === -1) {
+                for (let i = 1; i <= 31; i++) {
+                    selectJour.add(new Option(i, i));
+                }
+                return;
+            }
+
+            // Nombre de jours par mois
+            const joursParMois = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+            // Si seulement le mois est sélectionné (sans année)
+            if (mois !== -1 && annee === -1) {
+                // Pour février, on met 29 jours (maximum possible)
+                const maxJours = (mois === 2) ? 29 : joursParMois[mois - 1];
+                for (let i = 1; i <= maxJours; i++) {
+                    selectJour.add(new Option(i, i));
+                }
+                if (jourActuel > 0 && jourActuel <= maxJours) {
+                    selectJour.value = jourActuel;
+                }
+                return;
+            }
+
+            // Si seulement l'année est sélectionnée (sans mois)
+            if (mois === -1 && annee !== -1) {
+                for (let i = 1; i <= 31; i++) {
+                    selectJour.add(new Option(i, i));
+                }
+                return;
+            }
+
+            // Si les deux sont sélectionnés (cas le plus précis)
+            // Vérifier si l'année est bissextile
+            if ((annee % 4 === 0 && annee % 100 !== 0) || annee % 400 === 0) {
+                joursParMois[1] = 29;
+            }
+
+            const maxJours = joursParMois[mois - 1];
+
+            // Remplir avec le nombre correct de jours
+            for (let i = 1; i <= maxJours; i++) {
+                selectJour.add(new Option(i, i));
+            }
+
+            // Restaurer la valeur précédente si elle est encore valide
+            if (jourActuel > 0 && jourActuel <= maxJours) {
+                selectJour.value = jourActuel;
+            }
+        }
+
+        // Afficher le résultat dans la zone centralisée
+        function afficherResultat(texte) {
+            document.getElementById('resultText').textContent = texte;
+        }
+
+        // Calcul automatique pour Républicain -> Grégorien
+        function calculerRepublicainVersGregorien() {
+            const jour = parseInt(document.getElementById('jour1').value);
+            const mois = parseInt(document.getElementById('mois1').value);
+            const annee = parseInt(document.getElementById('annee1').value);
+
+            if (jour === -1 || mois === -1 || annee === -1) {
+                afficherResultat('Sélectionnez une date pour voir le résultat de la conversion');
+                return;
+            }
+
+            const resultat = convertirRepublicainVersGregorien(jour, mois, annee);
+            afficherResultat(`${jour} ${moisRepublicains[mois]} An ${romanize(annee + 1)} → ${resultat}`);
+        }
+
+        // Calcul automatique pour Jours Complémentaires
+        function calculerJoursComplementaires() {
+            const jour = parseInt(document.getElementById('jour2').value);
+            const annee = parseInt(document.getElementById('annee2').value);
+
+            if (jour === -1 || annee === -1) {
+                afficherResultat('Sélectionnez une date pour voir le résultat de la conversion');
+                return;
+            }
+
+            // Vérifier si le jour est valide pour cette année
+            const nbJoursMax = (annee === 2 || annee === 6 || annee === 10) ? 6 : 5;
+            if (jour > nbJoursMax) {
+                afficherResultat(`An ${romanize(annee + 1)} ne possède que ${nbJoursMax} jours complémentaires (pas de 6ème jour)`);
+                return;
+            }
+
+            const joursComplementairesNomsAffichage = [
+                'Jour de la vertu',
+                'Jour du génie',
+                'Jour du travail',
+                'Jour de l\'opinion',
+                'Jour des récompenses',
+                'Jour de la révolution'
+            ];
+
+            const jc = joursComplementaires[annee];
+            const jourGreg = jc.j + jour - 1;
+
+            // Les jours complémentaires sont les jours 31-36 de Fructidor
+            const jourFructidor = 30 + jour;
+
+            afficherResultat(`${jourFructidor} Fructidor An ${romanize(annee + 1)} (${joursComplementairesNomsAffichage[jour - 1]}) → ${jourGreg} ${moisGregoriens[jc.m - 1]} ${jc.a}`);
+        }
+
+        // Calcul automatique pour Grégorien -> Républicain
+        function calculerGregorienVersRepublicain() {
+            const jour = parseInt(document.getElementById('jour3').value);
+            const mois = parseInt(document.getElementById('mois3').value);
+            const annee = parseInt(document.getElementById('annee3').value);
+
+            if (jour === -1 || mois === -1 || annee === -1) {
+                afficherResultat('Sélectionnez une date pour voir le résultat de la conversion');
+                return;
+            }
+
+            const resultat = convertirGregorienVersRepublicain(jour, mois, annee);
+            afficherResultat(`${jour} ${moisGregoriens[mois - 1]} ${annee} → ${resultat}`);
+        }
+
+        // Gestion des événements - Calcul automatique
+        document.getElementById('jour1').addEventListener('change', calculerRepublicainVersGregorien);
+        document.getElementById('mois1').addEventListener('change', calculerRepublicainVersGregorien);
+        document.getElementById('annee1').addEventListener('change', calculerRepublicainVersGregorien);
+
+        document.getElementById('annee2').addEventListener('change', function () {
+            updateJoursComplementaires();
+            calculerJoursComplementaires();
+        });
+        document.getElementById('jour2').addEventListener('change', calculerJoursComplementaires);
+
+        document.getElementById('jour3').addEventListener('change', calculerGregorienVersRepublicain);
+        document.getElementById('mois3').addEventListener('change', function () {
+            updateJoursGregoriens();
+            calculerGregorienVersRepublicain();
+        });
+        document.getElementById('annee3').addEventListener('change', function () {
+            updateJoursGregoriens();
+            calculerGregorienVersRepublicain();
+        });
+
+        // loadDarkModeScript est appelé automatiquement par menu-loader.js après chargement du menu
+
+        // Initialisation
+        remplirSelecteurs();
+    </script>
+    <script src="../js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+    <script src="../js/darkMode.js"></script>
+    <script src="../js/burger.js"></script>
+</body>
+
+</html>

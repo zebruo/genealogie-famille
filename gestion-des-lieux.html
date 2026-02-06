@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestion des Lieux</title>
+  <link rel="icon" href="data:,"> <!--source vide pour le moment-->
+  <link rel="stylesheet" href="styles/family-tree-styles.css">
+  <link rel="stylesheet" href="styles/person-quick-view.css">
+  <link rel="stylesheet" href="styles/modal-system.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+  <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-places.html -->
+  <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
+
+  <div class="container">
+      <div class="controls-header">
+        <div class="controls-title">
+          <i class="fas fa-map-marker-alt"></i>
+          <span>Gestion des Lieux</span>
+        </div>
+        <div class="controls-actions">
+          <div class="search-input-wrapper" style="width: 500px;">
+            <input type="text" class="search-input" placeholder="Rechercher un lieu..." style="width: 100%;" />
+            <i class="fas fa-search search-icon"></i>
+            <i class="fas fa-times clear-search"></i>
+            <div class="search-suggestions"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistiques -->
+      <div class="stats-grid" id="statsSummary">
+        <div class="stat-card">
+          <div class="stat-number" id="totalLieux">0</div>
+          <div class="stat-label">Lieux Uniques (Total)</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="totalNaissances">0</div>
+          <div class="stat-label">Lieux de Naissance</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="totalDeces">0</div>
+          <div class="stat-label">Lieux de Décès</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-number" id="totalMariages">0</div>
+          <div class="stat-label">Lieux de Mariage</div>
+        </div>
+      </div>
+
+      <!-- Index alphabétique -->
+      <div class="alphabet-index"></div>
+
+      <!-- Tableau des lieux -->
+      <div class="table-container">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="width: 40%;">Lieu</th>
+              <th style="width: 15%; text-align: center;">Naissances</th>
+              <th style="width: 15%; text-align: center;">Mariages</th>
+              <th style="width: 15%; text-align: center;">Décès</th>
+              <th style="width: 15%; text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="lieuxTableBody">
+            <tr>
+              <td colspan="5" class="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <p>Chargement des lieux...</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div class="pagination"></div>
+  </div>
+
+  <!-- Modal de détails -->
+  <div class="details-modal" id="detailsModal">
+    <div class="details-content">
+      <div class="details-header">
+        <h3 id="detailsTitle"></h3>
+        <button class="btn-delete" onclick="closeDetailsModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div id="detailsBody"></div>
+    </div>
+  </div>
+
+  <!-- Modal d'édition -->
+  <div class="edit-modal" id="editModal">
+    <div class="edit-content">
+      <div class="edit-header">
+        <h3><i class="fas fa-edit"></i> Modifier le lieu</h3>
+        <button class="btn-delete" onclick="closeEditModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <form id="editForm" onsubmit="return false;">
+        <div class="form-group">
+          <label class="form-label">Lieu actuel</label>
+          <input type="text" id="ancienLieu" class="form-control" readonly>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nouveau lieu</label>
+          <input type="text" id="nouveauLieu" class="form-control" required>
+        </div>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+          <button type="button" class="btn-submit" onclick="updateLieu()">
+            <i class="fas fa-save"></i> Enregistrer
+          </button>
+          <button type="button" class="btn-submit" onclick="closeEditModal()">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+  <script src="js/darkMode.js"></script>
+  <script src="js/burger.js"></script>
+  <script src="js/modal-system.js"></script>
+  <script>
+    // État de l'application
+    const state = {
+      allLieux: [],
+      filteredLieux: [],
+      currentPage: 1,
+      itemsPerPage: 20
+    };
+    // Normaliser le texte (enlever les accents pour la recherche)
+    function normalizeText(text) {
+      if (!text) return '';
+      return text.normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase();
+    }
+    // Surligner les correspondances dans le texte
+    function highlightMatch(text, query) {
+      if (!query || !text) return text;
+      const normalized = normalizeText(query);
+      const textNormalized = normalizeText(text);
+      const index = textNormalized.indexOf(normalized);
+      if (index === -1) return text;
+      const start = text.substring(0, index);
+      const match = text.substring(index, index + query.length);
+      const end = text.substring(index + query.length);
+      return `${start}<span class="suggestion-highlight">${match}</span>${end}`;
+    }
+    // Charger tous les lieux
+    function loadLieux() {
+      fetch('admin/api3.php?action=getLieux')
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            state.allLieux = data.lieux.sort((a, b) =>
+              (a.lieu || '').localeCompare(b.lieu || '')
+            );
+            state.filteredLieux = [...state.allLieux];
+            state.currentPage = 1;
+            updateStats();
+            setupAlphabetIndex();
+            renderTable();
+            renderPagination();
+          }
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+          showTemporaryInfo('Erreur lors du chargement des lieux', 'error');
+        });
+    }
+    // Recherche dynamique
+    function handleSearch(e) {
+      const query = e.target.value.trim();
+      const suggestionsContainer = document.querySelector('.search-suggestions');
+      if (!query || query.length < 2) {
+        state.filteredLieux = [...state.allLieux];
+        suggestionsContainer.classList.remove('show');
+      } else {
+        const normalized = normalizeText(query);
+        state.filteredLieux = state.allLieux.filter(lieu =>
+          normalizeText(lieu.lieu).includes(normalized)
+        );
+        // Afficher les suggestions
+        const suggestions = state.filteredLieux.slice(0, 10);
+        if (suggestions.length > 0) {
+          suggestionsContainer.innerHTML = suggestions.map(lieu => `
+              <div class="suggestion-item" data-lieu="${escapeHtml(lieu.lieu)}" onclick="selectLieuFromSuggestion(this)">
+                <div class="suggestion-main">
+                  ${highlightMatch(lieu.lieu, query)}
+                </div>
+                <!-- <div class="suggestion-details">
+                  ${lieu.nb_naissances > 0 ? `<span>🎂 ${lieu.nb_naissances}</span>` : ''}
+                  ${lieu.nb_deces > 0 ? `<span>✝️ ${lieu.nb_deces}</span>` : ''}
+                  ${lieu.nb_mariages > 0 ? `<span>💒 ${lieu.nb_mariages}</span>` : ''}
+                </div> -->
+              </div>
+            `).join('');
+          suggestionsContainer.classList.add('show');
+        } else {
+          suggestionsContainer.innerHTML = '<div class="suggestion-item empty">Aucun résultat trouvé</div>';
+          suggestionsContainer.classList.add('show');
+        }
+      }
+      state.currentPage = 1;
+      renderTable();
+      renderPagination();
+    }
+    // Sélectionner un lieu depuis les suggestions
+    function selectLieuFromSuggestion(element) {
+      const lieu = element.getAttribute('data-lieu');
+      selectLieu(lieu);
+    }
+
+    function selectLieu(lieu) {
+      document.querySelector('.search-input').value = lieu;
+      document.querySelector('.clear-search').style.display = 'block';
+      document.querySelector('.search-suggestions').classList.remove('show');
+      const normalized = normalizeText(lieu);
+      state.filteredLieux = state.allLieux.filter(l =>
+        normalizeText(l.lieu).includes(normalized)
+      );
+      state.currentPage = 1;
+      renderTable();
+      renderPagination();
+    }
+    // Mettre à jour les statistiques
+    function updateStats() {
+      document.getElementById('totalLieux').textContent = state.allLieux.length;
+      document.getElementById('totalNaissances').textContent =
+        state.allLieux.filter(l => l.nb_naissances > 0).length;
+      document.getElementById('totalDeces').textContent =
+        state.allLieux.filter(l => l.nb_deces > 0).length;
+      document.getElementById('totalMariages').textContent =
+        state.allLieux.filter(l => l.nb_mariages > 0).length;
+    }
+    // Index alphabétique
+    function setupAlphabetIndex() {
+      const letters = [...new Set(
+        state.allLieux
+          .map(l => (l.lieu || '').charAt(0).toUpperCase())
+          .filter(c => /[A-ZÀ-Ü]/.test(c))
+      )].sort();
+      const indexHtml = `
+          <button class="letter-btn active" onclick="showAllLieux()">
+            <i class="fas fa-globe stat-number"></i> Tous
+          </button>
+          ${letters.map(letter => `
+            <button class="letter-btn" onclick="filterByLetter('${letter}')">
+              ${letter}
+            </button>
+          `).join('')}
+        `;
+      document.querySelector('.alphabet-index').innerHTML = indexHtml;
+    }
+    // Filtrer par lettre
+    function filterByLetter(letter) {
+      state.filteredLieux = state.allLieux.filter(l =>
+        (l.lieu || '').charAt(0).toUpperCase() === letter
+      );
+      state.currentPage = 1;
+      // Mettre à jour l'état actif des boutons
+      document.querySelectorAll('.letter-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.textContent.trim() === letter) {
+          btn.classList.add('active');
+        }
+      });
+      document.querySelector('.search-input').value = '';
+      document.querySelector('.clear-search').style.display = 'none';
+      renderTable();
+      renderPagination();
+    }
+    // Afficher tous les lieux
+    function showAllLieux() {
+      state.filteredLieux = [...state.allLieux];
+      state.currentPage = 1;
+      document.querySelectorAll('.letter-btn').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      document.querySelector('.letter-btn').classList.add('active');
+      document.querySelector('.search-input').value = '';
+      document.querySelector('.clear-search').style.display = 'none';
+      renderTable();
+      renderPagination();
+    }
+    // Rendu du tableau
+    function renderTable() {
+      const tbody = document.getElementById('lieuxTableBody');
+      const start = (state.currentPage - 1) * state.itemsPerPage;
+      const end = start + state.itemsPerPage;
+      const pageData = state.filteredLieux.slice(start, end);
+      if (pageData.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+              <td colspan="5" class="empty-message">
+                <i class="fas fa-search"></i>
+                <p>Aucun lieu trouvé</p>
+              </td>
+            </tr>
+          `;
+        return;
+      }
+      tbody.innerHTML = pageData.map(lieu => `
+          <tr>
+            <td>
+              ${escapeHtml(lieu.lieu)}
+            </td>
+            <td style="text-align: center;">
+              ${lieu.nb_naissances > 0 ? `<span class="lieu-badge badge-naissance">${lieu.nb_naissances}</span>` : '-'}
+            </td>
+            <td style="text-align: center;">
+              ${lieu.nb_mariages > 0 ? `<span class="lieu-badge badge-mariage">${lieu.nb_mariages}</span>` : '-'}
+            </td>
+            <td style="text-align: center;">
+              ${lieu.nb_deces > 0 ? `<span class="lieu-badge badge-deces">${lieu.nb_deces}</span>` : '-'}
+            </td>
+            <td style="text-align: center;">
+              <button class="btn-showDetails" data-lieu="${escapeHtml(lieu.lieu)}" onclick="showDetailsFromButton(this)" title="Voir les détails">
+                <i class="fas fa-eye"></i>
+              </button>
+              <button class="btn-edit" data-lieu="${escapeHtml(lieu.lieu)}" onclick="openEditModalFromButton(this)" title="Modifier">
+                <i class="fas fa-edit"></i>
+              </button>
+              <button class="btn-delete" data-lieu="${escapeHtml(lieu.lieu)}" onclick="confirmDeleteFromButton(this)" title="Supprimer">
+                <i class="fas fa-times"></i>
+              </button>
+            </td>
+          </tr>
+        `).join('');
+    }
+    // Pagination
+    function renderPagination() {
+      const totalPages = Math.ceil(state.filteredLieux.length / state.itemsPerPage);
+      if (totalPages <= 1) {
+        document.querySelector('.pagination').innerHTML = '';
+        return;
+      }
+      let html = '';
+      // Bouton précédent
+      if (state.currentPage > 1) {
+        html += `<button class="page-btn" onclick="changePage(${state.currentPage - 1})">
+            <i class="fas fa-chevron-left"></i>
+          </button>`;
+      }
+      // Numéros de page
+      for (let i = 1; i <= totalPages; i++) {
+        if (
+          i === 1 ||
+          i === totalPages ||
+          (i >= state.currentPage - 2 && i <= state.currentPage + 2)
+        ) {
+          html += `<button class="page-btn ${i === state.currentPage ? 'active' : ''}" 
+                      onclick="changePage(${i})">${i}</button>`;
+        } else if (i === state.currentPage - 3 || i === state.currentPage + 3) {
+          html += '<span class="page-ellipsis">...</span>';
+        }
+      }
+      // Bouton suivant
+      if (state.currentPage < totalPages) {
+        html += `<button class="page-btn" onclick="changePage(${state.currentPage + 1})">
+            <i class="fas fa-chevron-right"></i>
+          </button>`;
+      }
+      document.querySelector('.pagination').innerHTML = html;
+    }
+
+    function changePage(page) {
+      state.currentPage = page;
+      renderTable();
+      renderPagination();
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }
+    // Afficher les détails d'un lieu
+    function showDetails(lieu) {
+      document.getElementById('detailsTitle').innerHTML = `
+          <i class="fas fa-map-marker-alt"></i> ${escapeHtml(lieu)}
+        `;
+      document.getElementById('detailsBody').innerHTML = `
+          <div class="loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <p>Chargement des détails...</p>
+          </div>
+        `;
+      document.getElementById('detailsModal').classList.add('active');
+
+      const url = `admin/api3.php?action=getDetails&lieu=${encodeURIComponent(lieu)}`;
+      console.log('Fetching:', url);
+
+      fetch(url)
+        .then(response => {
+          console.log('Response status:', response.status);
+          if (!response.ok) {
+            return response.text().then(text => {
+              console.error('Server error:', text);
+              throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
+            });
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Data received:', data);
+          if (!data.success) {
+            throw new Error(data.message || 'Erreur inconnue');
+          }
+          displayDetails(data.details);
+        })
+        .catch(error => {
+          console.error('Erreur complète:', error);
+          document.getElementById('detailsBody').innerHTML = `
+              <div class="error-message">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>Erreur lors du chargement des détails</p>
+                <small style="color: #999; margin-top: 10px; display: block;">${escapeHtml(error.message)}</small>
+              </div>
+            `;
+        });
+    }
+
+    function displayDetails(details) {
+      let content = '';
+
+      // Naissances
+      if (details.naissances.length > 0) {
+        content += `
+      <h4><i class="fas fa-baby"></i> Naissances (${details.naissances.length})</h4>
+      ${details.naissances.map(p => `
+        <div class="person-item">
+          <div class="person-info">${escapeHtml(p.prenom)} ${escapeHtml(p.nom)}</div>
+          <div class="person-date">${formatDate(p.date_naissance)}</div>
+        </div>
+      `).join('')}
+    `;
+      }
+
+      // Mariages
+      if (details.mariages.length > 0) {
+        content += `
+      <h4><i class="fas fa-heart"></i> Mariages (${details.mariages.length})</h4>
+      ${details.mariages.map(m => `
+        <div class="person-item">
+          <div class="person-info">
+            ${escapeHtml(m.epoux_prenom)} ${escapeHtml(m.epoux_nom)}
+            &
+            ${escapeHtml(m.epouse_prenom)} ${escapeHtml(m.epouse_nom)}
+          </div>
+          <div class="person-date">${formatDate(m.date_mariage)}</div>
+        </div>
+      `).join('')}
+    `;
+      }
+
+      // Décès
+      if (details.deces.length > 0) {
+        content += `
+      <h4><i class="fas fa-cross"></i> Décès (${details.deces.length})</h4>
+      ${details.deces.map(p => `
+        <div class="person-item">
+          <div class="person-info">${escapeHtml(p.prenom)} ${escapeHtml(p.nom)}</div>
+          <div class="person-date">${formatDate(p.date_deces)}</div>
+        </div>
+      `).join('')}
+    `;
+      }
+
+      // Si aucune donnée
+      let html = content
+        ? `<div class="documents-list">${content}</div>`
+        : '<p class="empty-message">Aucune donnée disponible</p>';
+
+      document.getElementById('detailsBody').innerHTML = html;
+      document.getElementById('detailsModal').classList.add('active');
+    }
+
+    // Ouvrir le modal d'édition
+    function openEditModal(lieu) {
+      document.getElementById('ancienLieu').value = lieu;
+      document.getElementById('nouveauLieu').value = lieu;
+      document.getElementById('editModal').classList.add('active');
+      document.getElementById('nouveauLieu').focus();
+    }
+    // Fermer les modals
+    function closeDetailsModal() {
+      document.getElementById('detailsModal').classList.remove('active');
+    }
+
+    function closeEditModal() {
+      document.getElementById('editModal').classList.remove('active');
+    }
+    // Mettre à jour un lieu
+    async function updateLieu() {
+      const ancienLieu = document.getElementById('ancienLieu').value;
+      const nouveauLieu = document.getElementById('nouveauLieu').value.trim();
+
+      if (!nouveauLieu) {
+        showTemporaryInfo('Veuillez entrer un nouveau nom de lieu', 'warning');
+        return;
+      }
+
+      if (ancienLieu === nouveauLieu) {
+        showTemporaryInfo('Le nouveau lieu est identique à l\'ancien', 'warning');
+        return;
+      }
+
+      const confirmed = await showConfirm(
+        `sera remplacé par "${nouveauLieu}". Cette action modifiera toutes les occurrences.`,
+        ancienLieu
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('action', 'updateLieu');
+      formData.append('ancien_lieu', ancienLieu);
+      formData.append('nouveau_lieu', nouveauLieu);
+
+      fetch('admin/api3.php', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showTemporaryInfo('Lieu mis à jour avec succès', 'success');
+            closeEditModal();
+            loadLieux();
+          } else {
+            showTemporaryInfo(data.message || 'Erreur lors de la mise à jour', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+          showTemporaryInfo('Erreur lors de la mise à jour', 'error');
+        });
+    }
+    // Confirmer la suppression
+    async function confirmDelete(lieu) {
+      const confirmed = await showConfirmDelete(
+        'Cette action effacera ce lieu de tous les enregistrements (naissances, décès, mariages).',
+        lieu
+      );
+
+      if (!confirmed) {
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('action', 'deleteLieu');
+      formData.append('lieu', lieu);
+
+      fetch('admin/api3.php', {
+        method: 'POST',
+        body: formData
+      })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            showTemporaryInfo('Lieu supprimé avec succès', 'success');
+            loadLieux();
+          } else {
+            showTemporaryInfo(data.message || 'Erreur lors de la suppression', 'error');
+          }
+        })
+        .catch(error => {
+          console.error('Erreur:', error);
+          showTemporaryInfo('Erreur lors de la suppression', 'error');
+        });
+    }
+    // Utilitaires
+    function escapeHtml(text) {
+      if (!text) return '';
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function formatDate(date) {
+      if (!date || date === '0000-00-00') return '-';
+      const d = new Date(date);
+      return d.toLocaleDateString('fr-FR', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    }
+
+    // Fonctions wrapper pour récupérer les données depuis les boutons
+    function showDetailsFromButton(button) {
+      const lieu = button.getAttribute('data-lieu');
+      showDetails(lieu);
+    }
+
+    function openEditModalFromButton(button) {
+      const lieu = button.getAttribute('data-lieu');
+      openEditModal(lieu);
+    }
+
+    async function confirmDeleteFromButton(button) {
+      const lieu = button.getAttribute('data-lieu');
+      await confirmDelete(lieu);
+    }
+
+    // Initialisation
+    document.addEventListener('DOMContentLoaded', function () {
+      loadLieux();
+      // loadDarkModeScript est appelé automatiquement par menu-loader.js après chargement du menu
+      // Configuration de la recherche
+      const searchInput = document.querySelector('.search-input');
+      const clearBtn = document.querySelector('.clear-search');
+      clearBtn.style.display = 'none';
+      searchInput.addEventListener('input', (e) => {
+        clearBtn.style.display = e.target.value.trim() !== '' ? 'block' : 'none';
+        handleSearch(e);
+      });
+      clearBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        clearBtn.style.display = 'none';
+        searchInput.dispatchEvent(new Event('input'));
+        searchInput.focus();
+      });
+      // Fermer les suggestions en cliquant à l'extérieur
+      document.addEventListener('click', (e) => {
+        const wrapper = document.querySelector('.search-input-wrapper');
+        const suggestions = document.querySelector('.search-suggestions');
+        if (wrapper && !wrapper.contains(e.target)) {
+          suggestions.classList.remove('show');
+        }
+      });
+    });
+    // Fermer les modals en cliquant à l'extérieur
+    document.getElementById('detailsModal').addEventListener('click', function (e) {
+      if (e.target === this) closeDetailsModal();
+    });
+    document.getElementById('editModal').addEventListener('click', function (e) {
+      if (e.target === this) closeEditModal();
+    });
+    // Raccourcis clavier
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        closeDetailsModal();
+        closeEditModal();
+        document.querySelector('.search-suggestions').classList.remove('show');
+      }
+    });
+    // Exposer les fonctions globalement
+    window.selectLieu = selectLieu;
+    window.selectLieuFromSuggestion = selectLieuFromSuggestion;
+    window.filterByLetter = filterByLetter;
+    window.showAllLieux = showAllLieux;
+    window.changePage = changePage;
+    window.showDetails = showDetails;
+    window.openEditModal = openEditModal;
+    window.confirmDelete = confirmDelete;
+    window.closeDetailsModal = closeDetailsModal;
+    window.closeEditModal = closeEditModal;
+    window.updateLieu = updateLieu;
+  </script>
+</body>
+
+</html>

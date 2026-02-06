@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arbre Généalogique Ascendant</title>
+    <link rel="icon" href="data:," />
+    <!--source vide pour le moment-->
+    <link rel="stylesheet" href="styles/family-tree-styles.css" />
+    <link rel="stylesheet" href="styles/person-quick-view.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+    <link rel="stylesheet" href="styles/modal-system.css" />
+  </head>
+
+  <body>
+    <!-- Menu de navigation, top-fixed-bar chargés dynamiquement depuis menu-navigation.html -->
+    <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
+
+    <div id="person-panel" class="person-panel">
+      <div class="panel-header fixed-header">
+        <h3>Sélectionnez une personne</h3>
+      </div>
+      <div id="panel-content" class="panel-content-scroll">
+        <p style="color: var(--text-secondary)">
+          Cliquez sur un nœud dans l'arbre pour afficher les informations
+          détaillées.
+        </p>
+      </div>
+      <div class="panel-footer fixed-footer">
+        <p>© 2026 - Généalogie Durel</p>
+      </div>
+    </div>
+
+    <!-- Modal Person Quick View -->
+    <div class="modal-overlay" id="documentsModal" style="display: none">
+      <div class="modal-content-qv">
+        <div class="modal-header-qv">
+          <h2>
+            <i class="fas fa-file-alt"></i> <span id="modalPersonName"></span>
+          </h2>
+          <button class="modal-close-qv" onclick="closeDocumentsModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <div class="modal-body-qv">
+          <div class="documents-list-qv" id="documentsList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="controls">
+        <div class="controls-actions">
+          <div class="search-bar">
+            <i class="fas fa-search search-icon"></i>
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Rechercher une personne..."
+              autocomplete="off"
+            />
+            <i class="fas fa-times clear-icon" id="clearSearch"></i>
+            <div
+              id="searchResults"
+              class="search-results"
+              style="display: none"
+            ></div>
+          </div>
+
+          <select id="generationSelect" class="generation-select">
+            <option value="2">2 générations</option>
+            <option value="3">3 générations</option>
+            <option value="4">4 générations</option>
+            <option value="5">5 générations</option>
+            <option value="6" selected>6 générations</option>
+          </select>
+
+          <button class="action-button" id="toggleOrientationButton">
+            <i class="fas fa-exchange-alt"></i>Vertical
+          </button>
+
+          <button class="action-button" id="centerViewButton">
+            <i class="fas fa-compress-arrows-alt"></i>Centrer
+          </button>
+
+          <button
+            class="action-button"
+            id="returnToDefaultButton"
+            style="display: none"
+          >
+            <i class="fas fa-home"></i>Retour
+          </button>
+
+          <button class="action-button" id="setDefaultButton">
+            <i class="fas fa-star"></i>Point de départ
+          </button>
+        </div>
+      </div>
+
+      <div id="loader" class="loader-overlay" style="display: none">
+        <div class="loader"></div>
+        <p>Chargement de l'arbre...</p>
+      </div>
+
+      <div class="tree-container" id="tree-container"></div>
+
+      <!-- Contrôles de zoom mobile -->
+      <div class="zoom-controls" id="zoomControls">
+        <button class="zoom-btn" id="zoomInBtn" aria-label="Zoom avant">
+          <i class="fas fa-plus"></i>
+        </button>
+        <button
+          class="zoom-btn center-btn"
+          id="centerBtnMobile"
+          aria-label="Centrer"
+        >
+          <i class="fas fa-crosshairs"></i>
+        </button>
+        <button class="zoom-btn" id="zoomOutBtn" aria-label="Zoom arrière">
+          <i class="fas fa-minus"></i>
+        </button>
+        <button
+          class="zoom-btn"
+          id="toggleOrientationMobile"
+          aria-label="Orientation"
+        >
+          <i class="fas fa-exchange-alt"></i>
+        </button>
+        <button
+          class="zoom-btn"
+          id="returnToDefaultMobile"
+          aria-label="Retour"
+          style="display: none"
+        >
+          <i class="fa-solid fa-bullseye"></i>
+        </button>
+        <button
+          class="zoom-btn"
+          id="setDefaultMobile"
+          aria-label="Point de départ"
+        >
+          <i class="fas fa-flag"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Scripts de l'application -->
+    <script src="js/config.js"></script>
+    <script src="js/helpers.js"></script>
+    <script src="js/family-member.js"></script>
+    <script src="js/ui-manager.js"></script>
+    <script src="js/tree-visualizer.js"></script>
+    <script src="js/family-tree-app.js"></script>
+    <script src="js/init.js"></script>
+    <script src="js/menu-loader.js" data-menu="menu-navigation.html"></script>
+    <script src="js/modal-system.js"></script>
+    <script src="js/search-engine.js"></script>
+    <script src="js/person-quick-view.js"></script>
+    <script src="js/darkMode.js"></script>
+    <script src="js/burger.js"></script>
+  </body>
+</html>

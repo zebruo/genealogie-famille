@@ -1,0 +1,33 @@
+# Fichiers système
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Fichiers temporaires
+*.tmp
+*.bak
+*~
+*.old
+*.backup
+
+# Dossiers IDE
+.vscode/
+.idea/
+.claude/
+
+# Logs
+*.log
+
+# Configuration et données sensibles
+admin/config.php
+admin/backups/
+
+# Uploads utilisateurs
+uploads/
+
+# Fichiers de travail
+test.html
+policeType.html
+
+# Git Manager (interface de gestion Git)
+git-manager/
