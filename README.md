@@ -215,6 +215,6 @@ Développé avec l'assistance de Claude
 
 ---
 
-**© 2026 - Généalogie Durel**
+**© 2026 - Généalogie Zebruo**
 
 Créé avec soin pour préserver l'histoire familiale
