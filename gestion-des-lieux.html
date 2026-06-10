@@ -9,21 +9,22 @@
   <link rel="stylesheet" href="styles/family-tree-styles.css">
   <link rel="stylesheet" href="styles/person-quick-view.css">
   <link rel="stylesheet" href="styles/modal-system.css">
+  <link rel="stylesheet" href="styles/readonly.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 
 <body>
-  <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-places.html -->
+  <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-users.html -->
   <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
 
   <div class="container">
       <div class="controls-header">
         <div class="controls-title">
           <i class="fas fa-map-marker-alt"></i>
-          <span>Gestion des Lieux</span>
+          <span class="admin-title">Gestion des Lieux</span><span class="viewer-only">Consultation des lieux</span>
         </div>
         <div class="controls-actions">
-          <div class="search-input-wrapper" style="width: 500px;">
+          <div class="search-input-wrapper">
             <input type="text" class="search-input" placeholder="Rechercher un lieu..." style="width: 100%;" />
             <i class="fas fa-search search-icon"></i>
             <i class="fas fa-times clear-search"></i>
@@ -60,19 +61,16 @@
         <table class="table">
           <thead>
             <tr>
-              <th style="width: 40%;">Lieu</th>
-              <th style="width: 15%; text-align: center;">Naissances</th>
-              <th style="width: 15%; text-align: center;">Mariages</th>
-              <th style="width: 15%; text-align: center;">Décès</th>
-              <th style="width: 15%; text-align: center;">Actions</th>
+              <th style="width: 40%; text-align: center;"><i class="fas fa-map-marker-alt" title="Lieu"></i></th>
+              <th style="width: 9%; text-align: center;"><i class="fas fa-baby document-type-naissance" title="Naissances"></i></th>
+              <th style="width: 9%; text-align: center;"><i class="fas fa-ring document-type-mariage" title="Mariages"></i></th>
+              <th style="width: 9%; text-align: center;"><i class="fas fa-cross document-type-deces" title="Décès"></i></th>
+              <th style="width: 33%; text-align: center;"><i class="fas fa-sliders-h" title="Actions"></i></th>
             </tr>
           </thead>
           <tbody id="lieuxTableBody">
             <tr>
-              <td colspan="5" class="loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                <p>Chargement des lieux...</p>
-              </td>
+              <td colspan="5"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Chargement des lieux...</p></div></td>
             </tr>
           </tbody>
         </table>
@@ -87,7 +85,7 @@
     <div class="details-content">
       <div class="details-header">
         <h3 id="detailsTitle"></h3>
-        <button class="btn-delete" onclick="closeDetailsModal()">
+        <button class="btn-close-modal" onclick="closeDetailsModal()">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -96,11 +94,11 @@
   </div>
 
   <!-- Modal d'édition -->
-  <div class="edit-modal" id="editModal">
+  <div class="edit-modal admin-only" id="editModal">
     <div class="edit-content">
       <div class="edit-header">
         <h3><i class="fas fa-edit"></i> Modifier le lieu</h3>
-        <button class="btn-delete" onclick="closeEditModal()">
+        <button class="btn-close-modal" onclick="closeEditModal()">
           <i class="fas fa-times"></i>
         </button>
       </div>
@@ -125,6 +123,7 @@
     </div>
   </div>
 
+  <script src="js/auth.js"></script>
   <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
   <script src="js/darkMode.js"></script>
   <script src="js/burger.js"></script>
@@ -137,6 +136,15 @@
       currentPage: 1,
       itemsPerPage: 20
     };
+    // Clé de tri : ignore les caractères non-lettre en début de chaîne
+    function sortKey(s) {
+      const str = s || '';
+      for (let i = 0; i < str.length; i++) {
+        const c = str.charCodeAt(i);
+        if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122) || c >= 192) return str.slice(i);
+      }
+      return str;
+    }
     // Normaliser le texte (enlever les accents pour la recherche)
     function normalizeText(text) {
       if (!text) return '';
@@ -163,7 +171,7 @@
         .then(data => {
           if (data.success) {
             state.allLieux = data.lieux.sort((a, b) =>
-              (a.lieu || '').localeCompare(b.lieu || '')
+              sortKey(a.lieu).localeCompare(sortKey(b.lieu), 'fr')
             );
             state.filteredLieux = [...state.allLieux];
             state.currentPage = 1;
@@ -247,9 +255,9 @@
     function setupAlphabetIndex() {
       const letters = [...new Set(
         state.allLieux
-          .map(l => (l.lieu || '').charAt(0).toUpperCase())
-          .filter(c => /[A-ZÀ-Ü]/.test(c))
-      )].sort();
+          .map(l => sortKey(l.lieu).charAt(0).toUpperCase())
+          .filter(c => c.length > 0)
+      )].sort((a, b) => a.localeCompare(b, 'fr'));
       const indexHtml = `
           <button class="letter-btn active" onclick="showAllLieux()">
             <i class="fas fa-globe stat-number"></i> Tous
@@ -265,7 +273,7 @@
     // Filtrer par lettre
     function filterByLetter(letter) {
       state.filteredLieux = state.allLieux.filter(l =>
-        (l.lieu || '').charAt(0).toUpperCase() === letter
+        sortKey(l.lieu).charAt(0).toUpperCase() === letter
       );
       state.currentPage = 1;
       // Mettre à jour l'état actif des boutons
@@ -328,12 +336,13 @@
               <button class="btn-showDetails" data-lieu="${escapeHtml(lieu.lieu)}" onclick="showDetailsFromButton(this)" title="Voir les détails">
                 <i class="fas fa-eye"></i>
               </button>
+              ${window.userRole !== 'viewer' ? `
               <button class="btn-edit" data-lieu="${escapeHtml(lieu.lieu)}" onclick="openEditModalFromButton(this)" title="Modifier">
                 <i class="fas fa-edit"></i>
               </button>
               <button class="btn-delete" data-lieu="${escapeHtml(lieu.lieu)}" onclick="confirmDeleteFromButton(this)" title="Supprimer">
                 <i class="fas fa-times"></i>
-              </button>
+              </button>` : ''}
             </td>
           </tr>
         `).join('');
@@ -389,29 +398,24 @@
           <i class="fas fa-map-marker-alt"></i> ${escapeHtml(lieu)}
         `;
       document.getElementById('detailsBody').innerHTML = `
-          <div class="loading">
+          <div class="loading-spinner">
             <i class="fas fa-spinner fa-spin"></i>
             <p>Chargement des détails...</p>
           </div>
         `;
       document.getElementById('detailsModal').classList.add('active');
-
       const url = `admin/api3.php?action=getDetails&lieu=${encodeURIComponent(lieu)}`;
-      console.log('Fetching:', url);
 
       fetch(url)
         .then(response => {
-          console.log('Response status:', response.status);
           if (!response.ok) {
             return response.text().then(text => {
-              console.error('Server error:', text);
               throw new Error(`HTTP ${response.status}: ${text.substring(0, 200)}`);
             });
           }
           return response.json();
         })
         .then(data => {
-          console.log('Data received:', data);
           if (!data.success) {
             throw new Error(data.message || 'Erreur inconnue');
           }
@@ -439,7 +443,7 @@
       ${details.naissances.map(p => `
         <div class="person-item">
           <div class="person-info">${escapeHtml(p.prenom)} ${escapeHtml(p.nom)}</div>
-          <div class="person-date">${formatDate(p.date_naissance)}</div>
+          <div class="person-date">${p.date_naissance_affichage || formatDate(p.date_naissance)}</div>
         </div>
       `).join('')}
     `;
@@ -448,7 +452,7 @@
       // Mariages
       if (details.mariages.length > 0) {
         content += `
-      <h4><i class="fas fa-heart"></i> Mariages (${details.mariages.length})</h4>
+      <h4><i class="fas fa-heart"></i> Unions (${details.mariages.length})</h4>
       ${details.mariages.map(m => `
         <div class="person-item">
           <div class="person-info">
@@ -456,7 +460,7 @@
             &
             ${escapeHtml(m.epouse_prenom)} ${escapeHtml(m.epouse_nom)}
           </div>
-          <div class="person-date">${formatDate(m.date_mariage)}</div>
+          <div class="person-date">${m.date_mariage_affichage || formatDate(m.date_mariage)}</div>
         </div>
       `).join('')}
     `;
@@ -469,7 +473,7 @@
       ${details.deces.map(p => `
         <div class="person-item">
           <div class="person-info">${escapeHtml(p.prenom)} ${escapeHtml(p.nom)}</div>
-          <div class="person-date">${formatDate(p.date_deces)}</div>
+          <div class="person-date">${p.date_deces_affichage || formatDate(p.date_deces)}</div>
         </div>
       `).join('')}
     `;
@@ -481,7 +485,6 @@
         : '<p class="empty-message">Aucune donnée disponible</p>';
 
       document.getElementById('detailsBody').innerHTML = html;
-      document.getElementById('detailsModal').classList.add('active');
     }
 
     // Ouvrir le modal d'édition
@@ -550,7 +553,7 @@
     // Confirmer la suppression
     async function confirmDelete(lieu) {
       const confirmed = await showConfirmDelete(
-        'Cette action effacera ce lieu de tous les enregistrements (naissances, décès, mariages).',
+        'Cette action effacera ce lieu de tous les enregistrements (naissances, décès, unions).',
         lieu
       );
 
@@ -590,12 +593,12 @@
 
     function formatDate(date) {
       if (!date || date === '0000-00-00') return '-';
-      const d = new Date(date);
-      return d.toLocaleDateString('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
+      const parts = date.split('-');
+      if (parts.length !== 3) return '-';
+      const [year, month, day] = parts;
+      if (day === '00' && month === '00') return year;
+      if (day === '00') return `${month}-${year}`;
+      return `${day}-${month}-${year}`;
     }
 
     // Fonctions wrapper pour récupérer les données depuis les boutons

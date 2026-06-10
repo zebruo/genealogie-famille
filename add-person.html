@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="fr">
 
   <head>
@@ -9,25 +9,26 @@
     <link rel="stylesheet" href="styles/family-tree-styles.css" />
     <link rel="stylesheet" href="styles/person-quick-view.css" />
     <link rel="stylesheet" href="styles/modal-system.css" />
+    <link rel="stylesheet" href="styles/readonly.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   </head>
     
   <body>
-    <!-- Menu de navigation chargé dynamiquement depuis menu-navigation.html -->
+    <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-users.html -->
     <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
 
     <div class="container">
       <div class="controls-header">
         <div class="controls-title">
           <i class="fas fa-users"></i>
-          <span>Gestion de la famille</span>
+          <span class="admin-title">Gestion des membres</span><span class="viewer-only">Consultation des membres</span>
         </div>
       </div>
       <form id="familyForm">
         <input type="hidden" name="memberId" value="" />
 
         <div class="form-header">
-          <div class="status-group">
+          <div class="status-group admin-only">
             <button type="button" class="status-button active" data-status="alive">
               <i class="fas fa-heart badge-note-heart"></i>En vie
             </button>
@@ -35,11 +36,11 @@
               <i class="fas fa-cross badge-note-deces"></i>Décédé
             </button>
           </div>
-          <select class="gender-select form-control" name="gender" required>
+          <select class="gender-select form-control admin-only" name="gender" required>
             <option value="">Genre</option>
-            <option value="M">Masculin</option>
-            <option value="F">Féminin</option>
-            <option value="U">Je ne sais pas</option>
+            <option value="M">Homme</option>
+            <option value="F">Femme</option>
+            <option value="U">Non spécifié</option>
           </select>
           <div class="search-input-wrapper header-search">
             <input type="text" class="search-input" placeholder="Rechercher un membre de la famille (nom, prénom, lieu...)" />
@@ -49,70 +50,84 @@
           </div>
         </div>
 
-        <div class="form-body">
+        <div class="form-body admin-only">
           <!-- Informations de base -->
-          <div class="form-section">
+          <div class="form-section" style="flex: 1">
             <div class="form-group">
               <label>Nom</label>
-              <input type="text" class="form-control" name="lastName" required />
+              <input type="text" class="form-control" name="lastName" required maxlength="100" />
             </div>
             <div class="form-group">
               <label>Prénom(s)</label>
-              <input type="text" class="form-control" name="firstName" required />
+              <input type="text" class="form-control" name="firstName" required maxlength="150" />
             </div>
             <div class="form-group">
               <label>Surnom</label>
-              <input type="text" class="form-control" name="surnom" placeholder="Optionnel" />
+              <input type="text" class="form-control" name="surnom" placeholder="Optionnel" maxlength="100" />
             </div>
           </div>
 
           <!-- Naissance -->
-          <div class="form-section">
+          <div class="form-section" style="flex: 1">
             <div class="form-group">
               <label>Date de naissance</label>
-              <input type="date" class="form-control" name="birthDate" />
+              <div class="date-qualifier-group"><select class="form-control" name="birthDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" class="form-control" name="birthDate" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
             </div>
             <div class="form-group">
               <label>Lieu de naissance</label>
-              <input type="text" class="form-control" name="birthPlace" />
+              <input type="text" class="form-control" name="birthPlace" maxlength="200" />
             </div>
             <div class="form-group">
               <label>Doc. naissance</label>
-              <textarea class="form-control" name="doc_naissance" rows="4" placeholder="archives état civil, registres paroissiaux..."></textarea>
+              <textarea class="form-control" name="doc_naissance" rows="4" placeholder="archives état civil, registres paroissiaux..." maxlength="3000"></textarea>
             </div>
           </div>
 
           <!-- Décès -->
-          <div class="form-section death-info" style="display: none">
+          <div class="form-section death-info" style="display: none; flex: 1;">
             <div class="form-group">
               <label>Date de décès</label>
-              <input type="date" class="form-control" name="deathDate" />
+              <div class="date-qualifier-group"><select class="form-control" name="deathDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" class="form-control" name="deathDate" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
             </div>
             <div class="form-group">
               <label>Lieu de décès</label>
-              <input type="text" class="form-control" name="deathPlace" />
+              <input type="text" class="form-control" name="deathPlace" maxlength="200" />
             </div>
             <div class="form-group">
               <label>Doc. décès</label>
-              <textarea class="form-control" name="doc_deces" rows="4" placeholder="archives état civil, registres paroissiaux..."></textarea>
+              <textarea class="form-control" name="doc_deces" rows="4" placeholder="archives état civil, registres paroissiaux..." maxlength="3000"></textarea>
             </div>
           </div>
 
           <!-- Profession et notes -->
-          <div class="form-section">
+          <div class="form-section" style="flex: 1">
             <div class="form-group">
               <label>Profession</label>
-              <input type="text" class="form-control" name="occupation" placeholder="Ex: Agriculteur, Médecin..." />
+              <input type="text" class="form-control" name="occupation" placeholder="Ex: Agriculteur, Médecin..." maxlength="200" />
             </div>
             <div class="form-group">
               <label>Notes</label>
-              <textarea class="form-control" name="notes" rows="4" placeholder="Informations complémentaires..."></textarea>
+              <textarea class="form-control" name="notes" rows="4" placeholder="Informations complémentaires..." maxlength="3000"></textarea>
             </div>
+          </div>
+
+          <!-- Confidentialité -->
+          <div class="form-section" style="flex: 0.7;">
+            <div class="form-group" style="flex-direction: row; align-items: center; gap: 10px;">
+              <input type="checkbox" id="force_public" name="force_public" style="width: auto; accent-color: var(--accent-color);" />
+              <label for="force_public" style="margin: 0; cursor: pointer;">
+                <i class="fas fa-eye" style="color: var(--accent-color);"></i>
+                Forcer l'affichage public
+              </label>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 4px;">
+              Afficher cette personne même si les règles de confidentialité la masqueraient normalement.
+            </p>
           </div>
         </div>
 
         <!-- Section Relations -->
-        <div class="relation-section">
+        <div class="relation-section admin-only">
           <h3><i class="fas fa-link"></i> Relations Familiales</h3>
 
           <select class="relation-select" name="relationType">
@@ -122,7 +137,7 @@
               <option value="child">Est l'enfant de</option>
             </optgroup>
             <option value="sibling">Frère/Sœur</option>
-            <option value="spouse">Conjoint(e) / Mariage</option>
+            <option value="spouse">Union</option>
           </select>
 
           <div class="relation-search-container">
@@ -143,7 +158,7 @@
           <div class="existing-marriages-list"></div>
         </div>
 
-        <div class="form-buttons-container">
+        <div class="form-buttons-container admin-only">
           <button class="btn-submit" id="resetBtn" type="button">
             <i class="fas fa-undo"></i>Réinitialiser
           </button>
@@ -156,19 +171,19 @@
       <div class="alphabet-index"></div>
 
       <div class="table-container">
-        <table class="table">
+        <table class="table" style="table-layout: fixed; width: 100%;">
           <thead>
             <tr>
-              <th>Nom</th>
-              <th>Prénom</th>
-              <th style="text-align: center;">Genre</th>
-              <th style="text-align: center;">Naissance</th>
-              <th style="text-align: center;">Décès</th>
-              <th>Relations</th>
-              <th style="text-align: center;">Actions</th>
+              <th style="width: 21%; text-align: center;"><i class="fas fa-id-card" title="Nom"></i></th>
+              <th style="width: 11%; text-align: center;"><i class="fas fa-user" title="Prénom"></i></th>
+              <th style="width: 6%; text-align: center;"><i class="fas fa-venus-mars" title="Genre"></i></th>
+              <th style="width: 8%; text-align: center;"><i class="fas fa-calendar-alt" title="Naissance"></i></th>
+              <th style="width: 8%; text-align: center;"><i class="fas fa-calendar-alt" title="Décès"></i></th>
+              <th style="width: 24%; text-align: center;"><i class="fas fa-link" title="Relations"></i></th>
+              <th style="width: 22%; text-align: center;"><i class="fas fa-sliders-h" title="Actions"></i></th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody><tr><td colspan="7"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Chargement des données…</p></div></td></tr></tbody>
         </table>
       </div>
 
@@ -176,7 +191,7 @@
     </div>
 
     <!-- Modal pour ajouter/éditer un mariage -->
-    <div id="marriageModal" class="modal-overlay" style="display: none;">
+    <div id="marriageModal" class="modal-overlay admin-only" style="display: none;">
       <div class="modal-content">
         <h3 id="marriageModalTitle"><i class="fas fa-ring"></i> Ajouter un mariage</h3>
         <form id="marriageForm">
@@ -193,17 +208,17 @@
 
           <div class="form-group">
             <label>Date de mariage</label>
-            <input type="date" id="marriageDate" class="form-control" />
+            <div class="date-qualifier-group"><select class="form-control" id="marriageDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" id="marriageDate" class="form-control" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
           </div>
 
           <div class="form-group">
             <label>Lieu de mariage</label>
-            <input type="text" id="marriagePlace" class="form-control" />
+            <input type="text" id="marriagePlace" class="form-control" maxlength="200" />
           </div>
 
           <div class="form-group">
             <label>Date (divorce/décès)</label>
-            <input type="date" id="marriageEndDate" class="form-control" />
+            <div class="date-qualifier-group"><select class="form-control" id="marriageEndDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" id="marriageEndDate" class="form-control" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
           </div>
 
           <div class="form-group">
@@ -218,10 +233,10 @@
 
           <div class="form-group">
             <label>Notes</label>
-            <textarea id="marriageNotes" class="form-control" rows="3"></textarea>
+            <textarea id="marriageNotes" class="form-control" rows="3" maxlength="2000"></textarea>
           </div>
 
-          <div class="modal-buttons">
+          <div class="form-buttons-container">
             <button type="button" class="btn-submit" onclick="closeMarriageModal()">
               <i class="fas fa-times"></i> Annuler
             </button>
@@ -232,6 +247,28 @@
         </form>
       </div>
     </div>
+    <!-- Modal de consultation (lecture seule) -->
+    <div id="viewModal" class="modal-overlay" style="display: none;">
+      <div class="modal-content" style="max-width: 620px; width: 92%; display: flex; flex-direction: column; max-height: 90vh; padding: 0; overflow: hidden;">
+        <!-- Header fixe -->
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--input-border); flex-shrink: 0;">
+          <h3 id="viewModalTitle" style="margin: 0;"></h3>
+          <button type="button" class="btn-close-modal" onclick="closeViewModal()" aria-label="Fermer">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+        <!-- Contenu scrollable -->
+        <div id="viewModalBody" style="font-size: 0.9rem; line-height: 1.6; overflow-y: auto; padding: 1.25rem 1.5rem; flex: 1;"></div>
+        <!-- Footer fixe -->
+        <div class="form-buttons-container" style="padding: 1rem 1.5rem; border-top: 1px solid var(--input-border); flex-shrink: 0;">
+          <button type="button" class="btn-submit" onclick="closeViewModal()">
+            <i class="fas fa-times"></i> Fermer
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/auth.js"></script>
     <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
     <script src="js/modal-system.js"></script>
     <script src="js/search-engine.js"></script>
@@ -292,7 +329,7 @@
           return dateStr;
         }
         if (/^\d{4}$/.test(dateStr)) {
-          return fullFormat ? dateStr : dateStr;
+          return dateStr;
         }
         const date = new Date(dateStr);
         if (fullFormat) {
@@ -301,23 +338,56 @@
         return dateStr;
       }
 
-      function convertDateToISO(dateStr) {
-        if (!dateStr) return '';
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-          return dateStr;
+      // Construit le texte d'affichage d'une date à partir du qualificateur et de la valeur saisie
+      function buildDateDisplay(qualifier, value) {
+        const v = value.trim().replace(/\//g, '-');
+        if (!v) return '';
+        return qualifier === 'Le' ? v : qualifier + ' ' + v;
+      }
+
+      // Extrait une date ISO (YYYY-MM-DD ou YYYY-01-01) depuis un texte d'affichage
+      function extractISOFromDisplay(display) {
+        if (!display) return '';
+        const val = display.replace(/^(Le|En|Avant|Après|Vers)\s+/, '').trim();
+        const dmy = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        if (dmy) return dmy[3] + '-' + dmy[2].padStart(2,'0') + '-' + dmy[1].padStart(2,'0');
+        if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
+        const year = val.match(/\d{4}/);
+        return year ? year[0] + '-01-01' : '';
+      }
+
+      // Parse un texte d'affichage en { qualifier, value }
+      function parseDateDisplay(display) {
+        if (!display || display === '?') return { qualifier: 'Le', value: '' };
+        const qualifiers = ['Avant', 'Après', 'Vers', 'Le', 'En'];
+        for (const q of qualifiers) {
+          if (display.startsWith(q + ' ')) return { qualifier: q, value: display.slice(q.length + 1) };
         }
-        if (/^\d{4}$/.test(dateStr)) {
-          return '';
+        if (/^\d{1,2}[-\/]\d{2}[-\/]\d{4}$/.test(display)) return { qualifier: 'Le', value: display.replace(/-/g, '/') };
+        return { qualifier: 'En', value: display };
+      }
+
+      function getYearFromInput(qualifier, value) {
+        if (!value) return NaN;
+        if (qualifier === 'Le') { const m = value.match(/\d{4}/); return m ? parseInt(m[0]) : NaN; }
+        return parseInt(value) || NaN;
+      }
+
+      function validateDateInput(qualifier, value, label) {
+        if (!value) return null;
+        if (qualifier === 'Le') {
+          const m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+          if (!m) return label + ' : format attendu JJ/MM/AAAA';
+          const d = parseInt(m[1]), mo = parseInt(m[2]), y = parseInt(m[3]);
+          if (mo < 1 || mo > 12) return label + ' : mois invalide';
+          if (d < 1 || d > new Date(y, mo, 0).getDate()) return label + ' : jour invalide';
+          if (y < 1 || y > new Date().getFullYear() + 1) return label + ' : annee invalide';
+        } else {
+          if (!/^\d{4}$/.test(value)) return label + ' : format attendu AAAA';
+          const y = parseInt(value);
+          if (y < 1 || y > new Date().getFullYear() + 1) return label + ' : annee invalide';
         }
-        if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
-          const [day, month, year] = dateStr.split('-');
-          return `${year}-${month}-${day}`;
-        }
-        if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateStr)) {
-          const [day, month, year] = dateStr.split('/');
-          return `${year}-${month}-${day}`;
-        }
-        return '';
+        return null;
       }
 
       // normalizeText supprimée - maintenant dans AddPersonSearchEngine
@@ -328,7 +398,9 @@
           state.members = Object.values(data).map(member => ({
             ...member,
             id: Number(member.id),
-            marriages: member.marriages || {}
+            marriages: member.marriages || {},
+            birthDateDisplay: member.birthDateDisplay ? member.birthDateDisplay.replace(/^Le /, '') : member.birthDateDisplay,
+            deathDateDisplay: member.deathDateDisplay ? member.deathDateDisplay.replace(/^Le /, '') : member.deathDateDisplay,
           }));
           state.filteredMembers = sortMembers(state.members);
           state.currentPage = 1;
@@ -341,8 +413,33 @@
         }
       }
 
+      function getInitials(firstNames) {
+        if (!firstNames) return '';
+        if (firstNames === '👤') return '👤';
+        return firstNames.trim().split(/\s+/).map(n => n.charAt(0) + '.').join(' ');
+      }
+
+      function getYear(dateStr) {
+        if (!dateStr) return '';
+        const match = dateStr.match(/\d{4}/);
+        return match ? match[0] : '';
+      }
+
+      function memberYear(m, type) {
+        const disp = type === 'birth' ? m.birthDateDisplay : m.deathDateDisplay;
+        const raw  = type === 'birth' ? m.birthDate        : m.deathDate;
+        return disp ? (getYear(disp) || disp) : (raw || '');
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+
       function sortMembers(members) {
         return [...members].sort((a, b) => {
+          const confA = a.isConfidential ? 1 : 0;
+          const confB = b.isConfidential ? 1 : 0;
+          if (confA !== confB) return confA - confB;
           const nameA = `${a.lastName} ${a.firstName}`.toLowerCase();
           const nameB = `${b.lastName} ${b.firstName}`.toLowerCase();
           return nameA.localeCompare(nameB);
@@ -350,6 +447,24 @@
       }
       async function handleFormSubmit(e) {
         e.preventDefault();
+        const birthQualifier = document.querySelector('[name="birthDateQualifier"]').value;
+        const birthValue = document.querySelector('[name="birthDate"]').value.trim();
+        const deathQualifier = document.querySelector('[name="deathDateQualifier"]').value;
+        const deathValue = document.querySelector('[name="deathDate"]').value.trim();
+        const birthErr = validateDateInput(birthQualifier, birthValue, 'Date de naissance');
+        if (birthErr) { showTemporaryInfo(birthErr, 'error'); return; }
+        const deathErr = validateDateInput(deathQualifier, deathValue, 'Date de décès');
+        if (deathErr) { showTemporaryInfo(deathErr, 'error'); return; }
+        if (birthValue && deathValue) {
+          const by = getYearFromInput(birthQualifier, birthValue);
+          const dy = getYearFromInput(deathQualifier, deathValue);
+          if (!isNaN(by) && !isNaN(dy) && by > dy) {
+            showTemporaryInfo('La date de naissance ne peut pas être postérieure à la date de décès', 'error');
+            return;
+          }
+        }
+        const submitBtn = document.querySelector('#familyForm [type="submit"]');
+        submitBtn.disabled = true;
         const formData = new FormData();
         formData.append('action', 'saveMembre');
         if (state.editingMember) {
@@ -359,12 +474,18 @@
         formData.append('nom', document.querySelector('[name="lastName"]').value);
         formData.append('surnom', document.querySelector('[name="surnom"]').value || '');
         formData.append('sex', document.querySelector('[name="gender"]').value);
-        formData.append('date_naissance', document.querySelector('[name="birthDate"]').value || '');
+        const rawBirthDisplay = buildDateDisplay(document.querySelector('[name="birthDateQualifier"]').value, document.querySelector('[name="birthDate"]').value);
+        const birthDisplay = rawBirthDisplay || '?';
+        formData.append('date_naissance_affichage', birthDisplay);
+        formData.append('date_naissance', extractISOFromDisplay(birthDisplay));
         formData.append('lieu_naissance', document.querySelector('[name="birthPlace"]').value || '');
         // Normaliser les retours à la ligne (remplacer \r\n par \n)
         const docNaissance = (document.querySelector('[name="doc_naissance"]').value || '').replace(/\r\n/g, '\n');
         formData.append('doc_naissance', docNaissance);
-        formData.append('date_deces', document.querySelector('[name="deathDate"]').value || '');
+        const rawDeathDisplay = buildDateDisplay(document.querySelector('[name="deathDateQualifier"]').value, document.querySelector('[name="deathDate"]').value);
+        const deathDisplay = (state.currentStatus === 'deceased' && !rawDeathDisplay) ? '?' : rawDeathDisplay;
+        formData.append('date_deces_affichage', deathDisplay);
+        formData.append('date_deces', extractISOFromDisplay(deathDisplay));
         formData.append('lieu_deces', document.querySelector('[name="deathPlace"]').value || '');
         // Normaliser les retours à la ligne (remplacer \r\n par \n)
         const docDeces = (document.querySelector('[name="doc_deces"]').value || '').replace(/\r\n/g, '\n');
@@ -373,6 +494,7 @@
         // Normaliser les retours à la ligne pour les notes aussi
         const notes = (document.querySelector('[name="notes"]').value || '').replace(/\r\n/g, '\n');
         formData.append('notes', notes);
+        if (document.querySelector('#force_public').checked) formData.append('force_public', '1');
         try {
           const response = await fetch(CONFIG.apiEndpoint, {
             method: 'POST',
@@ -397,6 +519,8 @@
         } catch (error) {
           console.error(error);
           showTemporaryInfo(error.message || 'Erreur lors de l\'enregistrement', 'error');
+        } finally {
+          document.querySelector('#familyForm [type="submit"]').disabled = false;
         }
       }
       async function saveRelation(personId, relation) {
@@ -447,8 +571,10 @@
           }
         }
         if (marriage.date) formData.append('date_mariage', marriage.date);
+        if (marriage.dateDisplay) formData.append('date_mariage_affichage', marriage.dateDisplay);
         if (marriage.place) formData.append('lieu_mariage', marriage.place);
         if (marriage.endDate) formData.append('date_fin', marriage.endDate);
+        if (marriage.endDateDisplay) formData.append('date_fin_affichage', marriage.endDateDisplay);
         if (marriage.endType) formData.append('type_fin', marriage.endType);
         if (marriage.notes) formData.append('notes', marriage.notes);
         try {
@@ -532,9 +658,9 @@
                 <div class="temp-relations">
                     ${state.tempRelations.map((rel, index) => {
                         const relatedPerson = state.members.find(m => m.id === rel.id);
-                        const birthYear = relatedPerson && relatedPerson.birthDate ? relatedPerson.birthDate : '';
-                        const deathYear = relatedPerson && relatedPerson.deathDate ? relatedPerson.deathDate : '';
-                        const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+                        const birthYear = relatedPerson ? memberYear(relatedPerson, 'birth') : '';
+                        const deathYear = relatedPerson ? memberYear(relatedPerson, 'death') : '';
+                        const dates = birthYear || deathYear ? ` (${birthYear || '?'}${deathYear ? ' - ' + deathYear : ''})` : '';
                         
                         return `
                             <div class="temp-relation">
@@ -556,7 +682,7 @@
         }
         state.tempMarriages.push({
           spouseId: spouse.id,
-          spouseName: `${spouse.firstNames} ${spouse.lastName}`,
+          spouseName: `${escapeHtml(spouse.firstNames)} ${escapeHtml(spouse.lastName)}`,
           ...marriageData
         });
         renderTempMarriages();
@@ -579,9 +705,9 @@
                 <div class="temp-relations">
                     ${state.tempMarriages.map((marriage, index) => {
                         const spouse = state.members.find(m => m.id === marriage.spouseId);
-                        const birthYear = spouse && spouse.birthDate ? spouse.birthDate : '';
-                        const deathYear = spouse && spouse.deathDate ? spouse.deathDate : '';
-                        const spouseDates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - †' + deathYear : ''})` : '';
+                        const birthYear = spouse ? memberYear(spouse, 'birth') : '';
+                        const deathYear = spouse ? memberYear(spouse, 'death') : '';
+                        const spouseDates = birthYear || deathYear ? ` (${birthYear || '?'}${deathYear ? ' - †' + deathYear : ''})` : '';
                         const marriageDate = marriage.date ? ` • ${formatDate(marriage.date, true)}` : '';
                         const marriagePlace = marriage.place ? ` • ${marriage.place}` : '';
                         
@@ -612,62 +738,36 @@
           .forEach(m => {
             const option = document.createElement('option');
             option.value = m.id;
-            const dates = m.birthDate ?
-              m.birthDate + (m.deathDate ? ' - ' + m.deathDate : '') :
-              '';
+            const b = memberYear(m, 'birth');
+            const d = memberYear(m, 'death');
+            const dates = b || d ? b + (d ? ' - ' + d : '') : '';
             option.textContent = `${m.firstNames} ${m.lastName}${dates ? ' (' + dates + ')' : ''}`;
             select.appendChild(option);
           });
         if (existingMarriage) {
-          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Modifier le mariage';
+          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Modifier une union';
           document.getElementById('marriageId').value = existingMarriage.marriageId;
           document.getElementById('marriageSpouseId').value = existingMarriage.spouseId;
           select.value = existingMarriage.spouseId;
           select.disabled = true;
           // Gérer la date de mariage
-          let marriageDateValue = '';
-          if (existingMarriage.fullMarriageDate) {
-            // Format DD-MM-YYYY -> YYYY-MM-DD
-            const parts = existingMarriage.fullMarriageDate.split('-');
-            if (parts.length === 3) {
-              marriageDateValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
-          } else if (existingMarriage.marriageDate) {
-            const dateStr = String(existingMarriage.marriageDate);
-            if (/^\d{4}$/.test(dateStr)) {
-              marriageDateValue = dateStr + '-01-01';
-            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-              marriageDateValue = dateStr;
-            }
-          }
-          document.getElementById('marriageDate').value = marriageDateValue;
+          const md = parseDateDisplay(existingMarriage.marriageDateDisplay || existingMarriage.fullMarriageDate || '');
+          document.getElementById('marriageDateQualifier').value = md.qualifier;
+          document.getElementById('marriageDate').value = md.value;
           document.getElementById('marriagePlace').value = existingMarriage.place || existingMarriage.marriagePlace || '';
           // Gérer la date de fin
-          let endDateValue = '';
-          if (existingMarriage.fullDivorceDate) {
-            // Format DD-MM-YYYY -> YYYY-MM-DD
-            const parts = existingMarriage.fullDivorceDate.split('-');
-            if (parts.length === 3) {
-              endDateValue = `${parts[2]}-${parts[1]}-${parts[0]}`;
-            }
-          } else if (existingMarriage.endDate || existingMarriage.divorceDate) {
-            const dateStr = String(existingMarriage.endDate || existingMarriage.divorceDate);
-            if (/^\d{4}$/.test(dateStr)) {
-              endDateValue = dateStr + '-01-01';
-            } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-              endDateValue = dateStr;
-            }
-          }
-          document.getElementById('marriageEndDate').value = endDateValue;
+          const ed = parseDateDisplay(existingMarriage.endDateDisplay || existingMarriage.fullDivorceDate || '');
+          document.getElementById('marriageEndDateQualifier').value = ed.qualifier;
+          document.getElementById('marriageEndDate').value = ed.value;
           document.getElementById('marriageEndType').value = existingMarriage.endType || '';
           document.getElementById('marriageNotes').value = existingMarriage.notes || '';
         } else if (spouse) {
-          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Ajouter un mariage';
+          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Ajouter une union';
           select.value = spouse.id;
           document.getElementById('marriageSpouseId').value = spouse.id;
           select.disabled = false;
         } else {
-          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Ajouter un mariage';
+          document.getElementById('marriageModalTitle').innerHTML = '<i class="fas fa-ring"></i> Ajouter une union';
           select.disabled = false;
         }
         modal.style.display = 'flex';
@@ -676,100 +776,105 @@
       function closeMarriageModal() {
         document.getElementById('marriageModal').style.display = 'none';
       }
-      async function handleMarriageSubmit(e) {
-  e.preventDefault();
-  const marriageId = document.getElementById('marriageId').value;
-  const spouseId = document.getElementById('marriageSpouseSelect').value;
-  const date = document.getElementById('marriageDate').value;
-  const place = document.getElementById('marriagePlace').value;
-  const endDate = document.getElementById('marriageEndDate').value;
-  const endType = document.getElementById('marriageEndType').value;
-  const notes = document.getElementById('marriageNotes').value;
-  
-  console.log('=== HANDLE MARRIAGE SUBMIT ===');
-  console.log('marriageId:', marriageId);
-  console.log('marriageId ? true/false:', marriageId ? true : false);
-  console.log('state.editingMember:', state.editingMember);
-  
-  if (!spouseId) {
-    showTemporaryInfo('Veuillez sélectionner un conjoint', 'error');
-    return;
-  }
-  
-  if (state.editingMember) {
-    const formData = new FormData();
-    const action = marriageId ? 'updateMariage' : 'addMariage';
-    console.log('ACTION CHOISIE:', action);
-    formData.append('action', action);
-    
-    if (marriageId) {
-      console.log('MODE UPDATE - mariage_id:', marriageId);
-      formData.append('mariage_id', marriageId);
-    } else {
-      console.log('MODE ADD');
-      const person = state.editingMember;
-      if (person.sex === 'M') {
-        formData.append('epoux_id', person.id);
-        formData.append('epouse_id', spouseId);
-      } else {
-        formData.append('epoux_id', spouseId);
-        formData.append('epouse_id', person.id);
-      }
-    }
-    
-    if (date) formData.append('date_mariage', date);
-    if (place) formData.append('lieu_mariage', place);
-    if (endDate) formData.append('date_fin', endDate);
-    if (endType) formData.append('type_fin', endType);
-    if (notes) formData.append('notes', notes);
-    
-    // DEBUG: Afficher toutes les données envoyées
-    console.log('=== DONNÉES ENVOYÉES ===');
-    for (let pair of formData.entries()) {
-      console.log(pair[0] + ': ' + pair[1]);
-    }
-    
-    try {
-      const response = await fetch(CONFIG.apiEndpoint, {
-        method: 'POST',
-        body: formData
-      });
-      const result = await response.json();
-      console.log('RÉSULTAT API:', result);
-      
-      if (result.success) {
-        showTemporaryInfo('Mariage enregistré !', 'success');
-        await loadMembers();
-        if (state.editingMember) {
-          const updated = state.members.find(m => m.id === state.editingMember.id);
-          if (updated) {
-            state.editingMember = updated;
-            loadExistingMarriages(updated);
+
+      function viewMember(id) {
+        const member = state.members.find(m => m.id === Number(id));
+        if (!member) return;
+
+        const genderLabel = member.sex === 'M' ? '<i class="fas fa-mars"></i>' : member.sex === 'F' ? '<i class="fas fa-venus"></i>' : 'Non spécifié';
+        const birthDisplay = member.birthDateDisplay || member.fullBirthDate || member.birthDate || '?';
+        const deathDisplay = member.deathDateDisplay || member.fullDeathDate || member.deathDate || null;
+
+        document.getElementById('viewModalTitle').innerHTML =
+          `<i class="fas fa-user" style="color: var(--accent-color); margin-right: 8px;"></i>${escapeHtml(member.firstNames)} ${escapeHtml(member.lastName)}`;
+
+        let html = '<div style="display: flex; flex-direction: column; gap: 1rem;">';
+
+        // Infos générales
+        html += '<div class="stats-box" style="padding: 1rem;">';
+        html += '<h4 style="margin-bottom: 0.75rem; color: var(--text-primary);"><i class="fas fa-info-circle" style="color: var(--accent-color); margin-right: 6px;"></i>Informations</h4>';
+        html += `<div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem 1rem; font-size: 0.85rem;">`;
+        html += `<div><span style="color: var(--text-secondary);">Naissance :</span> ${birthDisplay}${member.birthPlace ? ' — ' + escapeHtml(member.birthPlace) : ''}</div>`;
+        if (deathDisplay) html += `<div><span style="color: var(--text-secondary);">Décès :</span> ${deathDisplay} †${member.deathPlace ? ' — ' + escapeHtml(member.deathPlace) : ''}</div>`;
+        if (member.surnom) html += `<div><span style="color: var(--text-secondary);">Surnom :</span> ${escapeHtml(member.surnom)}</div>`;
+        html += `<div><span style="color: var(--text-secondary);">Genre :</span> ${genderLabel}</div>`;
+        if (member.occupation) html += `<div><span style="color: var(--text-secondary);">Profession :</span> ${escapeHtml(member.occupation)}</div>`;
+        if (member.notes) html += `<div><span style="color: var(--text-secondary);">Notes :</span> ${escapeHtml(member.notes)}</div>`;
+        html += '</div></div>';
+
+        // Relations familiales
+        const hasParents = member.parentIds && member.parentIds.length > 0;
+        const children = state.members.filter(m => m.parentIds && m.parentIds.includes(member.id));
+        const hasSiblings = member.siblingIds && member.siblingIds.length > 0;
+        const hasMarriages = member.marriages && Object.keys(member.marriages).length > 0;
+
+        if (hasParents || children.length > 0 || hasSiblings || hasMarriages) {
+          html += '<div class="stats-box" style="padding: 1rem;">';
+          html += '<h4 style="margin-bottom: 0.75rem; color: var(--text-primary);"><i class="fas fa-link" style="color: var(--accent-color); margin-right: 6px;"></i>Relations familiales</h4>';
+
+          const makeRelItem = (icon, name, dates) =>
+            `<div class="existing-relation" style="pointer-events: none; margin-bottom: 2px;">
+               <i class="fas ${icon}"></i>
+               <span>${name}${dates ? ' <small style="color:var(--text-secondary);">('+dates+')</small>' : ''}</span>
+             </div>`;
+
+          const relDates = m => {
+            const b = memberYear(m, 'birth');
+            const d = memberYear(m, 'death');
+            return (b || d) ? `${b}${d ? ' – ' + d : ''}` : '';
+          };
+
+          if (hasParents) {
+            html += `<h5 style="color: var(--text-secondary); font-size: 0.78rem; margin: 0.5rem 0 0.25rem;"><i class="fas fa-user-tie"></i> Parents</h5>`;
+            member.parentIds.forEach(pid => {
+              const p = state.members.find(m => m.id === pid);
+              if (p) html += makeRelItem('fa-user-tie', `${escapeHtml(p.firstNames)} ${escapeHtml(p.lastName)}`, relDates(p));
+            });
           }
+          if (children.length > 0) {
+            html += `<h5 style="color: var(--text-secondary); font-size: 0.78rem; margin: 0.5rem 0 0.25rem;"><i class="fas fa-child"></i> Enfants</h5>`;
+            children.forEach(c => html += makeRelItem('fa-child', `${escapeHtml(c.firstNames)} ${escapeHtml(c.lastName)}`, relDates(c)));
+          }
+          if (hasSiblings) {
+            html += `<h5 style="color: var(--text-secondary); font-size: 0.78rem; margin: 0.5rem 0 0.25rem;"><i class="fas fa-users"></i> Fratrie</h5>`;
+            member.siblingIds.forEach(sid => {
+              const s = state.members.find(m => m.id === sid);
+              if (s) html += makeRelItem('fa-users', `${escapeHtml(s.firstNames)} ${escapeHtml(s.lastName)}`, relDates(s));
+            });
+          }
+          if (hasMarriages) {
+            html += `<h5 style="color: var(--text-secondary); font-size: 0.78rem; margin: 0.5rem 0 0.25rem;"><i class="fas fa-ring"></i> Mariages</h5>`;
+            Object.entries(member.marriages).forEach(([spouseId, m]) => {
+              const spouse = state.members.find(mb => mb.id === Number(spouseId));
+              const spouseName = spouse ? `${escapeHtml(spouse.firstNames)} ${escapeHtml(spouse.lastName)}` : 'Inconnu';
+              const isConf = member.isConfidential || (spouse && spouse.isConfidential);
+              const spouseDates = (!isConf && spouse) ? relDates(spouse) : '';
+              const spouseDatesFmt = spouseDates ? `(${spouseDates})` : '';
+              const marriageInfo = !isConf ? [m.fullMarriageDate, m.place].filter(Boolean).join(' — ') : '';
+              html += makeRelItem('fa-ring', spouseName, spouseDatesFmt + (marriageInfo ? ' · ' + marriageInfo : ''));
+            });
+          }
+          html += '</div>';
         }
-        closeMarriageModal();
-      } else {
-        throw new Error(result.message || 'Erreur lors de l\'enregistrement');
+
+        html += '</div>';
+        document.getElementById('viewModalBody').innerHTML = html;
+        document.getElementById('viewModal').style.display = 'flex';
       }
-    } catch (error) {
-      console.error('ERREUR:', error);
-      showTemporaryInfo(error.message, 'error');
-    }
-  } else {
-    const spouse = state.members.find(m => m.id === Number(spouseId));
-    if (spouse) {
-      addTemporaryMarriage(spouse, {
-        id: marriageId || null,
-        date,
-        place,
-        endDate,
-        endType,
-        notes
+
+      function closeViewModal() {
+        document.getElementById('viewModal').style.display = 'none';
+      }
+
+      // Fermer viewModal en cliquant sur l'overlay ou avec Échap
+      document.getElementById('viewModal').addEventListener('click', function(e) {
+        if (e.target === this) closeViewModal();
       });
-    }
-    closeMarriageModal();
-  }
-}
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('viewModal').style.display === 'flex') {
+          closeViewModal();
+        }
+      });
       async function deleteMarriage(marriageId) {
         const confirmed = await showConfirmDelete('Voulez-vous vraiment supprimer ce mariage ?'); if (!confirmed) {
           return;
@@ -849,13 +954,13 @@
           return {
             ...marriage,
             spouseId: Number(spouseId),
-            spouseName: spouse ? `${spouse.firstNames} ${spouse.lastName}` : 'Inconnu',
-            spouseBirthYear: spouse && spouse.birthDate ? spouse.birthDate : '',
-            spouseDeathYear: spouse && spouse.deathDate ? spouse.deathDate : ''
+            spouseName: spouse ? `${escapeHtml(spouse.firstNames)} ${escapeHtml(spouse.lastName)}` : 'Inconnu',
+            spouseBirthYear: spouse ? memberYear(spouse, 'birth') : '',
+            spouseDeathYear: spouse ? memberYear(spouse, 'death') : ''
           };
         });
         container.innerHTML = `
-                <h4><i class="fas fa-ring"></i> Mariages (${marriages.length})</h4>
+                <h4><i class="fas fa-ring"></i> Union (${marriages.length})</h4>
                 <div class="existing-relations">
                     ${marriages.map((marriage, index) => {
                         const spouseDates = marriage.spouseBirthYear || marriage.spouseDeathYear 
@@ -865,11 +970,11 @@
                             <div class="existing-relation">
                                 <i class="fas fa-ring"></i>
                                 <span>
-                                    <strong>${marriage.spouseName}${spouseDates}</strong>
+                                    ${marriage.spouseName}${spouseDates}
                                     ${marriage.fullMarriageDate ? ` • ${marriage.fullMarriageDate}` : ''}
                                     ${marriage.place ? ` • ${marriage.place}` : ''}
                                 </span>
-                                <div style="margin-left: auto; display: flex; gap: 12px;">
+                                <div style="margin-left: auto; display: flex;">
                               <i class="fas fa-edit btn-edit" onclick="editMarriage(${marriage.marriageId})" title="Modifier"></i>
                               <i class="fas fa-times btn-delete" onclick="deleteMarriage(${marriage.marriageId})" title="Supprimer"></i>
                             </div>
@@ -900,15 +1005,30 @@
         document.querySelector('[name="lastName"]').value = member.lastName;
         document.querySelector('[name="surnom"]').value = member.surnom || '';
         document.querySelector('[name="gender"]').value = member.sex;
-        document.querySelector('[name="birthDate"]').value = member.isoBirthDate || '';
+        const bd = parseDateDisplay(member.birthDateDisplay || '');
+        if (!bd.value && member.isoBirthDate) {
+          const p = member.isoBirthDate.split('-');
+          if (p[1] === '01' && p[2] === '01') { bd.qualifier = 'En'; bd.value = p[0]; }
+          else { bd.qualifier = 'Le'; bd.value = p[2] + '/' + p[1] + '/' + p[0]; }
+        } else if (!bd.value && member.birthDate) { bd.qualifier = 'En'; bd.value = member.birthDate; }
+        document.querySelector('[name="birthDateQualifier"]').value = bd.qualifier;
+        document.querySelector('[name="birthDate"]').value = bd.value;
         document.querySelector('[name="birthPlace"]').value = member.birthPlace || '';
         document.querySelector('[name="doc_naissance"]').value = member.doc_naissance || '';
-        document.querySelector('[name="deathDate"]').value = member.isoDeathDate || '';
+        const dd = parseDateDisplay(member.deathDateDisplay || '');
+        if (!dd.value && member.isoDeathDate) {
+          const p = member.isoDeathDate.split('-');
+          if (p[1] === '01' && p[2] === '01') { dd.qualifier = 'En'; dd.value = p[0]; }
+          else { dd.qualifier = 'Le'; dd.value = p[2] + '/' + p[1] + '/' + p[0]; }
+        } else if (!dd.value && member.deathDate) { dd.qualifier = 'En'; dd.value = member.deathDate; }
+        document.querySelector('[name="deathDateQualifier"]').value = dd.qualifier;
+        document.querySelector('[name="deathDate"]').value = dd.value;
         document.querySelector('[name="deathPlace"]').value = member.deathPlace || '';
         document.querySelector('[name="doc_deces"]').value = member.doc_deces || '';
         document.querySelector('[name="occupation"]').value = member.occupation || '';
         document.querySelector('[name="notes"]').value = member.notes || '';
-        if (member.deathDate) {
+        document.querySelector('#force_public').checked = !!member.force_public;
+        if (member.deathDate || member.deathDateDisplay) {
           state.currentStatus = 'deceased';
           document.querySelector('[data-status="deceased"]').classList.add('active');
           document.querySelector('[data-status="alive"]').classList.remove('active');
@@ -943,9 +1063,9 @@
           member.parentIds.forEach(parentId => {
             const parent = state.members.find(m => m.id === parentId);
             if (parent) {
-              const birthYear = parent.birthDate ? parent.birthDate : '';
-              const deathYear = parent.deathDate ? parent.deathDate : '';
-              const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+              const birthYear = memberYear(parent, 'birth');
+              const deathYear = memberYear(parent, 'death');
+              const dates = birthYear || deathYear ? ` (${birthYear || '?'}${deathYear ? ' - ' + deathYear : ''})` : '';
               html += `
                             <div class="existing-relation">
                               <i class="fas fa-user-tie"></i>
@@ -961,9 +1081,9 @@
           html += '<h4><i class="fas fa-child"></i> Enfants</h4>';
           html += '<div class="relation-type-group">';
           children.forEach(child => {
-            const birthYear = child.birthDate ? child.birthDate : '';
-            const deathYear = child.deathDate ? child.deathDate : '';
-            const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+            const birthYear = memberYear(child, 'birth');
+            const deathYear = memberYear(child, 'death');
+            const dates = birthYear || deathYear ? ` (${birthYear || '?'}${deathYear ? ' - ' + deathYear : ''})` : '';
             html += `
                         <div class="existing-relation">
                           <i class="fas fa-child"></i>
@@ -980,9 +1100,9 @@
           member.siblingIds.forEach(siblingId => {
             const sibling = state.members.find(m => m.id === siblingId);
             if (sibling) {
-              const birthYear = sibling.birthDate ? sibling.birthDate : '';
-              const deathYear = sibling.deathDate ? sibling.deathDate : '';
-              const dates = birthYear || deathYear ? ` (${birthYear}${deathYear ? ' - ' + deathYear : ''})` : '';
+              const birthYear = memberYear(sibling, 'birth');
+              const deathYear = memberYear(sibling, 'death');
+              const dates = birthYear || deathYear ? ` (${birthYear || '?'}${deathYear ? ' - ' + deathYear : ''})` : '';
               html += `
                             <div class="existing-relation">
                               <i class="fas fa-users"></i>
@@ -1054,17 +1174,18 @@
               `<span class="lieu-badge badge-mariage">${count} ${count > 1 ? "mariages" : "mariage"}</span>`
             );
           }
-          const birthDisplay = member.fullBirthDate || member.birthDate || '';
-          const deathDisplay = member.fullDeathDate ? member.fullDeathDate + ' †' : (member.deathDate ? member.deathDate + ' †' : '');
+          const birthDisplay = member.birthDateDisplay || member.fullBirthDate || member.birthDate || '?';
+          const deathDisplay = member.deathDateDisplay ? member.deathDateDisplay + ' †' : (member.fullDeathDate ? member.fullDeathDate + ' †' : (member.deathDate ? member.deathDate + ' †' : ''));
           return `
                     <tr>
                         <td>${member.lastName}</td>
-                        <td>${member.firstNames}</td>
+                        <td style="text-align: center;"><span class="name-full">${member.firstNames}</span><span class="name-initials">${getInitials(member.firstNames)}</span></td>
                         <td style="text-align: center;">${member.sex === 'M' ? 'M' : member.sex === 'F' ? 'F' : 'Non spécifié'}</td>
-                        <td style="text-align: center;">${birthDisplay}</td>
-                        <td style="text-align: center;">${deathDisplay}</td>
-                        <td>${relations.join(' ') || '<span class="lieu-badge badge-deces">Aucune</span>'}</td>
+                        <td style="text-align: center;"><span class="date-full">${birthDisplay}</span><span class="date-year">${getYear(birthDisplay)}</span></td>
+                        <td style="text-align: center;"><span class="date-full">${deathDisplay}</span><span class="date-year">${getYear(deathDisplay)}</span></td>
+                        <td style="text-align: center;">${relations.join(' ') || '<span class="lieu-badge badge-deces">Aucune</span>'}</td>
                         <td style="text-align: center;">
+                          <i class="fas fa-eye btn-showDetails" onclick="viewMember(${member.id})" title="Voir"></i>
                           <i class="fas fa-edit btn-edit" onclick="startEditMember(${member.id})" title="Modifier"></i>
                           <i class="fas fa-times btn-delete" onclick="confirmDeleteMember(${member.id})" title="Supprimer"></i>
                         </td>
@@ -1119,11 +1240,16 @@
           state.members
           .map(m => (m.lastName || '').charAt(0).toUpperCase())
           .filter(c => /[A-ZÀ-Ü]/.test(c))
-        )].sort();
+        )].sort((a, b) => a.localeCompare(b, 'fr'));
+        const confCount = state.members.filter(m => m.isConfidential).length;
         const indexHtml = `
           <button class="letter-btn active" onclick="showAllMembers()">
             <i class="fas fa-users stat-number"></i> Tous
           </button>
+          ${confCount > 0 ? `
+          <button class="letter-btn" onclick="filterByConfidential(this)" title="Personnes confidentielles">
+            <i class="fas fa-user-secret"></i> ${confCount}
+          </button>` : ''}
           ${letters.map(letter => `
             <button class="letter-btn" onclick="filterByLetter('${letter}')">
               ${letter}
@@ -1146,6 +1272,17 @@
             btn.classList.add('active');
           }
         });
+        document.querySelector('.search-input').value = '';
+        document.querySelector('.clear-search').style.display = 'none';
+        renderTable();
+        renderPagination();
+      }
+
+      function filterByConfidential(btn) {
+        state.filteredMembers = sortMembers(state.members.filter(m => m.isConfidential));
+        state.currentPage = 1;
+        document.querySelectorAll('.letter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
         document.querySelector('.search-input').value = '';
         document.querySelector('.clear-search').style.display = 'none';
         renderTable();
@@ -1175,10 +1312,8 @@
             state.currentStatus = btn.dataset.status || 'alive';
             if (state.currentStatus === 'deceased') {
               document.querySelector('.death-info').style.display = 'block';
-              document.querySelector('[name="deathDate"]').required = true;
             } else {
               document.querySelector('.death-info').style.display = 'none';
-              document.querySelector('[name="deathDate"]').required = false;
             }
           });
         });
@@ -1219,12 +1354,23 @@
             showTemporaryInfo('Veuillez sélectionner un conjoint', 'error');
             return;
           }
+          const mDateErr = validateDateInput(document.getElementById('marriageDateQualifier').value, document.getElementById('marriageDate').value.trim(), 'Date de mariage');
+          if (mDateErr) { showTemporaryInfo(mDateErr, 'error'); return; }
+          const mEndDateErr = validateDateInput(document.getElementById('marriageEndDateQualifier').value, document.getElementById('marriageEndDate').value.trim(), 'Date de fin');
+          if (mEndDateErr) { showTemporaryInfo(mEndDateErr, 'error'); return; }
           
+          const rawMDateDisplay = buildDateDisplay(document.getElementById('marriageDateQualifier').value, document.getElementById('marriageDate').value);
+          const mDateDisplay = rawMDateDisplay || '?';
+          const rawMEndDisplay = buildDateDisplay(document.getElementById('marriageEndDateQualifier').value, document.getElementById('marriageEndDate').value);
+          const mEndType = document.getElementById('marriageEndType').value;
+          const mEndDisplay = rawMEndDisplay || (mEndType ? '?' : '');
           const marriageData = {
-            date: document.getElementById('marriageDate').value,
+            date: extractISOFromDisplay(mDateDisplay),
+            dateDisplay: mDateDisplay,
             place: document.getElementById('marriagePlace').value,
-            endDate: document.getElementById('marriageEndDate').value,
-            endType: document.getElementById('marriageEndType').value,
+            endDate: extractISOFromDisplay(mEndDisplay),
+            endDateDisplay: mEndDisplay,
+            endType: mEndType,
             notes: document.getElementById('marriageNotes').value
           };
           
@@ -1234,8 +1380,10 @@
             formData.append('action', 'updateMariage');
             formData.append('mariage_id', marriageId);
             formData.append('date_mariage', marriageData.date || '');
+            formData.append('date_mariage_affichage', marriageData.dateDisplay || '');
             formData.append('lieu_mariage', marriageData.place || '');
             formData.append('date_fin', marriageData.endDate || '');
+            formData.append('date_fin_affichage', marriageData.endDateDisplay || '');
             formData.append('type_fin', marriageData.endType || '');
             formData.append('notes', marriageData.notes || '');
             
@@ -1278,8 +1426,10 @@
               formData.append('epouse_id', person.id);
             }
             if (marriageData.date) formData.append('date_mariage', marriageData.date);
+            if (marriageData.dateDisplay) formData.append('date_mariage_affichage', marriageData.dateDisplay);
             if (marriageData.place) formData.append('lieu_mariage', marriageData.place);
             if (marriageData.endDate) formData.append('date_fin', marriageData.endDate);
+            if (marriageData.endDateDisplay) formData.append('date_fin_affichage', marriageData.endDateDisplay);
             if (marriageData.endType) formData.append('type_fin', marriageData.endType);
             if (marriageData.notes) formData.append('notes', marriageData.notes);
             
@@ -1317,9 +1467,9 @@
           }
         });
       }
-      window.selectRelation = selectRelation;
-      window.selectMemberFromSuggestion = selectMemberFromSuggestion;
       window.startEditMember = startEditMember;
+      window.viewMember = viewMember;
+      window.closeViewModal = closeViewModal;
       window.confirmDeleteMember = confirmDeleteMember;
       window.resetForm = resetForm;
       window.changePage = changePage;
@@ -1329,7 +1479,6 @@
       window.removeTemporaryMarriage = removeTemporaryMarriage;
       window.openMarriageModal = openMarriageModal;
       window.closeMarriageModal = closeMarriageModal;
-      window.editMarriage = editMarriage;
       window.deleteMarriage = deleteMarriage;
       window.deleteExistingRelation = deleteExistingRelation;
       document.addEventListener('DOMContentLoaded', async () => {

@@ -1,0 +1,7 @@
+# Désactiver la liste des fichiers
+Options -Indexes
+
+# Interdire l'accès direct aux fichiers sensibles
+<FilesMatch "^(config\.php|config\.example\.php|mdp\.php)$">
+  Require all denied
+</FilesMatch>

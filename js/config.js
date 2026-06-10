@@ -2,13 +2,13 @@
 
 /**
  * Configuration globale de l'application d'arbre généalogique
- * Structure basée sur test.html - Mode vertical uniquement
+ * Structure basée sur test.html
  */
 const CONFIG = {
   // Dimensions des nœuds (rectangles)
   node: {
-    width: 95,
-    height: 120,
+    width: 96,
+    height: 130,
   },
 
   // Espacements de l'arbre
@@ -31,13 +31,15 @@ const CONFIG = {
 
   // Enfants
   children: {
-    descent: 160,              // Distance verticale vers les enfants (Y positif)
+    descent: 168,              // Distance verticale vers les enfants (Y positif)
     spacing: 15,               // Distance entre enfants
   },
 
   // Zoom et vue
   view: {
-    zoomExtent: [0.2, 3],  // [min, max] - min ajusté pour arbres avec 6 générations
+    zoomExtent: [0.2, 3],      // [min, max] - min ajusté pour arbres avec 6 générations
+    mobileBreakpoint: 768,     // Largeur en-dessous de laquelle on applique le zoom mobile
+    mobileInitialScale: 0.6,  // Zoom initial sur mobile (centré sur la racine)
   },
 
   // Marges (non utilisées avec le zoom - garder à 0)

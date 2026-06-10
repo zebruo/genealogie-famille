@@ -8,6 +8,7 @@ set_error_handler(function($errno, $errstr, $errfile, $errline) {
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
+require_once 'auth.php';
 require_once 'config.php';
 require_once 'mariage_manager.php';
 
@@ -23,18 +24,50 @@ class FamilyTreeAPI {
         header('Cache-Control: no-cache, must-revalidate');
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
         
-        // Créer le répertoire d'upload s'il n'existe pas
         if (!file_exists($this->uploadDir)) {
             mkdir($this->uploadDir, 0755, true);
         }
+    }
+
+    // Confidentialité : décédé depuis moins de 10 ans, ou vivant né il y a moins de 100 ans
+    private function isConfidential(array $membre): bool {
+        if (!empty($membre['force_public'])) return false;
+        $deces = $membre['date_deces'] ?? '';
+        $hasDeath = !empty($deces) && $deces !== '0000-00-00';
+        if ($hasDeath) return (int)substr($deces, 0, 4) > (date('Y') - 10);
+        $naissance = $membre['date_naissance'] ?? '';
+        if (empty($naissance) || $naissance === '0000-00-00') return true;
+        return (int)substr($naissance, 0, 4) > (date('Y') - 100);
+    }
+
+    private function maskMembre(array $membre): array {
+        return array_merge($membre, [
+            'prenom'          => '👤',
+            'nom'             => '🔒',
+            'surnom'          => '',
+            'date_naissance'  => null,
+            'date_deces'      => null,
+            'lieu_naissance'  => '',
+            'lieu_deces'      => '',
+            'notes'           => '',
+            'doc_naissance'   => '',
+            'doc_deces'       => '',
+            'occupation'      => '',
+            'relations'       => null,
+            'isConfidential'  => true,
+        ]);
     }
 
     // Request handling
     public function handleRequest() {
         $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+        // Toutes les actions nécessitent au minimum d'être connecté
+        requireLogin();
+
         try {
             switch ($action) {
+                // ── Lecture (viewer + admin) ──────────────────────────────────
                 case 'getMembres':
                     echo json_encode($this->getMembres());
                     break;
@@ -47,37 +80,6 @@ class FamilyTreeAPI {
                     echo json_encode($this->getFamilyData());
                     break;
 
-                case 'saveMembre':
-                    echo json_encode($this->saveMember());
-                    break;
-
-                case 'saveRelation':
-                    echo json_encode($this->saveRelation());
-                    break;
-
-                case 'deleteMembre':
-                    echo json_encode($this->deleteMember());
-                    break;
-
-                case 'deleteRelation':
-                    echo json_encode($this->deleteRelation());
-                    break;
-
-                // ============================================
-                // ACTIONS POUR LES MARIAGES
-                // ============================================
-                case 'addMariage':
-                    echo json_encode($this->addMariage());
-                    break;
-
-                case 'updateMariage':
-                    echo json_encode($this->updateMariage());
-                    break;
-
-                case 'deleteMariage':
-                    echo json_encode($this->deleteMariage());
-                    break;
-
                 case 'getMariagesPersonne':
                     echo json_encode($this->getMariagesPersonne());
                     break;
@@ -86,32 +88,8 @@ class FamilyTreeAPI {
                     echo json_encode($this->getMariageDetails());
                     break;
 
-                case 'updateMariageOrder':
-                    echo json_encode($this->updateMariageOrder());
-                    break;
-
-                // ============================================
-                // ACTIONS POUR LA GESTION DES LIEUX
-                // ============================================
                 case 'getLieux':
                     echo json_encode(['success' => true, 'lieux' => $this->getLieuxUniques()]);
-                    break;
-
-                case 'updateLieu':
-                    $ancien = $_POST['ancien_lieu'] ?? '';
-                    $nouveau = $_POST['nouveau_lieu'] ?? '';
-                    if (empty($ancien) || empty($nouveau)) {
-                        throw new Exception('Lieux manquants');
-                    }
-                    echo json_encode($this->mettreAJourLieu($ancien, $nouveau));
-                    break;
-
-                case 'deleteLieu':
-                    $lieu = $_POST['lieu'] ?? '';
-                    if (empty($lieu)) {
-                        throw new Exception('Lieu manquant');
-                    }
-                    echo json_encode($this->supprimerLieu($lieu));
                     break;
 
                 case 'getDetails':
@@ -127,31 +105,105 @@ class FamilyTreeAPI {
                     echo json_encode(['success' => true, 'lieux' => $this->rechercherLieux($terme)]);
                     break;
 
-                // ============================================
-                // ACTIONS POUR LA GESTION DOCUMENTAIRE
-                // ============================================
                 case 'getDocuments':
                     echo json_encode($this->getDocuments());
-                    break;
-
-                case 'addDocument':
-                    echo json_encode($this->addDocument());
-                    break;
-
-                case 'updateDocument':
-                    echo json_encode($this->updateDocument());
-                    break;
-
-                case 'deleteDocument':
-                    echo json_encode($this->deleteDocument());
                     break;
 
                 case 'getTousMariages':
                     echo json_encode($this->mariageManager->getTousMariages());
                     break;
-                    
+
                 case 'getAllDocumentCounts':
                     echo json_encode($this->getAllDocumentCounts());
+                    break;
+
+                // ── Écriture (admin uniquement) ───────────────────────────────
+                case 'saveMembre':
+                    requireAdmin();
+                    echo json_encode($this->saveMember());
+                    break;
+
+                case 'saveRelation':
+                    requireAdmin();
+                    echo json_encode($this->saveRelation());
+                    break;
+
+                case 'deleteMembre':
+                    requireAdmin();
+                    echo json_encode($this->deleteMember());
+                    break;
+
+                case 'deleteRelation':
+                    requireAdmin();
+                    echo json_encode($this->deleteRelation());
+                    break;
+
+                case 'addMariage':
+                    requireAdmin();
+                    echo json_encode($this->addMariage());
+                    break;
+
+                case 'updateMariage':
+                    requireAdmin();
+                    echo json_encode($this->updateMariage());
+                    break;
+
+                case 'deleteMariage':
+                    requireAdmin();
+                    echo json_encode($this->deleteMariage());
+                    break;
+
+                case 'updateMariageOrder':
+                    requireAdmin();
+                    echo json_encode($this->updateMariageOrder());
+                    break;
+
+                case 'updateLieu':
+                    requireAdmin();
+                    $ancien = $_POST['ancien_lieu'] ?? '';
+                    $nouveau = $_POST['nouveau_lieu'] ?? '';
+                    if (empty($ancien) || empty($nouveau)) {
+                        throw new Exception('Lieux manquants');
+                    }
+                    echo json_encode($this->mettreAJourLieu($ancien, $nouveau));
+                    break;
+
+                case 'deleteLieu':
+                    requireAdmin();
+                    $lieu = $_POST['lieu'] ?? '';
+                    if (empty($lieu)) {
+                        throw new Exception('Lieu manquant');
+                    }
+                    echo json_encode($this->supprimerLieu($lieu));
+                    break;
+
+                case 'addDocument':
+                    requireAdmin();
+                    echo json_encode($this->addDocument());
+                    break;
+
+                case 'updateDocument':
+                    requireAdmin();
+                    echo json_encode($this->updateDocument());
+                    break;
+
+                case 'deleteDocument':
+                    requireAdmin();
+                    echo json_encode($this->deleteDocument());
+                    break;
+
+                case 'getLinkedMembers':
+                    echo json_encode($this->getLinkedMembers());
+                    break;
+
+                case 'addDocumentLink':
+                    requireAdmin();
+                    echo json_encode($this->addDocumentLink());
+                    break;
+
+                case 'removeDocumentLink':
+                    requireAdmin();
+                    echo json_encode($this->removeDocumentLink());
                     break;
 
                 default:
@@ -167,14 +219,21 @@ class FamilyTreeAPI {
     // MÉTHODES POUR LA GESTION DOCUMENTAIRE
     // ============================================
 
-    /**
-     * Récupérer tous les documents d'une personne
-     */
     private function getDocuments() {
         $personId = $_GET['person_id'] ?? 0;
-        
+
         if (!$personId) {
             throw new Exception('ID de personne manquant');
+        }
+
+        // Bloquer l'accès aux documents des personnes confidentielles
+        if (!isAdmin()) {
+            $stmt = $this->pdo->prepare("SELECT date_naissance, date_deces FROM membres WHERE id = :id");
+            $stmt->execute(['id' => $personId]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($row && $this->isConfidential(['date_naissance' => $row['date_naissance'], 'date_deces' => $row['date_deces']])) {
+                return ['success' => true, 'documents' => []];
+            }
         }
 
         // Récupérer les notes de la table membres
@@ -231,9 +290,8 @@ class FamilyTreeAPI {
         $stmt->execute(['person_id' => $personId]);
         $mariageNotes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Récupérer les documents de la table documents
-        $stmt = $this->pdo->prepare("
-            SELECT 
+        // Récupérer les documents dont la personne est propriétaire
+        $selectFields = "
                 d.id,
                 d.type,
                 d.source,
@@ -245,11 +303,11 @@ class FamilyTreeAPI {
                 d.description,
                 d.created_at,
                 d.updated_at,
-                CASE 
+                CASE
                     WHEN d.source = 'membre' THEN 'Informations générales'
                     WHEN d.source LIKE 'mariage_%' THEN (
                         SELECT CONCAT('Mariage avec ',
-                            CASE 
+                            CASE
                                 WHEN m.epoux_id = :person_id THEN CONCAT(e2.prenom, ' ', e2.nom)
                                 ELSE CONCAT(e1.prenom, ' ', e1.nom)
                             END
@@ -260,13 +318,27 @@ class FamilyTreeAPI {
                         WHERE m.id = CAST(SUBSTRING(d.source, 9) AS UNSIGNED)
                     )
                     ELSE ''
-                END as source_label
-            FROM documents d
-            WHERE d.person_id = :person_id
-            ORDER BY d.created_at DESC
-        ");
+                END as source_label";
+
+        $stmt = $this->pdo->prepare("SELECT $selectFields FROM documents d WHERE d.person_id = :person_id ORDER BY d.created_at DESC");
         $stmt->execute(['person_id' => $personId]);
         $documents = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // Récupérer les documents liés via document_members (dont la personne n'est pas propriétaire)
+        $stmt2 = $this->pdo->prepare("
+            SELECT d.id, d.type, d.source, d.title, d.content,
+                   d.file_name, d.file_path, d.file_size, d.description,
+                   d.created_at, d.updated_at, '' as source_label
+            FROM documents d
+            INNER JOIN document_members dm ON dm.document_id = d.id
+            WHERE dm.member_id = ?
+              AND d.person_id != ?
+            ORDER BY d.created_at DESC
+        ");
+        $stmt2->execute([$personId, $personId]);
+        $linkedDocuments = $stmt2->fetchAll(PDO::FETCH_ASSOC);
+
+        $documents = array_merge($documents, $linkedDocuments);
 
         // Récupérer les sources de naissance
         $stmt = $this->pdo->prepare("
@@ -327,9 +399,6 @@ class FamilyTreeAPI {
         ];
     }
 
-    /**
-     * Ajouter un nouveau document
-     */
     private function addDocument() {
         $personId = $_POST['person_id'] ?? 0;
         $type = $_POST['type'] ?? '';
@@ -514,12 +583,9 @@ class FamilyTreeAPI {
         }
     }
 
-    /**
-     * Méthode utilitaire pour mettre à jour les champs d'un document
-     */
     private function updateDocumentFields($documentId, $personId, $updateFields) {
         $setParts = [];
-        foreach ($updateFields as $key => $value) {
+        foreach (array_keys($updateFields) as $key) {
             $setParts[] = "$key = :$key";
         }
         $setParts[] = "updated_at = NOW()";
@@ -532,12 +598,8 @@ class FamilyTreeAPI {
         $stmt->execute($updateFields);
     }
 
-    /**
-     * Mettre à jour un document
-     */
     private function updateDocument() {
         $documentId = $_POST['document_id'] ?? '';
-        $personId = $_POST['person_id'] ?? 0;
         $type = $_POST['type'] ?? '';
         $source = $_POST['source'] ?? '';
 
@@ -547,6 +609,7 @@ class FamilyTreeAPI {
 
         // Si c'est une note dans membres ou mariages (ID temporaire)
         if (strpos($documentId, 'temp_') === 0) {
+            $personId = $_POST['person_id'] ?? 0;
             // Pour les documents temporaires, person_id est obligatoire
             if (!$personId) {
                 throw new Exception('ID de personne manquant pour document temporaire');
@@ -608,51 +671,32 @@ class FamilyTreeAPI {
         }
 
         // Pour les documents réels de la table documents
-        // Si person_id n'est pas fourni, le récupérer depuis le document
-        if (!$personId) {
-            $stmt = $this->pdo->prepare("SELECT person_id FROM documents WHERE id = :id");
-            $stmt->execute(['id' => $documentId]);
-            $doc = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-            if (!$doc) {
-                throw new Exception('Document introuvable');
-            }
-            
-            $personId = $doc['person_id'];
+        // Toujours récupérer le person_id réel depuis la BDD pour gérer les docs liés
+        $stmt = $this->pdo->prepare("SELECT person_id, file_path FROM documents WHERE id = :id");
+        $stmt->execute(['id' => $documentId]);
+        $doc = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$doc) {
+            throw new Exception('Document introuvable');
         }
+
+        $personId = $doc['person_id'];
 
         // Mettre à jour dans la table documents
         $this->pdo->beginTransaction();
 
         try {
             if ($type === 'note') {
-                $title = $_POST['title'] ?? '';
-                $content = $_POST['content'] ?? '';
-                $description = $_POST['description'] ?? '';
-
-                $stmt = $this->pdo->prepare("
-                    UPDATE documents 
-                    SET source = :source, title = :title, content = :content, description = :description, updated_at = NOW()
-                    WHERE id = :id AND person_id = :person_id
-                ");
-                
-                $stmt->execute([
-                    'id' => $documentId,
-                    'person_id' => $personId,
-                    'source' => $source,
-                    'title' => $title,
-                    'content' => $content,
-                    'description' => $description
+                $this->updateDocumentFields($documentId, $personId, [
+                    'source'      => $source,
+                    'title'       => $_POST['title'] ?? '',
+                    'content'     => $_POST['content'] ?? '',
+                    'description' => $_POST['description'] ?? ''
                 ]);
             } elseif ($type === 'pdf') {
                 $title = $_POST['title'] ?? '';
                 $description = $_POST['description'] ?? '';
-                
-                // Récupérer le document actuel pour supprimer l'ancien fichier si un nouveau est uploadé
-                $stmt = $this->pdo->prepare("SELECT file_path FROM documents WHERE id = :id");
-                $stmt->execute(['id' => $documentId]);
-                $currentDoc = $stmt->fetch(PDO::FETCH_ASSOC);
-                
+
                 $updateFields = ['source' => $source, 'title' => $title, 'description' => $description];
                 
                 // Si un nouveau fichier est uploadé
@@ -683,8 +727,8 @@ class FamilyTreeAPI {
                     }
 
                     // Supprimer l'ancien fichier
-                    if ($currentDoc && $currentDoc['file_path'] && file_exists($currentDoc['file_path'])) {
-                        unlink($currentDoc['file_path']);
+                    if (!empty($doc['file_path']) && file_exists($doc['file_path'])) {
+                        unlink($doc['file_path']);
                     }
 
                     $updateFields['file_name'] = $file['name'];
@@ -697,12 +741,7 @@ class FamilyTreeAPI {
             } elseif ($type === 'photo') {
                 $title = $_POST['title'] ?? '';
                 $description = $_POST['description'] ?? '';
-                
-                // Récupérer le document actuel pour supprimer l'ancienne photo si une nouvelle est uploadée
-                $stmt = $this->pdo->prepare("SELECT file_path FROM documents WHERE id = :id");
-                $stmt->execute(['id' => $documentId]);
-                $currentDoc = $stmt->fetch(PDO::FETCH_ASSOC);
-                
+
                 $updateFields = ['source' => $source, 'title' => $title, 'description' => $description];
                 
                 // Si une nouvelle photo est uploadée
@@ -740,8 +779,8 @@ class FamilyTreeAPI {
                     }
 
                     // Supprimer l'ancienne photo
-                    if ($currentDoc && $currentDoc['file_path'] && file_exists($currentDoc['file_path'])) {
-                        unlink($currentDoc['file_path']);
+                    if (!empty($doc['file_path']) && file_exists($doc['file_path'])) {
+                        unlink($doc['file_path']);
                     }
 
                     $updateFields['file_name'] = $file['name'];
@@ -771,9 +810,6 @@ class FamilyTreeAPI {
         }
     }
 
-    /**
-     * Supprimer un document
-     */
     private function deleteDocument() {
         $documentId = $_POST['document_id'] ?? '';
 
@@ -928,13 +964,17 @@ class FamilyTreeAPI {
                 }
             }
             
-            // Ajouter les relations à chaque membre
+            // Ajouter les relations et masquer si confidentiel
             foreach ($membres as &$membre) {
-                $membre['relations'] = isset($relationsParMembre[$membre['id']]) 
-                    ? json_encode($relationsParMembre[$membre['id']]) 
+                $membre['relations'] = isset($relationsParMembre[$membre['id']])
+                    ? json_encode($relationsParMembre[$membre['id']])
                     : null;
+                if (!isAdmin() && $this->isConfidential($membre)) {
+                    $membre = $this->maskMembre($membre);
+                }
             }
-            
+            unset($membre);
+
             return $membres;
             
         } catch (PDOException $e) {
@@ -1372,9 +1412,6 @@ class FamilyTreeAPI {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Récupérer tous les compteurs de documents pour tous les membres en une seule requête
-     */
     private function getAllDocumentCounts() {
         try {
             // Compter les notes de mariage par personne
@@ -1424,11 +1461,40 @@ class FamilyTreeAPI {
                 }
                 $documentCounts[$personId][$row['type']] = intval($row['count']);
             }
-            
+
+            // Totaux uniques calculés avant fusion des docs liés (pas de double comptage)
+            $documentTotals = ['note' => 0, 'pdf' => 0, 'photo' => 0];
+            foreach ($documentCounts as $counts) {
+                $documentTotals['note']  += $counts['note'];
+                $documentTotals['pdf']   += $counts['pdf'];
+                $documentTotals['photo'] += $counts['photo'];
+            }
+
+            // Ajouter les documents liés via document_members (pour les personnes non propriétaires)
+            $linkedCounts = [];
+            $stmtLinked = $this->pdo->query("
+                SELECT dm.member_id as person_id, d.type, COUNT(*) as count
+                FROM document_members dm
+                INNER JOIN documents d ON d.id = dm.document_id
+                WHERE d.source = 'document'
+                  AND d.person_id != dm.member_id
+                GROUP BY dm.member_id, d.type
+            ");
+            while ($row = $stmtLinked->fetch(PDO::FETCH_ASSOC)) {
+                $personId = $row['person_id'];
+                if (!isset($documentCounts[$personId])) {
+                    $documentCounts[$personId] = ['note' => 0, 'pdf' => 0, 'photo' => 0];
+                }
+                $documentCounts[$personId][$row['type']] += intval($row['count']);
+                $linkedCounts[$personId] = ($linkedCounts[$personId] ?? 0) + intval($row['count']);
+            }
+
             return [
                 'success' => true,
                 'mariageCounts' => $mariageCounts,
-                'documentCounts' => $documentCounts
+                'documentCounts' => $documentCounts,
+                'documentTotals' => $documentTotals,
+                'linkedCounts' => $linkedCounts
             ];
             
         } catch (Exception $e) {
@@ -1436,6 +1502,68 @@ class FamilyTreeAPI {
                 'success' => false,
                 'message' => 'Erreur lors du chargement des compteurs: ' . $e->getMessage()
             ];
+        }
+    }
+
+    // ============================================
+    // MÉTHODES POUR LA LIAISON DOCUMENT ↔ MEMBRES
+    // ============================================
+
+    private function getLinkedMembers() {
+        $documentId = $_GET['document_id'] ?? 0;
+        if (!$documentId) {
+            return ['success' => false, 'message' => 'document_id requis'];
+        }
+        try {
+            $stmt = $this->pdo->prepare("
+                SELECT m.id, m.prenom, m.nom, m.sex, m.date_naissance, m.date_deces
+                FROM document_members dm
+                JOIN membres m ON m.id = dm.member_id
+                WHERE dm.document_id = :document_id
+                ORDER BY m.nom, m.prenom
+            ");
+            $stmt->execute([':document_id' => $documentId]);
+            return ['success' => true, 'members' => $stmt->fetchAll(PDO::FETCH_ASSOC)];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function addDocumentLink() {
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $documentId = $data['document_id'] ?? 0;
+        $memberId   = $data['member_id']   ?? 0;
+        if (!$documentId || !$memberId) {
+            return ['success' => false, 'message' => 'document_id et member_id requis'];
+        }
+        try {
+            $stmt = $this->pdo->prepare("
+                INSERT IGNORE INTO document_members (document_id, member_id)
+                VALUES (:document_id, :member_id)
+            ");
+            $stmt->execute([':document_id' => $documentId, ':member_id' => $memberId]);
+            return ['success' => true];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
+        }
+    }
+
+    private function removeDocumentLink() {
+        $data = json_decode(file_get_contents('php://input'), true) ?? [];
+        $documentId = $data['document_id'] ?? 0;
+        $memberId   = $data['member_id']   ?? 0;
+        if (!$documentId || !$memberId) {
+            return ['success' => false, 'message' => 'document_id et member_id requis'];
+        }
+        try {
+            $stmt = $this->pdo->prepare("
+                DELETE FROM document_members
+                WHERE document_id = :document_id AND member_id = :member_id
+            ");
+            $stmt->execute([':document_id' => $documentId, ':member_id' => $memberId]);
+            return ['success' => true];
+        } catch (Exception $e) {
+            return ['success' => false, 'message' => $e->getMessage()];
         }
     }
 }

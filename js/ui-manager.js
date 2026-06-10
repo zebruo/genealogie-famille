@@ -65,7 +65,6 @@ class UIManager {
     this.app.maxGenerations = selectedValue;
     if (this.app.currentPersonId) {
       this.app.rebuildTree(this.app.currentPersonId);
-      // Le centrage est maintenant fait immédiatement dans updateTreeVisualization()
     }
   }
 }

@@ -156,10 +156,10 @@ class FamilyTreeApp {
     if (person) {
       var rootTabName = document.getElementById("rootTabName");
       if (rootTabName) {
-        rootTabName.textContent = person.firstNames + " " + person.lastName;
+        rootTabName.textContent = getFullName(person);
       }
       // Mise à jour du titre de la page
-      document.title = person.firstNames + " " + person.lastName + " - Arbre Généalogique";
+      document.title = getFullName(person) + " - Arbre Généalogique";
       // Mise à jour du nom de la personne dans le titre des contrôles
       this.updateCurrentPersonName(personId);
     }
@@ -172,10 +172,10 @@ class FamilyTreeApp {
     var returnButtonMobile = document.getElementById("returnToDefaultMobile");
     if (storedDefaultId) {
       var defaultPerson = this.familyDatabase[storedDefaultId];
-      var referenceFullName = defaultPerson ? (defaultPerson.firstName + " " + defaultPerson.lastName) : "";
+      var referenceFullName = defaultPerson ? getFullName(defaultPerson) : "";
       var refInfo = "<span class='tooltip-wrapper'>" + "<span style='color: #94a3b8; font-size: 0.8em;'>" +
         referenceFullName +
-        "<span class='tooltip'>Retour point de départ</span>" +
+        "<span class='tooltip'>Individu racine</span>" +
         "</span></span>";
       returnButton.innerHTML = '<i class="fa-solid fa-bullseye"></i>' + refInfo;
       returnButton.style.display = "inline-flex";
@@ -188,7 +188,7 @@ class FamilyTreeApp {
       if (storedDefaultId === this.currentPersonId.toString()) {
         defaultButton.innerHTML =
           '<i class="fas fa-check-circle"></i> ' +
-          currentPerson.firstName +
+          currentPerson.firstNames +
           " " +
           currentPerson.lastName;
         defaultButton.classList.add("active");
@@ -196,8 +196,8 @@ class FamilyTreeApp {
         defaultButton.innerHTML =
           "<span class='tooltip-wrapper'>" +
           "<span style='color: #94a3b8; font-size: 0.8em;'>" +
-          "<i class='fas fa-flag'></i>" + " " + currentPerson.firstName + " " + currentPerson.lastName +
-          "<span class='tooltip'>Définir comme nouveau point de départ</span>" +
+          "<i class='fas fa-flag'></i>" + " " + getFullName(currentPerson) +
+          "<span class='tooltip'>Définir comme nouvel individu racine</span>" +
           "</span>" +
           "</span>";
         defaultButton.classList.remove("active");
@@ -208,7 +208,7 @@ class FamilyTreeApp {
     var person = this.familyDatabase[personId];
     var nameSpan = document.getElementById('current-person-name');
     if (person && nameSpan) {
-      nameSpan.textContent = '(' + person.firstNames + ' ' + person.lastName + ')';
+      nameSpan.textContent = '(' + getFullName(person) + ')';
     }
   }
   selectPerson(personId) {
@@ -222,12 +222,11 @@ class FamilyTreeApp {
 
     this.rebuildTree(personId);
 
-    // CORRECTION : Toujours utiliser familyDatabase pour avoir TOUTES les données
     var person = this.familyDatabase[personId];
     if (person) {
       var rootTabName = document.getElementById("rootTabName");
       if (rootTabName) {
-        rootTabName.textContent = person.firstNames + " " + person.lastName;
+        rootTabName.textContent = getFullName(person);
       }
       // Si le panneau était ouvert, le garder ouvert et mettre à jour
       if (wasOpen) {
@@ -258,7 +257,7 @@ class FamilyTreeApp {
   async setDefaultPerson() {
     if (this.currentPersonId) {
       const person = this.familyDatabase[this.currentPersonId];
-      const personName = person.firstNames + " " + person.lastName;
+      const personName = getFullName(person);
       const message = "défini(e) comme point de départ par défaut. Voulez-vous confirmer ?";
       
       const confirmed = await showConfirm(message, personName);
@@ -282,7 +281,6 @@ class FamilyTreeApp {
             }
           }
           if (displayedPersonId) {
-            // CORRECTION : Toujours utiliser familyDatabase pour avoir TOUTES les données
             var displayedPerson = this.familyDatabase[displayedPersonId];
             if (displayedPerson) {
               this.displayPersonInfo(displayedPerson);
@@ -303,7 +301,7 @@ class FamilyTreeApp {
       if (person) {
         var rootTabName = document.getElementById("rootTabName");
         if (rootTabName) {
-          rootTabName.textContent = person.firstNames + " " + person.lastName;
+          rootTabName.textContent = getFullName(person);
         }
         var personPanel = document.getElementById("person-panel");
         if (personPanel && personPanel.classList.contains("is-open")) {
@@ -315,7 +313,6 @@ class FamilyTreeApp {
     }
   }
   openPanel(personId) {
-    // CORRECTION : Toujours utiliser familyDatabase pour avoir TOUTES les données
     var person = this.familyDatabase[personId];
     if (person) {
       this.displayPersonInfo(person);
@@ -326,7 +323,7 @@ class FamilyTreeApp {
       }
       var rootTabName = document.getElementById("rootTabName");
       if (rootTabName) {
-        rootTabName.textContent = person.firstNames + " " + person.lastName;
+        rootTabName.textContent = getFullName(person);
       }
     }
   }
@@ -357,7 +354,7 @@ class FamilyTreeApp {
       if (person) {
         var rootTabName = document.getElementById("rootTabName");
         if (rootTabName) {
-          rootTabName.textContent = person.firstNames + " " + person.lastName;
+          rootTabName.textContent = getFullName(person);
         }
       }
     }
@@ -503,8 +500,8 @@ class FamilyTreeApp {
         var voyelles = ['a', 'e', 'i', 'o', 'u', 'y', 'h', 'é', 'è', 'ê', 'ë', 'à', 'â'];
         return voyelles.includes(firstChar) ? "d'" : "de ";
       };
-      var currentFullName = currentPerson.firstNames + " " + currentPerson.lastName; //degré de parenté
-      var referenceFullName = referencePerson.firstNames + " " + referencePerson.lastName; //degré de parenté
+      var currentFullName = getFullName(currentPerson);
+      var referenceFullName = getFullName(referencePerson);
       var refInfo = " <span style='color: #6c757d; font-size: 0.9em;'>(point de départ: " + referenceFullName + ")</span>";
       var html = '<div style="line-height: 1.6;">';
       if (relationType === "root") {
@@ -595,7 +592,7 @@ class FamilyTreeApp {
       return html;
     }.bind(this);
     var formatInfo = function(label, value) {
-      var displayValue = value || "Non renseigné";
+      var displayValue = value || "?";
       return (
         '<div class="panel-info-item"><span class="panel-label">' +
         label +
@@ -630,16 +627,18 @@ class FamilyTreeApp {
     // Construction du header
     var headerHtml =
       '<div class="panel-header-left">' +
-        '<h3>' + person.firstNames + ' ' + person.lastName + '</h3>' +
+        '<div class="panel-header-title">' +
+          '<h3>' + getFullName(person) + '</h3>' +
+          '<button id="close-panel-button" class="close-panel-button">' +
+            '<i class="fas fa-times"></i>' +
+          '</button>' +
+        '</div>' +
         '<button class="quick-view-btn" id="qv-btn-' + person.id + '" data-person-id="' + person.id + '" onclick="openPersonQuickView(' + person.id + ')">' +
           '<i class="fas fa-folder-open"></i> ' +
           '<span class="doc-clip-container"></span>' +
           '<span class="qv-label">' + initialTitle + '</span>' +
         '</button>' +
-      '</div>' +
-      '<button id="close-panel-button" class="close-panel-button">' +
-        '<i class="fas fa-times"></i>' +
-      '</button>';
+      '</div>';
     
     // Construction du content
     var contentHtml = '';
@@ -694,16 +693,16 @@ class FamilyTreeApp {
         return ordreA - ordreB;
       });
     if (spouses.length > 0) {
-      contentHtml += '<h4><i class="fas fa-ring"></i> Mariages</h4>';
+      contentHtml += '<h4><i class="fas fa-ring"></i> Union</h4>';
       spouses.forEach(function(spouse, index) {
         var marriageData =
           person.marriages && person.marriages[spouse.id] ?
           person.marriages[spouse.id] : {};
         var numeroOrdre = marriageData.numeroOrdre || (index + 1);
         var marriageDate =
-          marriageData.fullMarriageDate || marriageData.marriageDate || marriageData.date || "";
+          marriageData.fullMarriageDate || marriageData.marriageDate || "";
         var marriagePlace =
-          marriageData.marriagePlace || marriageData.place || "";
+          marriageData.marriagePlace || "";
         var divorceDate =
           marriageData.fullDivorceDate || marriageData.divorceDate || "";
         var hasDivorce = marriageData.hasDivorce || false;
@@ -711,13 +710,17 @@ class FamilyTreeApp {
           marriageData.divorcePlace || "";
         var marriageNotes =
           marriageData.notes || "";
+        var marriageConfidential = person.isConfidential || spouse.isConfidential;
+        if (marriageConfidential) {
+          marriageDate = ""; marriagePlace = ""; divorceDate = ""; hasDivorce = false; marriageNotes = "";
+        }
         contentHtml += '<div class="panel-info-group marriage-group">';
         contentHtml += '<div class="panel-info-item spouse-name">';
         contentHtml +=
           '<span class="panel-label"><i class="fas fa-ring"></i>' +
           (spouses.length > 1 ? '<span style="margin-left: 6px;">' + numeroOrdre + '</span>' : '') +
           '</span>';
-        contentHtml += `<span class="panel-value">avec ${spouse.firstNames} ${spouse.lastName}</span>`;
+        contentHtml += `<span class="panel-value">avec ${getFullName(spouse)}</span>`;
         contentHtml += "</div>";
         // Calcul de l'âge au mariage
         var marriageAgeText = "";
@@ -725,7 +728,7 @@ class FamilyTreeApp {
           var birthYear = parseInt(person.birthDate.substring(0, 4));
           var marriageYear;
           var firstDashPos = marriageDate.indexOf('-');
-          if (firstDashPos >= 2 && firstDashPos <= 2) {
+          if (firstDashPos === 2) {
             marriageYear = parseInt(marriageDate.substring(6, 10));
           } else {
             marriageYear = parseInt(marriageDate.substring(0, 4));
@@ -733,11 +736,10 @@ class FamilyTreeApp {
           if (marriageYear && birthYear && marriageYear >= birthYear) {
             var ageAtMarriage = marriageYear - birthYear;
             marriageAgeText = " (" + ageAtMarriage + " ans)";
-          } else {
           }
         }
         var marriageDateDisplay = marriageDate ? marriageDate + marriageAgeText : "";
-        contentHtml += formatInfo("Mariage / Pacs", marriageDateDisplay);
+        contentHtml += formatInfo("Date", marriageDateDisplay);
         contentHtml += formatInfo("Lieu", marriagePlace);
         if (divorceDate && divorceDate === spouse.fullDeathDate) {
           // Si la date de fin du mariage correspond à la date de décès
@@ -765,6 +767,13 @@ class FamilyTreeApp {
         var birthYear = parseInt(person.birthDate.substring(0, 4));
         var deathYear = parseInt(person.deathDate.substring(0, 4));
         var age = deathYear - birthYear;
+        if (person.isoBirthDate && person.isoDeathDate) {
+          var bMonth = parseInt(person.isoBirthDate.substring(5, 7));
+          var bDay   = parseInt(person.isoBirthDate.substring(8, 10));
+          var dMonth = parseInt(person.isoDeathDate.substring(5, 7));
+          var dDay   = parseInt(person.isoDeathDate.substring(8, 10));
+          if (dMonth < bMonth || (dMonth === bMonth && dDay < bDay)) age--;
+        }
         ageText = " (" + age + " ans)";
       }
       contentHtml += formatInfo("Date", person.fullDeathDate + ageText);
@@ -801,7 +810,7 @@ class FamilyTreeApp {
       container.innerHTML = "";
       svg = this.visualizer.createSVG();
       g = svg.append("g");
-      this.visualizer.zoom = this.visualizer.setupZoom(svg, g);
+      this.visualizer.setupZoom(svg, g);
     } else {
       // SVG existe déjà, on vide juste le groupe (comme test.html)
       g = svg.select("g");
@@ -839,8 +848,6 @@ class FamilyTreeApp {
 
     // Dessiner d'abord tous les liens (arrière-plan)
     this.drawTreeLinks(g, treeData);
-    //this.visualizer.drawMarriageLinks(g, nodes);                  à supprimer
-
     // Dessiner les fratries avant les nœuds principaux
     if (this.showSiblings) {
       this.drawSiblings(g, nodes);
@@ -884,19 +891,24 @@ class FamilyTreeApp {
         var midX = (parent1.x + parent2.x) / 2;
 
         // Chercher la date de mariage dans la base de données
-        var marriageYear = "?";
+        var marriageYear = null;
         var parent1Data = self.familyDatabase[parent1.data.id];
-        if (parent1Data && parent1Data.marriages && parent1Data.marriages[parent2.data.id]) {
-          var marriageData = parent1Data.marriages[parent2.data.id];
-          marriageYear = marriageData.marriageYear || marriageData.date || "?";
+        var parent2Data = self.familyDatabase[parent2.data.id];
+        var parent2Key = String(parent2.data.id);
+        if (parent1Data && parent1Data.marriages && parent1Data.marriages[parent2Key]) {
+          var marriageData = parent1Data.marriages[parent2Key];
+          marriageYear = marriageData.marriageYear || null;
         }
 
-        g.append("text")
-          .attr("class", "marriage-date")
-          .attr("x", midX)
-          .attr("y", bendY - 5)
-          .attr("text-anchor", "middle")
-          .text("× " + marriageYear);
+        var parentsConfidential = (parent1Data && parent1Data.isConfidential) || (parent2Data && parent2Data.isConfidential);
+        if (marriageYear && !parentsConfidential) {
+          g.append("text")
+            .attr("class", "marriage-date")
+            .attr("x", midX)
+            .attr("y", bendY - 5)
+            .attr("text-anchor", "middle")
+            .text("× " + marriageYear);
+        }
       }
     });
   }
@@ -951,8 +963,8 @@ class FamilyTreeApp {
       this.familyDatabase[rootNode.data.id].marriages : {};
 
     var sortedMarriages = Object.entries(marriages).sort(function(a, b) {
-      var yearA = parseInt(a[1].marriageYear || a[1].date) || 9999;
-      var yearB = parseInt(b[1].marriageYear || b[1].date) || 9999;
+      var yearA = parseInt(a[1].marriageYear) || 9999;
+      var yearB = parseInt(b[1].marriageYear) || 9999;
       return yearA - yearB;
     });
 
@@ -981,14 +993,17 @@ class FamilyTreeApp {
       // Date de mariage (au centre du lien)
       if (self.showMarriages) {
         var marriageData = item[1];
-        var marriageYear = marriageData.marriageYear || marriageData.date || "?";
-        var midX = (linkStartX + linkEndX) / 2;
-        g.append("text")
-          .attr("class", "marriage-date")
-          .attr("x", midX)
-          .attr("y", rootNode.y - 5)
-          .attr("text-anchor", "middle")
-          .text("× " + marriageYear);
+        var marriageYear = marriageData.marriageYear || null;
+        var spouseConfidential = rootNode.data.isConfidential || spouseData.isConfidential;
+        if (marriageYear && !spouseConfidential) {
+          var midX = (linkStartX + linkEndX) / 2;
+          g.append("text")
+            .attr("class", "marriage-date")
+            .attr("x", midX)
+            .attr("y", rootNode.y - 5)
+            .attr("text-anchor", "middle")
+            .text("× " + marriageYear);
+        }
       }
 
       // Numéro de mariage si plusieurs
@@ -996,7 +1011,7 @@ class FamilyTreeApp {
         g.append("text")
           .attr("class", "marriage-number")
           .attr("x", currentSpouseX)
-          .attr("y", rootNode.y + h / 2 + 16)
+          .attr("y", rootNode.y + h / 2 + 20)
           .attr("text-anchor", "middle")
           .text(index + 1);
       }
@@ -1050,12 +1065,14 @@ class FamilyTreeApp {
     });
   }
   getMarriageChildren(rootId, spouseId) {
+    var rootIdInt = parseInt(rootId);
+    var spouseIdInt = parseInt(spouseId);
     return Object.values(this.familyDatabase)
       .filter(function(p) {
         return (
           p.parentIds &&
-          p.parentIds.includes(rootId) &&
-          p.parentIds.includes(parseInt(spouseId))
+          p.parentIds.includes(rootIdInt) &&
+          p.parentIds.includes(spouseIdInt)
         );
       })
       .sort(function(a, b) {
@@ -1086,11 +1103,11 @@ class FamilyTreeApp {
             var dir = isLeft ? -1 : 1;
             if (dir === spouseDir) {
               var offset = Math.floor(index / 2) + 1;
-              var sibEdge = person.x + dir * CONFIG.sibling.spacing * offset + spouseDir * nodeW / 2;
-              var spouseEdge = otherParent.x - spouseDir * nodeW / 2;
-              if (spouseDir === 1 ? sibEdge > spouseEdge : sibEdge < spouseEdge) {
+              var sibX = person.x + dir * CONFIG.sibling.spacing * offset;
+              // Force l'autre côté si la fratrie se retrouve entre les deux conjoints
+              if ((sibX - person.x) * (sibX - otherParent.x) < 0) {
                 forceDirection = -spouseDir;
-                return true; // Chevauchement détecté, arrêter la boucle
+                return true;
               }
             }
             return false;
@@ -1143,7 +1160,7 @@ class FamilyTreeApp {
   drawNode(g, x, y, person, isRoot, strokeColor) {
     var self = this;
     var nodeG = g.append("g")
-      .attr("class", "node" + (isRoot ? " root-node" : ""))
+      .attr("class", "node" + (isRoot ? " root-node" : "") + (person.isConfidential ? " confidential" : ""))
       .attr("transform", "translate(" + x + "," + y + ")")
       .style("cursor", "pointer")
       .on("click", function() {
@@ -1177,12 +1194,24 @@ class FamilyTreeApp {
    * @param {Object} person - Données de la personne
    */
   addNodeText(nodeG, person) {
-    var maxWidth = CONFIG.node.width - 10;  // Marge de 5px de chaque côté
+    if (person.isConfidential) {
+      var portrait = nodeG.append("g").attr("class", "confidential-portrait");
+      portrait.append("circle").attr("cx", 0).attr("cy", -28).attr("r", 18);
+      portrait.append("path").attr("d", "M -36 34 C -36 -2 -12 -10 0 -10 C 12 -10 36 -2 36 34 Z");
+      nodeG.append("text")
+        .attr("class", "confidential-label")
+        .attr("x", 0).attr("y", 50)
+        .attr("text-anchor", "middle")
+        .text("Confidentiel");
+      return;
+    }
+
+    var maxWidth = CONFIG.node.width - 10;
 
     // Fonction pour tronquer le texte
-    function truncateText(text, maxW) {
+    function truncateText(text, maxW, cssClass) {
       if (!text) return "";
-      var temp = nodeG.append("text").style("visibility", "hidden").text(text);
+      var temp = nodeG.append("text").style("visibility", "hidden").attr("class", cssClass || "").text(text);
       var textWidth = temp.node().getComputedTextLength();
       temp.remove();
 
@@ -1191,7 +1220,7 @@ class FamilyTreeApp {
       var truncated = text;
       while (truncated.length > 0) {
         truncated = truncated.slice(0, -1);
-        temp = nodeG.append("text").style("visibility", "hidden").text(truncated + "…");
+        temp = nodeG.append("text").style("visibility", "hidden").attr("class", cssClass || "").text(truncated + "…");
         textWidth = temp.node().getComputedTextLength();
         temp.remove();
         if (textWidth <= maxW) return truncated + "…";
@@ -1201,9 +1230,9 @@ class FamilyTreeApp {
 
     // Construire les lignes avec gaps
     var lines = [];
-    var lineHeight = 15;
-    var gapAfterFirstnames = 6;  // Gap entre prénoms et nom
-    var gapAfterLastname = 8;    // Gap entre nom et dates
+    var lineHeight = 17;
+    var gapAfterFirstnames = 4;  // Gap entre prénoms et nom
+    var gapAfterLastname = 2;    // Gap entre nom et dates
 
     // Prénoms - chaque prénom sur sa propre ligne
     var firstNames = person.firstNames || person.firstName || "";
@@ -1211,7 +1240,7 @@ class FamilyTreeApp {
       var prenoms = firstNames.trim().split(/\s+/);
       prenoms.forEach(function(prenom, index) {
         lines.push({
-          text: truncateText(prenom, maxWidth),
+          text: truncateText(prenom, maxWidth, "node-text-firstname"),
           class: "node-text-firstname",
           extraGap: (index === prenoms.length - 1) ? gapAfterFirstnames : 0
         });
@@ -1222,7 +1251,7 @@ class FamilyTreeApp {
     var lastName = person.lastName || "";
     if (lastName) {
       lines.push({
-        text: truncateText(lastName.toUpperCase(), maxWidth),
+        text: truncateText(person.isConfidential ? lastName : lastName.toUpperCase(), maxWidth, "node-text-lastname"),
         class: "node-text-lastname",
         extraGap: gapAfterLastname
       });
@@ -1233,11 +1262,18 @@ class FamilyTreeApp {
     var deathYear = "";
     if (person.birthDate) {
       birthYear = person.birthDate.length > 4 ? person.birthDate.substring(0, 4) : person.birthDate;
+    } else if (person.fullBirthDate) {
+      var bm = person.fullBirthDate.match(/\d{4}/);
+      birthYear = bm ? bm[0] : person.fullBirthDate;
     }
     if (person.deathDate) {
       deathYear = person.deathDate.length > 4 ? person.deathDate.substring(0, 4) : person.deathDate;
+    } else if (person.fullDeathDate) {
+      var dm = person.fullDeathDate.match(/\d{4}/);
+      deathYear = dm ? dm[0] : person.fullDeathDate;
     }
 
+    if (!birthYear && !person.isConfidential) birthYear = '?';
     var datesText = "";
     if (birthYear && deathYear) {
       datesText = birthYear + " - " + deathYear;
@@ -1275,4 +1311,8 @@ class FamilyTreeApp {
       currentY += lineHeight + (line.extraGap || 0);
     });
   }
+}
+
+function getFullName(person) {
+  return person.firstNames + ' ' + person.lastName;
 }

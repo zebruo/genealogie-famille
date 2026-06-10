@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Liens dans les documents</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles/family-tree-styles.css" />
+  <link rel="stylesheet" href="styles/readonly.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    body { padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+    .filters {
+      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; align-items: center;
+    }
+    .filter-btn {
+      padding: 6px 14px; border-radius: 20px; border: 1px solid var(--input-border);
+      background: var(--bg-secondary); color: var(--text-primary); cursor: pointer;
+      font-size: 0.85rem; transition: background 0.15s;
+    }
+    .filter-btn.active, .filter-btn:hover {
+      background: var(--accent-color); color: #fff; border-color: var(--accent-color);
+    }
+    .search-box {
+      margin-left: auto;
+      padding: 6px 12px; border-radius: 6px; border: 1px solid var(--input-border);
+      background: var(--bg-secondary); color: var(--text-primary); font-size: 0.85rem; width: 220px;
+    }
+
+    .summary { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th {
+      text-align: left; padding: 10px 12px; background: var(--bg-secondary);
+      border-bottom: 2px solid var(--input-border); color: var(--text-secondary);
+      font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em;
+      cursor: pointer; user-select: none;
+    }
+    th:hover { color: var(--accent-color); }
+    th .sort-icon { margin-left: 4px; opacity: 0.4; font-size: 0.75rem; }
+    th.sorted .sort-icon { opacity: 1; color: var(--accent-color); }
+    td { padding: 9px 9px; border-bottom: 1px solid var(--input-border); }
+    tr:hover td { background: var(--bg-primary); }
+
+    .texte-cell {
+      white-space: pre-wrap; word-break: break-word; line-height: 1.5;
+      color: var(--text-primary);
+    }
+    .texte-cell a {
+      color: var(--accent-color); text-decoration: none;
+    }
+    .texte-cell a:hover { text-decoration: underline; }
+    .texte-cell[contenteditable="true"] {
+      outline: 2px solid var(--accent-color); border-radius: 4px;
+      padding: 4px 6px; background: var(--bg-secondary); cursor: text;
+    }
+    .edit-hint {
+      display: none; align-items: center; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px 0;
+    }
+    .texte-cell[contenteditable="true"] .edit-hint { display: flex; }
+    .edit-actions { display: flex; gap: 6px; margin: 0 auto; }
+    .edit-action-btn {
+      padding: 4px 12px; border-radius: 4px; border: none; cursor: pointer;
+      font-size: 0.8rem; font-weight: 600;
+    }
+    .edit-save-btn { background: var(--accent-color); color: #fff; }
+    .edit-cancel-btn {
+      background: var(--bg-secondary); color: var(--text-primary);
+      border: 1px solid var(--input-border);
+    }
+    .saving { opacity: 0.5; pointer-events: none; }
+    .copy-btn {
+      background: none; border: none; cursor: pointer; color: var(--text-secondary);
+      padding: 1px 5px; border-radius: 4px; font-size: 0.75rem; margin-left: 4px;
+      vertical-align: middle;
+    }
+    .copy-btn:hover { color: var(--accent-color); }
+
+    .empty { text-align: center; padding: 40px; color: var(--text-secondary); }
+
+    .verify-btn {
+      background: none; border: none; cursor: pointer; padding: 2px;
+      color: var(--text-secondary); font-size: 1rem; line-height: 1;
+    }
+    .verify-btn:hover { color: var(--accent-color); }
+    .verify-btn.verified { color: var(--accent-color); }
+
+    @media (max-width: 640px) {
+      body { padding: 12px; }
+      .edit-actions { margin-left: 0; width: 100%; }
+      .edit-action-btn { flex: 1; padding: 8px; font-size: 0.85rem; }
+
+      .filters { gap: 6px; margin-bottom: 14px; }
+      .filter-btn { padding: 5px 10px; font-size: 0.7rem; }
+      .search-box { margin: 6px 0 0 0; width: 100%; box-sizing: border-box; }
+
+      /* Table → cards */
+      table, thead, tbody, tr, th, td { display: block; }
+      thead { display: none; }
+      tr {
+        border: 1px solid var(--input-border); border-radius: 8px;
+        margin-bottom: 10px; padding: 10px 12px;
+        background: var(--bg-secondary);
+      }
+      tr:hover td { background: transparent; }
+      td { padding: 3px 0; border: none; }
+      td:first-child { font-weight: 600; font-size: 0.8rem; margin-bottom: 4px; }
+      td:nth-child(2) { margin-bottom: 6px; }
+      td.texte-cell { font-size: 0.85rem; border-top: 1px solid var(--input-border); padding-top: 8px; margin-top: 4px; }
+      td:last-child { text-align: left; display: flex; align-items: center; gap: 6px; margin-top: 2px; flex-wrap: nowrap; }
+      td:last-child span { display: inline !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Menu de navigation -->
+  <div id="nav-container"></div>
+
+  <div class="controls-header">
+    <div class="controls-title">
+      <i class="fas fa-link"></i>
+      <span class="admin-title">Gestion des Permaliens</span><span class="viewer-only">Consultation des Permaliens</span>
+    </div>
+  </div>
+
+  <div class="filters">
+    <button class="filter-btn active" data-filter="all">Tous</button>
+    <button class="filter-btn" data-filter="naissance">Naissance</button>
+    <button class="filter-btn" data-filter="deces">Décès</button>
+    <button class="filter-btn" data-filter="mariage">Mariage</button>
+    <button class="filter-btn" data-filter="document">Document</button>
+    <input type="search" class="search-box" id="searchBox" placeholder="Rechercher un nom ou URL…" />
+  </div>
+
+  <div class="summary" id="summary"></div>
+
+  <div id="tableContainer">
+    <div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Chargement des permaliens…</p></div>
+  </div>
+
+  <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/burger.js"></script>
+  <script src="js/darkMode.js"></script>
+  <script>
+    let allData = [];
+    let currentFilter = 'all';
+    let sortCol = 'personne';
+    let sortAsc = true;
+
+    const labels = { naissance: 'Naissance', deces: 'Décès', mariage: 'Mariage', document: 'Document' };
+
+    async function waitForRole() {
+      while (!window.userRole) await new Promise(r => setTimeout(r, 50));
+    }
+
+    async function loadData() {
+      await waitForRole();
+      try {
+        const res = await fetch('admin/api-liens.php');
+        if (!res.ok) throw new Error('Erreur serveur');
+        allData = await res.json();
+        if (allData.error) throw new Error(allData.error);
+        render();
+        if (window.AuthManager && window.AuthManager.isAdmin()) enableEditing();
+      } catch (e) {
+        document.getElementById('tableContainer').innerHTML =
+          `<div class="empty"><i class="fas fa-exclamation-triangle"></i> ${e.message}</div>`;
+      }
+    }
+
+    function linkify(text) {
+      return text.split(/(https?:\/\/\S+)/g).map((part, i) => {
+        if (i % 2 !== 1) return escapeHtml(part);
+        const esc = escapeHtml(part);
+        return `<a href="${esc}" target="_blank" rel="noopener">${esc}</a><button class="copy-btn" title="Copier" onclick="copyUrl(this,'${esc}')"><i class="fas fa-copy"></i></button>`;
+      }).join('');
+    }
+
+    function copyUrl(btn, url) {
+      navigator.clipboard.writeText(url).then(() => {
+        btn.innerHTML = '<i class="fas fa-check"></i>';
+        setTimeout(() => btn.innerHTML = '<i class="fas fa-copy"></i>', 1500);
+      });
+    }
+
+    function fmtDate(iso) {
+      const s = (iso || '').substring(0, 10);
+      return s.length === 10 ? s.slice(8) + '-' + s.slice(5, 7) + '-' + s.slice(0, 4) : '';
+    }
+
+    function normalizeString(s) {
+      return String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').trim();
+    }
+
+    function filtered() {
+      const q = normalizeString(document.getElementById('searchBox').value);
+      const words = q.split(/\s+/).filter(w => w.length > 0);
+      return allData
+        .filter(r => currentFilter === 'all' || r.source === currentFilter)
+        .filter(r => !words.length || words.every(w =>
+          normalizeString(r.personne).includes(w) ||
+          normalizeString(r.texte).includes(w) ||
+          normalizeString(r.titre || '').includes(w)))
+        .sort((a, b) => {
+          const va = a[sortCol] || '', vb = b[sortCol] || '';
+          return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+        });
+    }
+
+    function updateSummary(rowCount) {
+      const verifiedCount = allData.filter(r => r.verified).length;
+      document.getElementById('summary').textContent =
+        `${rowCount} entrée${rowCount !== 1 ? 's' : ''} affichée${rowCount !== 1 ? 's' : ''} sur ${allData.length} au total — ${verifiedCount} vérifiée${verifiedCount !== 1 ? 's' : ''}`;
+    }
+
+    function render() {
+      const rows = filtered();
+      updateSummary(rows.length);
+
+      if (!rows.length) {
+        document.getElementById('tableContainer').innerHTML =
+          '<div class="empty"><i class="fas fa-inbox"></i> Aucun résultat</div>';
+        return;
+      }
+
+      const sortIcon = col => `<span class="sort-icon">${col === sortCol ? (sortAsc ? '▲' : '▼') : '⇅'}</span>`;
+
+      const isAdmin = window.AuthManager && window.AuthManager.isAdmin();
+      document.getElementById('tableContainer').innerHTML = `
+        <table style="table-layout: fixed; width: 100%;">
+          <thead>
+            <tr>
+              <th class="${sortCol==='personne'?'sorted':''}" data-col="personne" style="width:28%">Personne ${sortIcon('personne')}</th>
+              <th class="${sortCol==='source'?'sorted':''}" data-col="source" style="width:10%">Source ${sortIcon('source')}</th>
+              <th style="width:51%">Contenu</th>
+              <th style="width:11%; text-align:center"><i class="fas fa-check-circle"></i> Vérifié le</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>${formatPersonne(r)}</td>
+                <td><span class="badge badge-${r.source}">${labels[r.source] || r.source}</span></td>
+                <td class="texte-cell" data-id="${r.id}" data-champ="${r.champ}" data-raw="${escapeHtml(r.texte)}">${linkify(r.texte)}</td>
+                <td style="text-align:center">
+                  ${isAdmin
+                    ? `<button class="verify-btn ${r.verified ? 'verified' : ''}" data-id="${r.id}" data-champ="${r.champ}" title="${r.verified ? 'Cliquer pour annuler' : 'Marquer comme vérifié'}">
+                        <i class="fas fa-${r.verified ? 'check-circle' : 'circle'}"></i>
+                       </button>
+                       ${r.verified ? `<span style="display:block;font-size:0.7rem;color:var(--text-secondary)">${fmtDate(r.verified_at)}</span>` : ''}`
+                    : r.verified
+                      ? `<i class="fas fa-check-circle" style="color:var(--accent-color)" title="Vérifié le ${fmtDate(r.verified_at)}"></i><span style="display:block;font-size:0.7rem;color:var(--text-secondary)">${fmtDate(r.verified_at)}</span>`
+                      : ''
+                  }
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>`;
+
+      document.querySelectorAll('th[data-col]').forEach(th => {
+        th.addEventListener('click', () => {
+          if (sortCol === th.dataset.col) sortAsc = !sortAsc;
+          else { sortCol = th.dataset.col; sortAsc = true; }
+          render();
+        });
+      });
+
+      document.querySelectorAll('.verify-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleVerified(btn));
+      });
+    }
+
+    async function toggleVerified(btn) {
+      const id    = Number(btn.dataset.id);
+      const champ = btn.dataset.champ;
+      const nowVerified = !btn.classList.contains('verified');
+      btn.disabled = true;
+      try {
+        const res = await fetch('admin/api-liens.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'verify', id, champ, verified: nowVerified })
+        });
+        const data = await res.json();
+        if (!data.ok) throw new Error(data.error || 'Erreur');
+        const row = allData.find(r => r.id === id && r.champ === champ);
+        if (row) { row.verified = nowVerified; row.verified_at = data.verified_at; }
+        updateSummary(filtered().length);
+        btn.classList.toggle('verified', nowVerified);
+        btn.querySelector('i').className = `fas fa-${nowVerified ? 'check-circle' : 'circle'}`;
+        btn.title = nowVerified ? 'Cliquer pour annuler' : 'Marquer comme vérifié';
+        let dateSpan = btn.nextElementSibling;
+        if (nowVerified) {
+          if (!dateSpan || !dateSpan.matches('span')) {
+            dateSpan = document.createElement('span');
+            dateSpan.style.cssText = 'display:block;font-size:0.7rem;color:var(--text-secondary)';
+            btn.insertAdjacentElement('afterend', dateSpan);
+          }
+          dateSpan.textContent = fmtDate(data.verified_at);
+        } else if (dateSpan && dateSpan.matches('span')) {
+          dateSpan.remove();
+        }
+      } catch (err) {
+        alert('Erreur : ' + err.message);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function escapeHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function formatDates(obj) {
+      const by = obj.birth_year || (obj.birth_display ? (obj.birth_display.match(/\d{4}/) || [])[0] : null);
+      const dy = obj.death_year || (obj.death_display ? (obj.death_display.match(/\d{4}/) || [])[0] : null);
+      if (!by && !dy) return '';
+      if (by && dy) return `(${by} - ${dy})`;
+      if (by) return `(${by})`;
+      return `(† ${dy})`;
+    }
+
+    function formatPersonne(r) {
+      const name = s => `<span style="font-size:0.8rem">${s}</span>`;
+      const sub  = s => `<span style="font-size:0.8rem;color:var(--text-secondary)">${s}</span>`;
+      if (r.source !== 'mariage') {
+        const d = formatDates(r);
+        return name(escapeHtml(r.personne)) + (d ? '<br>' + sub(d) : '');
+      }
+      const epouxDates  = formatDates({ birth_year: r.epoux_birth_year,  birth_display: r.epoux_birth_display,  death_year: r.epoux_death_year,  death_display: r.epoux_death_display });
+      const epouseDates = formatDates({ birth_year: r.epouse_birth_year, birth_display: r.epouse_birth_display, death_year: r.epouse_death_year, death_display: r.epouse_death_display });
+      return name(escapeHtml(r.epoux_name))  + (epouxDates  ? ' ' + sub(epouxDates)  : '')
+           + '<br>& ' + name(escapeHtml(r.epouse_name)) + (epouseDates ? ' ' + sub(epouseDates) : '');
+    }
+
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        render();
+      });
+    });
+
+    document.getElementById('searchBox').addEventListener('input', render);
+
+    // ── Édition inline (admin uniquement) ────────────────────────────────────
+    function enableEditing() {
+      document.getElementById('tableContainer').addEventListener('dblclick', e => {
+        const cell = e.target.closest('td.texte-cell');
+        if (!cell || cell.contentEditable === 'true') return;
+
+        const original = cell.dataset.raw;
+        cell.contentEditable = 'true';
+        cell.focus();
+
+        // hint + boutons
+        let hint = cell.querySelector('.edit-hint');
+        if (!hint) {
+          hint = document.createElement('div');
+          hint.className = 'edit-hint';
+          hint.innerHTML = `
+            <div class="edit-actions">
+              <button class="edit-action-btn edit-cancel-btn" type="button"><i class="fas fa-times"></i> Annuler</button>
+              <button class="edit-action-btn edit-save-btn" type="button"><i class="fas fa-check"></i> Sauvegarder</button>
+            </div>`;
+          cell.appendChild(hint);
+        }
+        const saveBtn = hint.querySelector('.edit-save-btn');
+        const cancelBtn = hint.querySelector('.edit-cancel-btn');
+
+        function stopEdit() {
+          cell.contentEditable = 'false';
+          cell.removeEventListener('keydown', onKey);
+          cell.removeEventListener('blur', onBlur);
+        }
+
+        async function save() {
+          cell.removeEventListener('blur', onBlur);
+          hint.remove();
+          const newText = cell.innerText;
+          if (newText === original) { stopEdit(); return; }
+          cell.classList.add('saving');
+          try {
+            const res = await fetch('admin/api-liens.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id: Number(cell.dataset.id), champ: cell.dataset.champ, texte: newText })
+            });
+            const data = await res.json();
+            if (!data.ok) throw new Error(data.error || 'Erreur');
+            cell.dataset.raw = newText;
+            const row = allData.find(r => r.id === Number(cell.dataset.id) && r.champ === cell.dataset.champ);
+            if (row) row.texte = newText;
+            cell.innerHTML = linkify(newText);
+          } catch (err) {
+            alert('Erreur lors de la sauvegarde : ' + err.message);
+            cell.innerHTML = linkify(original);
+          } finally {
+            cell.classList.remove('saving');
+            stopEdit();
+          }
+        }
+
+        function cancel() {
+          cell.innerHTML = linkify(original);
+          stopEdit();
+        }
+
+        function onKey(e) {
+          if (e.key === 'Enter' && e.ctrlKey) { e.preventDefault(); save(); }
+          if (e.key === 'Escape') { e.preventDefault(); cancel(); }
+        }
+        function onBlur() { cancel(); }
+
+        // preventDefault sur mousedown/touchstart empêche le blur de se déclencher avant le clic
+        saveBtn.onmousedown = e => { e.preventDefault(); save(); };
+        cancelBtn.onmousedown = e => { e.preventDefault(); cancel(); };
+        saveBtn.ontouchstart = e => { e.preventDefault(); save(); };
+        cancelBtn.ontouchstart = e => { e.preventDefault(); cancel(); };
+
+        cell.addEventListener('keydown', onKey);
+        cell.addEventListener('blur', onBlur, { once: true });
+      });
+    }
+
+    loadData();
+  </script>
+</body>
+</html>

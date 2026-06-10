@@ -36,29 +36,36 @@ class TreeVisualizer {
       .scaleExtent(CONFIG.view.zoomExtent)
       .on("zoom", (event) => g.attr("transform", event.transform));
     svg.call(this.zoom);
-    return this.zoom;
   }
 
   calculateOptimalTransform(nodes) {
     var dims = this.getDimensions();
-    var bounds = this.getTreeBounds(nodes);
-    var treeWidth = bounds.maxX - bounds.minX;
-    var treeHeight = bounds.maxY - bounds.minY;
+    var isMobile = window.innerWidth <= CONFIG.view.mobileBreakpoint;
+    var scale, translateX, translateY;
 
-    var padding = 60;
-    var scaleX = (dims.width - padding * 2) / treeWidth;
-    var scaleY = (dims.height - padding * 2) / treeHeight;
-    // Utiliser les limites de zoom de la config
-    var scale = Math.min(scaleX, scaleY, CONFIG.view.zoomExtent[1]);
-    scale = Math.max(scale, CONFIG.view.zoomExtent[0]);
+    if (isMobile && nodes.length > 0) {
+      var root = nodes[0];
+      scale = Math.min(
+        Math.max(CONFIG.view.mobileInitialScale, CONFIG.view.zoomExtent[0]),
+        CONFIG.view.zoomExtent[1]
+      );
+      translateX = dims.width / 2 - root.x * scale;
+      translateY = dims.height / 2 - root.y * scale;
+    } else {
+      var bounds = this.getTreeBounds(nodes);
+      var treeWidth = bounds.maxX - bounds.minX;
+      var treeHeight = bounds.maxY - bounds.minY;
+      var padding = 60;
+      var scaleX = (dims.width - padding * 2) / treeWidth;
+      var scaleY = (dims.height - padding * 2) / treeHeight;
+      scale = Math.min(scaleX, scaleY, CONFIG.view.zoomExtent[1]);
+      scale = Math.max(scale, CONFIG.view.zoomExtent[0]);
+      var centerX = (bounds.minX + bounds.maxX) / 2;
+      var centerY = (bounds.minY + bounds.maxY) / 2;
+      translateX = dims.width / 2 - centerX * scale;
+      translateY = dims.height / 2 - centerY * scale;
+    }
 
-    var centerX = (bounds.minX + bounds.maxX) / 2;
-    var centerY = (bounds.minY + bounds.maxY) / 2;
-
-    var translateX = dims.width / 2 - centerX * scale;
-    var translateY = dims.height / 2 - centerY * scale;
-
-    // Stocker le transform optimal pour le réutiliser
     this.lastOptimalTransform = d3.zoomIdentity.translate(translateX, translateY).scale(scale);
     return this.lastOptimalTransform;
   }
@@ -71,7 +78,6 @@ class TreeVisualizer {
       maxY: -Infinity,
     };
 
-    // Calcul des bornes basé sur les nœuds
     nodes.forEach(function(d) {
       bounds.minX = Math.min(bounds.minX, d.x);
       bounds.maxX = Math.max(bounds.maxX, d.x);
@@ -97,7 +103,4 @@ class TreeVisualizer {
     return bounds;
   }
 
-  /*drawMarriageLinks(g, nodes) {
-    // Non utilisé dans la nouvelle structure - les liens de mariage sont dessinés dans drawRootFamily
-  }*/
 }

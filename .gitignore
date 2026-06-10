@@ -20,6 +20,7 @@ desktop.ini
 
 # Configuration et données sensibles
 admin/config.php
+admin/generate-password.php
 admin/backups/
 admin/gedcom-debug.php
 admin/backup-database.html
@@ -31,6 +32,7 @@ uploads/
 # Fichiers de travail
 test.html
 policeType.html
+taille_caractères.md
 
 # Git Manager (interface de gestion Git)
 git-manager/

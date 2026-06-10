@@ -8,11 +8,74 @@
     <link rel="icon" href="data:,"> <!--source vide pour le moment-->
     <link rel="stylesheet" href="styles/family-tree-styles.css" />
     <link rel="stylesheet" href="styles/person-quick-view.css" />
+    <link rel="stylesheet" href="styles/readonly.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <style>
+      .date-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 3px 8px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid transparent;
+      }
+      .date-badge--unknown {
+        background: rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+      .date-badge--partial {
+        background: rgba(249, 115, 22, 0.12);
+        color: #f97316;
+        border-color: rgba(249, 115, 22, 0.3);
+      }
+      .date-badge--known {
+        background: var(--bg-secondary, rgba(0,0,0,0.05));
+        color: var(--text-secondary);
+        border-color: var(--input-border);
+      }
+      .date-badges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 4px;
+        justify-content: space-between;
+      }
+      @media (max-width: 768px) {
+        .stat-card {
+          background: transparent;
+          box-shadow: none;
+          border: none;
+        }
+
+        .stat-card-title {
+          font-size: 0.7rem;
+          font-weight: 300;
+          margin-bottom: 0.3rem;
+        }
+
+        .stat-number {
+          font-size: 0.75rem;
+          font-weight: 400;
+        }
+
+        .stat-label {
+          font-size: 0.6rem;
+        }
+
+        .place-item {
+          padding: 10px 8px;
+          flex-direction: column;
+          align-items: center;
+        }
+      }
+    </style>
   </head>
 
   <body>
-    <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-stats.html -->
+    <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-users.html -->
     <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
 
     <div class="container">
@@ -21,51 +84,6 @@
             <i class="fas fa-chart-bar"></i>
             <span>Statistiques Généalogiques</span>
           </div>
-      </div>
-
-      <!-- Cartes de statistiques principales -->
-      <div class="stats-grid">
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">Total membres</div>
-            <i class="fas fa-users stat-card-icon"></i>
-          </div>
-          <div class="stat-number" id="totalMembers">-</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">Naissances</div>
-            <i class="fas fa-baby document-type-naissance"></i>
-          </div>
-          <div class="stat-number" id="totalBirths">-</div>
-          <div class="stat-card-detail" id="unknownBirthsDetail"></div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">Mariages</div>
-            <i class="fas fa-ring document-type-mariage"></i>
-          </div>
-          <div class="stat-number" id="totalMarriages">-</div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">Décès</div>
-            <i class="fas fa-cross document-type-deces"></i>
-          </div>
-          <div class="stat-number" id="totalDeaths">-</div>
-          <div class="stat-card-detail" id="unknownDeathsDetail"></div>
-        </div>
-
-        <div class="stat-card">
-          <div class="stat-card-header">
-            <div class="stat-card-title">En vie / Décédés</div>
-            <i class="fas fa-heartbeat document-type-vie_deces"></i>
-          </div>
-          <div class="stat-number" id="aliveDeceased">-</div>
-        </div>
       </div>
 
       <!-- Onglets de navigation -->
@@ -86,6 +104,59 @@
           <button class="tab-button" data-tab="frequency">
             <i class="fas fa-chart-bar"></i> Fréquences
           </button>
+        </div>
+      </div>
+
+      <!-- Cartes de statistiques principales -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Membres</div>
+            <i class="fas fa-users stat-card-icon"></i>
+          </div>
+          <div class="stat-number" id="totalMembers">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Naiss.</div>
+            <i class="fas fa-baby document-type-naissance"></i>
+          </div>
+          <div class="stat-number" id="totalBirths">-</div>
+          <div class="stat-card-detail" id="unknownBirthsDetail"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Mar.</div>
+            <i class="fas fa-ring document-type-mariage"></i>
+          </div>
+          <div class="stat-number" id="totalMarriages">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Décès</div>
+            <i class="fas fa-cross document-type-deces"></i>
+          </div>
+          <div class="stat-number" id="totalDeaths">-</div>
+          <div class="stat-card-detail" id="unknownDeathsDetail"></div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Vie/Décès</div>
+            <i class="fas fa-heartbeat document-type-vie_deces"></i>
+          </div>
+          <div class="stat-number" id="aliveDeceased">-</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-card-header">
+            <div class="stat-card-title">Masqués</div>
+            <i class="fas fa-user-secret stat-card-icon"></i>
+          </div>
+          <div class="stat-number" id="totalConfidential">-</div>
         </div>
       </div>
 
@@ -140,11 +211,11 @@
           <!-- Colonne 2 : Répartition par siècle -->
           <div class="stats-box flex-1">
             <h2>Répartition par siècle</h2>
-            <ul class="stats-list" id="centuriesList">
+            <div id="centuriesList">
               <div class="loading-spinner">
                 <i class="fas fa-spinner"></i>
               </div>
-            </ul>
+            </div>
           </div>
           <div class="stats-box flex-2">
             <h2>Statistiques des lieux</h2>
@@ -255,10 +326,17 @@
       <!-- Onglet: Dates inconnues -->
       <div id="tabUnknown" class="tab-content">
         <div class="stats-flex-row">
-          <!-- 2 colonnes égales -->
-          <div class="stats-box flex-1">
-            <h2><i class="fas fa-baby"></i> Dates de naissance inconnues</h2>
-            <div class="events-list" id="unknownBirths">
+          <div class="stats-box flex-2">
+            <h2><i class="fas fa-question-circle"></i> Dates de naissances &amp; Décès — inconnues ou incomplètes</h2>
+            <div class="events-list" id="unknownDates">
+              <div class="loading-spinner">
+                <i class="fas fa-spinner"></i>
+              </div>
+            </div>
+          </div>
+          <div class="stats-box flex-2">
+            <h2><i class="fas fa-heart"></i> Dates d'unions inconnues ou incomplètes</h2>
+            <div class="events-list" id="unknownMarriages">
               <div class="loading-spinner">
                 <i class="fas fa-spinner"></i>
               </div>
@@ -266,22 +344,26 @@
           </div>
 
           <div class="stats-box flex-1">
-            <h2><i class="fas fa-cross"></i> Dates de décès inconnues</h2>
-            <div class="events-list" id="unknownDeaths">
-              <div class="loading-spinner">
-                <i class="fas fa-spinner"></i>
-              </div>
-            </div>
+            <h2><i class="fas fa-map-marker-alt"></i> Lieux de naissance manquants</h2>
+            <div class="events-list" id="unknownBirthPlaces"><div class="loading-spinner"><i class="fas fa-spinner"></i></div></div>
+          </div>
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-map-marker-alt"></i> Lieux de décès manquants</h2>
+            <div class="events-list" id="unknownDeathPlaces"><div class="loading-spinner"><i class="fas fa-spinner"></i></div></div>
+          </div>
+          <div class="stats-box flex-1">
+            <h2><i class="fas fa-map-marker-alt"></i> Lieux de mariage manquants</h2>
+            <div class="events-list" id="unknownMarriagePlaces"><div class="loading-spinner"><i class="fas fa-spinner"></i></div></div>
           </div>
         </div>
       </div>
     </div>
+    <script src="js/auth.js"></script>
     <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
     <script src="js/darkMode.js"></script>
     <script src="js/burger.js"></script>
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        // loadDarkModeScript est appelé automatiquement par menu-loader.js après chargement du menu
         const tabButtons = document.querySelectorAll('.tab-button');
         const tabContents = document.querySelectorAll('.tab-content');
         tabButtons.forEach(button => {
@@ -298,35 +380,43 @@
       });
       let allData = null;
 
+      function isInvalidDate(dateStr) {
+        if (!dateStr) return true;
+        const cleaned = String(dateStr).trim();
+        if (cleaned === '?') return true;
+        if (cleaned.includes('/')) return true;
+        if (cleaned === '0000' ||
+          cleaned.startsWith('0000-') ||
+          cleaned.includes('-00-00') ||
+          cleaned.includes('-00-') ||
+          cleaned.endsWith('-00') ||
+          cleaned.match(/^00-/) ||
+          cleaned.match(/-00$/) ||
+          cleaned.match(/^\d{2}-00-\d{4}$/) ||
+          cleaned.match(/^\d{4}-00-\d{2}$/)) {
+          return true;
+        }
+        return false;
+      }
+
       function calculatePercentage(value, total) {
         return total > 0 ? ((value / total) * 100).toFixed(1) : 0;
       }
 
       function formatDate(dateStr) {
         if (!dateStr) return 'Date inconnue';
-        let date;
-        if (dateStr.includes('-') && dateStr.length === 10) {
-          const parts = dateStr.split('-');
-          if (parts[0].length === 2) {
-            date = new Date(parts[2], parts[1] - 1, parts[0]);
-          } else {
-            date = new Date(dateStr);
-          }
-        } else if (dateStr.length === 4 && !isNaN(dateStr)) {
-          date = new Date(dateStr, 0, 1);
-          return dateStr;
-        } else {
-          date = new Date(dateStr);
+        const s = String(dateStr).trim();
+        if (!s) return 'Date inconnue';
+        // Passe directement les chaînes d'affichage (?, qualificatifs, jj-mm-aaaa)
+        if (s === '?' || /^[A-ZÀ-Ö]/.test(s) || /^\d{2}-\d{2}-\d{4}$/.test(s)) return s;
+        // ISO YYYY-MM-DD → jj-mm-aaaa
+        if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+          const [year, month, day] = s.split('-');
+          if (day === '00' && month === '00') return year;
+          if (day === '00') return `${month}-${year}`;
+          return `${day}-${month}-${year}`;
         }
-        if (isNaN(date.getTime())) {
-          return dateStr;
-        }
-        const options = {
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        };
-        return date.toLocaleDateString('fr-FR', options);
+        return s;
       }
 
       function calculateAge(birthDate, deathDate = null) {
@@ -368,6 +458,20 @@
         }
       }
 
+      function getUniqueMarriages(callback) {
+        const seen = new Set();
+        allData.forEach(person => {
+          if (!person.marriages) return;
+          Object.entries(person.marriages).forEach(([spouseId, marriage]) => {
+            const id = marriage.marriageId || marriage.mariageId;
+            if (!id || seen.has(id)) return;
+            seen.add(id);
+            const spouse = allData.find(p => p.id == spouseId);
+            callback(person, spouse, marriage);
+          });
+        });
+      }
+
       function updateOverviewTab() {
         if (!allData) return;
         const total = allData.length;
@@ -375,48 +479,24 @@
         const females = allData.filter(p => p.sex === 'F').length;
         const unknown = total - males - females;
         let totalMarriages = 0;
-        const processedMarriages = new Set();
-        allData.forEach(person => {
-          if (person.marriages) {
-            Object.values(person.marriages).forEach(marriage => {
-              const id = marriage.marriageId || marriage.mariageId;
-              if (id && !processedMarriages.has(id)) {
-                processedMarriages.add(id);
-                totalMarriages++;
-              }
-            });
-          }
-        });
-        // Fonction pour vérifier si une date est invalide
-        const isInvalidDate = (dateStr) => {
-          if (!dateStr) return true;
-          const cleaned = dateStr.trim();
-          if (cleaned.includes('/')) {
-            return true;
-          }
-          if (cleaned === '0000' ||
-            cleaned === '9999' ||
-            cleaned.startsWith('0000-') ||
-            cleaned.startsWith('9999-') ||
-            cleaned.includes('-00-00') ||
-            cleaned.includes('-00-') ||
-            cleaned.endsWith('-00') ||
-            cleaned.match(/^00-/) ||
-            cleaned.match(/-00$/) ||
-            cleaned.match(/^\d{2}-00-\d{4}$/) ||
-            cleaned.match(/^\d{4}-00-\d{2}$/)) {
-            return true;
-          }
-          return false;
+        getUniqueMarriages(() => totalMarriages++);
+        const totalBirths = allData.length;
+        const hasBirthIssueFn = (p) => {
+          if (p.birthDateDisplay === '?') return true;
+          if (p.birthDateDisplay) return false;
+          return !p.isoBirthDate;
         };
-        // Calculer les naissances et décès
-        const totalBirths = allData.length; // Tous les membres ont une naissance
-        const unknownBirthDates = allData.filter(p => {
-          return isInvalidDate(p.isoBirthDate) || isInvalidDate(p.fullBirthDate) || !p.isoBirthDate;
-        }).length;
-        const totalDeaths = allData.filter(p => p.deathDate || p.isoDeathDate || p.fullDeathDate).length;
+        const hasDeathIssueFn = (p) => {
+          if (p.deathDateDisplay === '?') return true;
+          if (p.deathDateDisplay) return false;
+          return !p.isoDeathDate;
+        };
+        const unknownBirthDates = allData.filter(p => !p.isConfidential && hasBirthIssueFn(p)).length;
+        const totalDeaths = allData.filter(p => p.isoDeathDate).length;
         const unknownDeathDates = allData.filter(p => {
-          return p.deathDate && (isInvalidDate(p.isoDeathDate) || isInvalidDate(p.fullDeathDate));
+          if (p.isConfidential) return false;
+          if (!p.isoDeathDate && !p.deathDateDisplay) return false;
+          return hasDeathIssueFn(p);
         }).length;
         document.getElementById('totalMembers').textContent = total;
         document.getElementById('totalMarriages').textContent = totalMarriages;
@@ -437,6 +517,8 @@
         const deceased = totalDeaths;
         const alive = total - deceased;
         document.getElementById('aliveDeceased').innerHTML = `<span>${alive}</span> / <span>${deceased}</span>`;
+        const totalConfidential = allData.filter(p => p.isConfidential).length;
+        document.getElementById('totalConfidential').textContent = totalConfidential;
         document.getElementById('maleCount').textContent = males;
         document.getElementById('femaleCount').textContent = females;
         document.getElementById('unknownCount').textContent = unknown;
@@ -502,15 +584,15 @@
           };
         }
         allData.forEach(person => {
-          if (person.birthDate) {
-            const birthYear = new Date(person.birthDate).getFullYear();
+          if (person.isoBirthDate && !isInvalidDate(person.isoBirthDate)) {
+            const birthYear = parseInt(person.isoBirthDate.substring(0, 4));
             const birthCentury = calculateCentury(birthYear);
             if (birthCentury && centuriesStats[birthCentury]) {
               centuriesStats[birthCentury].birthCount += 1;
             }
           }
-          if (person.deathDate) {
-            const deathYear = new Date(person.deathDate).getFullYear();
+          if (person.isoDeathDate && !isInvalidDate(person.isoDeathDate)) {
+            const deathYear = parseInt(person.isoDeathDate.substring(0, 4));
             const deathCentury = calculateCentury(deathYear);
             if (deathCentury && centuriesStats[deathCentury]) {
               centuriesStats[deathCentury].deathCount += 1;
@@ -629,23 +711,15 @@
           }).join('') :
           '<div class="empty-state"><i class="fas fa-baby"></i><p>Aucune naissance enregistrée</p></div>';
         const marriages = [];
-        const processedMarriages = new Set();
-        allData.forEach(person => {
-          if (person.marriages) {
-            Object.entries(person.marriages).forEach(([spouseId, marriage]) => {
-              const id = marriage.marriageId || marriage.mariageId;
-              let date = marriage.fullDate || marriage.date || marriage.marriageDate;
-              if (id && !processedMarriages.has(id) && date) {
-                processedMarriages.add(id);
-                const spouse = allData.find(p => p.id == spouseId);
-                marriages.push({
-                  person: person,
-                  spouse: spouse,
-                  date: date,
-                  rawDate: date,
-                  place: marriage.place || marriage.marriagePlace || ''
-                });
-              }
+        getUniqueMarriages((person, spouse, marriage) => {
+          const date = marriage.fullMarriageDate || marriage.date || marriage.marriageDate;
+          if (date) {
+            marriages.push({
+              person: person,
+              spouse: spouse,
+              date: date,
+              rawDate: date,
+              place: marriage.place || marriage.marriagePlace || ''
             });
           }
         });
@@ -665,12 +739,7 @@
         const marriagesContainer = document.getElementById('lastMarriages');
         marriagesContainer.innerHTML = marriages.slice(0, 10).length > 0 ?
           marriages.slice(0, 10).map(m => {
-            let displayDate;
-            if (m.date.length === 4) {
-              displayDate = m.date;
-            } else {
-              displayDate = formatDate(m.date);
-            }
+            const displayDate = formatDate(m.date);
             return `
                         <div class="event-item">
                             <div class="event-info">
@@ -714,9 +783,8 @@
       }
 
       function updateLifespanTab() {
-        const currentYear = new Date().getFullYear();
         const potentiallyAlive = allData
-          .filter(p => p.birthDate && !p.deathDate)
+          .filter(p => !p.isConfidential && p.birthDate && !p.deathDate && !p.deathDateDisplay)
           .map(p => ({
             ...p,
             age: calculateAge(p.birthDate)
@@ -730,19 +798,19 @@
                         <div class="event-info">
                             <div class="event-name">${person.firstName} ${person.lastName}</div>
                             <div class="event-details">
-                                Né en ${formatDate(person.birthDate)}
+                                Né en ${formatDate(person.fullBirthDate || person.birthDate)}
                                 ${person.birthPlace ? ' à ' + person.birthPlace : ''}
                             </div>
                         </div>
                         <div class="event-date">${person.age} ans</div>
                     </div>
                 `).join('') :
-          '<div class="empty-state"><i class="fas fa-birthday-cake"></i><p>Aucune donnée disponible</p></div>';
+          '<div class="empty-state"><i class="fas fa-birthday-cake"></i><p>Aucune donnée disponible ou confidentielle</p></div>';
         const longestLived = allData
-          .filter(p => p.birthDate && p.deathDate)
+          .filter(p => !p.isConfidential && p.isoBirthDate && p.isoDeathDate && !isInvalidDate(p.isoBirthDate) && !isInvalidDate(p.isoDeathDate))
           .map(p => ({
             ...p,
-            lifespan: calculateAge(p.birthDate, p.deathDate)
+            lifespan: calculateAge(p.isoBirthDate, p.isoDeathDate)
           }))
           .sort((a, b) => b.lifespan - a.lifespan)
           .slice(0, 10);
@@ -753,7 +821,7 @@
                         <div class="event-info">
                             <div class="event-name">${person.firstName} ${person.lastName}</div>
                             <div class="event-details">
-                                ${formatDate(person.birthDate)} - ${formatDate(person.deathDate)}
+                                ${formatDate(person.fullBirthDate || person.birthDate)} - ${formatDate(person.fullDeathDate || person.deathDate)}
                             </div>
                         </div>
                         <div class="event-date">${person.lifespan} ans</div>
@@ -802,87 +870,78 @@
       }
 
       function updateUnknownTab() {
-        const isInvalidDate = (dateStr) => {
-          if (!dateStr) return true;
-          const cleaned = dateStr.trim();
-          if (cleaned.includes('/')) {
-            return true;
-          }
-          if (cleaned === '0000' ||
-            cleaned === '9999' ||
-            cleaned.startsWith('0000-') ||
-            cleaned.startsWith('9999-') ||
-            cleaned.includes('-00-00') ||
-            cleaned.includes('-00-') ||
-            cleaned.endsWith('-00') ||
-            cleaned.match(/^00-/) ||
-            cleaned.match(/-00$/) ||
-            cleaned.match(/^\d{2}-00-\d{4}$/) ||
-            cleaned.match(/^\d{4}-00-\d{2}$/)) {
-            return true;
-          }
+        const hasBirthIssue = (p) => {
+          if (p.birthDateDisplay === '?') return true;
+          if (p.birthDateDisplay) return !/^\d{2}-\d{2}-\d{4}$/.test(p.birthDateDisplay);
+          return !p.isoBirthDate;
+        };
+        const hasDeathIssue = (p) => {
+          if (p.deathDateDisplay === '?') return true;
+          if (p.deathDateDisplay) return !/^\d{2}-\d{2}-\d{4}$/.test(p.deathDateDisplay);
           return false;
         };
-        const formatToFrench = (dateStr) => {
-          if (!dateStr) return 'N/A';
-          const cleaned = dateStr.trim();
-          if (cleaned.match(/^\d{4}[/-]\d{2}[/-]\d{2}$/)) {
-            const parts = cleaned.split(/[/-]/);
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-          }
-          if (cleaned.match(/^\d{2}-\d{2}-\d{4}$/)) {
-            return cleaned.replace(/-/g, '/');
-          }
-          if (cleaned.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
-            return cleaned;
-          }
-          return cleaned;
-        };
-        const unknownBirths = allData.filter(p => {
-          return isInvalidDate(p.isoBirthDate) || isInvalidDate(p.fullBirthDate) || !p.isoBirthDate;
-        });
-        const unknownBirthsContainer = document.getElementById('unknownBirths');
-        unknownBirthsContainer.innerHTML = unknownBirths.length > 0 ?
-          unknownBirths.map(person => {
-            const displayDate = formatToFrench(person.isoBirthDate || person.fullBirthDate);
+        const unknownDates = allData.filter(p => !p.isConfidential && (hasBirthIssue(p) || hasDeathIssue(p)));
+        const unknownDatesContainer = document.getElementById('unknownDates');
+        unknownDatesContainer.innerHTML = unknownDates.length > 0 ?
+          unknownDates.map(person => {
+            const bDisp = person.fullBirthDate || person.birthDate || null;
+            const dDisp = person.fullDeathDate || person.deathDate || null;
+            const bLabel = hasBirthIssue(person) ? (person.birthDateDisplay === '?' ? '?' : (bDisp || 'Manquante')) : bDisp;
+            const dLabel = hasDeathIssue(person) ? (person.deathDateDisplay === '?' ? '?' : (dDisp || 'Manquante')) : dDisp;
+            const bClass = hasBirthIssue(person) ? (bLabel === '?' || bLabel === 'Manquante' ? 'unknown' : 'partial') : 'known';
+            const dClass = hasDeathIssue(person) ? (dLabel === '?' || dLabel === 'Manquante' ? 'unknown' : 'partial') : 'known';
+            const bBadge = bLabel ? `<span class="date-badge date-badge--${bClass}"><i class="fas fa-baby"></i> ${bLabel}</span>` : '';
+            const dBadge = dLabel ? `<span class="date-badge date-badge--${dClass}"><i class="fas fa-cross"></i> ${dLabel}</span>` : '';
             return `
                         <div class="event-item">
                             <div class="event-info">
                                 <div class="event-name">${person.firstName} ${person.lastName}</div>
-                                <div class="event-details">
-                                    ${person.birthPlace ? person.birthPlace : '<em>Lieu inconnu</em>'}
-                                    ${displayDate !== 'N/A' ? ` • Date enregistrée : ${displayDate}` : ''}
-                                </div>
+                                <div class="date-badges">${bBadge}${dBadge}</div>
                             </div>
-                            <div class="event-date" style="color: #ef4444;">Date invalide</div>
                         </div>
                     `;
           }).join('') :
-          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Toutes les dates de naissance sont renseignées</p></div>';
-        const unknownDeaths = allData.filter(p => {
-          return p.deathDate && (isInvalidDate(p.isoDeathDate) || isInvalidDate(p.fullDeathDate));
+          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Toutes les dates sont renseignées</p></div>';
+        const unknownMarriagesList = [];
+        getUniqueMarriages((person, spouse, marriage) => {
+          const full = marriage.fullMarriageDate;
+          const isIncomplete = !full || !/^\d{2}-\d{2}-\d{4}$/.test(full);
+          if (isIncomplete) unknownMarriagesList.push({ person, spouse, marriage });
         });
-        const unknownDeathsContainer = document.getElementById('unknownDeaths');
-        unknownDeathsContainer.innerHTML = unknownDeaths.length > 0 ?
-          unknownDeaths.map(person => {
-            const birthInfo = person.fullBirthDate || person.birthDate || 'Date de naissance inconnue';
-            const displayDeathDate = formatToFrench(person.isoDeathDate || person.fullDeathDate);
+        const unknownMarriagesContainer = document.getElementById('unknownMarriages');
+        unknownMarriagesContainer.innerHTML = unknownMarriagesList.length > 0 ?
+          unknownMarriagesList.map(({ person, spouse, marriage }) => {
+            const mLabel = marriage.marriageDateDisplay === '?' ? '?' : (marriage.fullMarriageDate || 'Manquante');
+            const mClass = (mLabel === '?' || mLabel === 'Manquante') ? 'unknown' : 'partial';
+            const mBadge = `<span class="date-badge date-badge--${mClass}"><i class="fas fa-ring"></i> ${mLabel}</span>`;
             return `
                         <div class="event-item">
                             <div class="event-info">
-                                <div class="event-name">${person.firstName} ${person.lastName}</div>
-                                <div class="event-details">
-                                    Né(e) : ${birthInfo}
-                                    ${person.deathPlace ? ` • Décédé(e) à ${person.deathPlace}` : '<em> • Lieu inconnu</em>'}
-                                    ${displayDeathDate !== 'N/A' ? ` • Date enregistrée : ${displayDeathDate}` : ''}
-                                </div>
+                                <div class="event-name">${person.firstName} ${person.lastName} & ${spouse ? spouse.firstName + ' ' + spouse.lastName : 'Inconnu'}</div>
+                                <div class="date-badges">${mBadge}</div>
                             </div>
-                            <div class="event-date" style="color: #ef4444;">Date invalide</div>
                         </div>
                     `;
           }).join('') :
-          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Toutes les dates de décès sont renseignées</p></div>';
-      }
+          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Toutes les dates de mariage sont renseignées</p></div>';
+        // Lieux de naissance manquants
+        const missingBirthPlaces = allData.filter(p => !p.isConfidential && !p.birthPlace);
+        document.getElementById('unknownBirthPlaces').innerHTML = missingBirthPlaces.length > 0 ?
+          missingBirthPlaces.map(p => `<div class="event-item"><div class="event-info"><div class="event-name">${p.firstName} ${p.lastName}</div></div></div>`).join('') :
+          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Tous les lieux de naissance sont renseignés</p></div>';
+        // Lieux de décès manquants (uniquement les personnes décédées)
+        const missingDeathPlaces = allData.filter(p => !p.isConfidential && (p.isoDeathDate || p.deathDateDisplay) && !p.deathPlace);
+        document.getElementById('unknownDeathPlaces').innerHTML = missingDeathPlaces.length > 0 ?
+          missingDeathPlaces.map(p => `<div class="event-item"><div class="event-info"><div class="event-name">${p.firstName} ${p.lastName}</div></div></div>`).join('') :
+          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Tous les lieux de décès sont renseignés</p></div>';
+        // Lieux de mariage manquants
+        const missingMarriagePlacesList = [];
+        getUniqueMarriages((person, spouse, marriage) => {
+          if (!marriage.marriagePlace) missingMarriagePlacesList.push({ person, spouse, marriage });
+        });
+        document.getElementById('unknownMarriagePlaces').innerHTML = missingMarriagePlacesList.length > 0 ?
+          missingMarriagePlacesList.map(({ person, spouse, marriage }) => `<div class="event-item"><div class="event-info"><div class="event-name">${person.firstName} ${person.lastName} & ${spouse ? spouse.firstName + ' ' + spouse.lastName : 'Inconnu'}</div></div></div>`).join('') :
+          '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Tous les lieux de mariage sont renseignés</p></div>';      }
     </script>
   </body>
 

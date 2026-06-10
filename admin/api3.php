@@ -1,34 +1,105 @@
 <?php
+require_once 'auth.php';
 require_once 'config.php';
-require_once 'mariage_manager.php'; // NOUVEAU : Inclure la classe MariageManager
+require_once 'mariage_manager.php';
+
+// Point 5 : logique de confidentialité unifiée, partagée par les deux classes
+function isPersonConfidential($date_naissance, $date_deces, $force_public = 0, $date_deces_affichage = null): bool {
+    if (!empty($force_public)) return false;
+    $hasDeath = !empty($date_deces) && $date_deces !== '0000-00-00';
+    if ($hasDeath) return (int)substr($date_deces, 0, 4) > (date('Y') - 10);
+    if (!empty($date_deces_affichage)) return false;
+    if (empty($date_naissance) || $date_naissance === '0000-00-00') return true;
+    return (int)substr($date_naissance, 0, 4) > (date('Y') - 100);
+}
 
 class FamilyTreeAPI {
     private $pdo;
-    private $mariageManager; // NOUVEAU : Gestionnaire de mariages
+    private $mariageManager;
 
     public function __construct() {
         $this->pdo = getConnection();
-        $this->mariageManager = new MariageManager($this->pdo); // NOUVEAU
+        $this->mariageManager = new MariageManager($this->pdo);
         header('Content-Type: application/json');
         header('Cache-Control: no-cache, must-revalidate');
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
     }
 
-    // Utility functions
-    private function formatDate($date, $fullFormat = false) {
-        // Retourner null pour les dates vides, null, ou invalides comme 0000-00-00
-        if (empty($date) || $date === '0000-00-00' || substr($date, 0, 4) === '0000') {
-            return null;
+    // Point 5 : délègue à la fonction partagée
+    private function isConfidential($membre): bool {
+        return isPersonConfidential(
+            $membre['birthDate'] ?? null,
+            $membre['deathDate'] ?? null,
+            $membre['force_public'] ?? 0,
+            $membre['deathDateDisplay'] ?? null
+        );
+    }
+
+    private function maskMembre(array $data): array {
+        return array_merge($data, [
+            'firstName'          => '👤',
+            'firstNames'         => '👤',
+            'lastName'           => '🔒',
+            'surnom'             => '',
+            'birthDate'          => null,
+            'fullBirthDate'      => null,
+            'isoBirthDate'       => null,
+            'birthDateDisplay'   => null,
+            'birthPlace'         => '',
+            'deathDate'          => null,
+            'fullDeathDate'      => null,
+            'isoDeathDate'       => null,
+            'deathDateDisplay'   => null,
+            'deathPlace'         => '',
+            'doc_naissance'      => '',
+            'doc_deces'          => '',
+            'occupation'         => '',
+            'notes'              => '',
+            'isConfidential'     => true,
+        ]);
+    }
+
+    // Point 4 : garde partagée pour les dates invalides
+    private function isEmptyDate($date): bool {
+        return empty($date) || $date === '0000-00-00' || substr($date, 0, 4) === '0000';
+    }
+
+    private function validateMemberData(array $data): void {
+        if (empty(trim($data['prenom'] ?? ''))) throw new Exception('Le prénom est requis');
+        if (empty(trim($data['nom'] ?? ''))) throw new Exception('Le nom est requis');
+        if (!empty($data['sex']) && !in_array($data['sex'], ['M', 'F', 'U'])) {
+            throw new Exception('Genre invalide');
         }
+        $maxLengths = [
+            'nom' => 100, 'prenom' => 150, 'surnom' => 100,
+            'lieu_naissance' => 200, 'lieu_deces' => 200, 'occupation' => 200,
+            'doc_naissance' => 3000, 'doc_deces' => 3000, 'notes' => 3000,
+        ];
+        foreach ($maxLengths as $field => $max) {
+            if (!empty($data[$field]) && mb_strlen($data[$field]) > $max) {
+                throw new Exception('Champ ' . $field . ' trop long (max ' . $max . ' car.)');
+            }
+        }
+        foreach (['date_naissance', 'date_deces'] as $field) {
+            $val = $data[$field] ?? '';
+            if (!empty($val) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $val)) {
+                throw new Exception('Format de date invalide (' . $field . ')');
+            }
+        }
+        if (!empty($data['date_naissance']) && !empty($data['date_deces'])) {
+            if ($data['date_naissance'] > $data['date_deces']) {
+                throw new Exception('La date de naissance ne peut pas être postérieure à la date de décès');
+            }
+        }
+    }
+
+    private function formatDate($date, $fullFormat = false) {
+        if ($this->isEmptyDate($date)) return null;
         return $fullFormat ? date('d-m-Y', strtotime($date)) : substr($date, 0, 4);
     }
-    
+
     private function formatDateISO($date) {
-        // Retourner null pour les dates vides, null, ou invalides comme 0000-00-00
-        if (empty($date) || $date === '0000-00-00' || substr($date, 0, 4) === '0000') {
-            return null;
-        }
-        // Retourner la date au format ISO (YYYY-MM-DD)
+        if ($this->isEmptyDate($date)) return null;
         return date('Y-m-d', strtotime($date));
     }
 
@@ -41,12 +112,14 @@ class FamilyTreeAPI {
         return trim(preg_replace('/\s+/', ' ', $fullName));
     }
 
-    // Request handling
     public function handleRequest() {
         $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+        requireLogin();
+
         try {
             switch ($action) {
+                // ── Lecture (viewer + admin) ──────────────────────────────────
                 case 'getMembres':
                     echo json_encode($this->getMembres());
                     break;
@@ -59,37 +132,6 @@ class FamilyTreeAPI {
                     echo json_encode($this->getFamilyData());
                     break;
 
-                case 'saveMembre':
-                    echo json_encode($this->saveMember());
-                    break;
-
-                case 'saveRelation':
-                    echo json_encode($this->saveRelation());
-                    break;
-
-                case 'deleteMembre':
-                    echo json_encode($this->deleteMember());
-                    break;
-
-                case 'deleteRelation':
-                    echo json_encode($this->deleteRelation());
-                    break;
-
-                // ============================================
-                // NOUVELLES ACTIONS POUR LES MARIAGES
-                // ============================================
-                case 'addMariage':
-                    echo json_encode($this->addMariage());
-                    break;
-
-                case 'updateMariage':
-                    echo json_encode($this->updateMariage());
-                    break;
-
-                case 'deleteMariage':
-                    echo json_encode($this->deleteMariage());
-                    break;
-
                 case 'getMariagesPersonne':
                     echo json_encode($this->getMariagesPersonne());
                     break;
@@ -98,43 +140,15 @@ class FamilyTreeAPI {
                     echo json_encode($this->getMariageDetails());
                     break;
 
-                case 'updateMariageOrder':
-                    echo json_encode($this->updateMariageOrder());
-                    break;
-
-                // ============================================
-                // ACTIONS POUR LA GESTION DES LIEUX
-                // ============================================
                 case 'getLieux':
                     $manager = new LieuxManager();
                     echo json_encode(['success' => true, 'lieux' => $manager->getLieuxUniques()]);
                     break;
 
-                case 'updateLieu':
-                    $manager = new LieuxManager();
-                    $ancien = $_POST['ancien_lieu'] ?? '';
-                    $nouveau = $_POST['nouveau_lieu'] ?? '';
-                    if (empty($ancien) || empty($nouveau)) {
-                        throw new Exception('Lieux manquants');
-                    }
-                    echo json_encode($manager->mettreAJourLieu($ancien, $nouveau));
-                    break;
-
-                case 'deleteLieu':
-                    $manager = new LieuxManager();
-                    $lieu = $_POST['lieu'] ?? '';
-                    if (empty($lieu)) {
-                        throw new Exception('Lieu manquant');
-                    }
-                    echo json_encode($manager->supprimerLieu($lieu));
-                    break;
-
                 case 'getDetails':
                     $manager = new LieuxManager();
                     $lieu = $_GET['lieu'] ?? '';
-                    if (empty($lieu)) {
-                        throw new Exception('Lieu manquant');
-                    }
+                    if (empty($lieu)) throw new Exception('Lieu manquant');
                     echo json_encode(['success' => true, 'details' => $manager->getDetailsLieu($lieu)]);
                     break;
 
@@ -142,6 +156,64 @@ class FamilyTreeAPI {
                     $manager = new LieuxManager();
                     $terme = $_GET['terme'] ?? '';
                     echo json_encode(['success' => true, 'lieux' => $manager->rechercherLieux($terme)]);
+                    break;
+
+                // ── Écriture (admin uniquement) ───────────────────────────────
+                case 'saveMembre':
+                    requireAdmin();
+                    echo json_encode($this->saveMember());
+                    break;
+
+                case 'saveRelation':
+                    requireAdmin();
+                    echo json_encode($this->saveRelation());
+                    break;
+
+                case 'deleteMembre':
+                    requireAdmin();
+                    echo json_encode($this->deleteMember());
+                    break;
+
+                case 'deleteRelation':
+                    requireAdmin();
+                    echo json_encode($this->deleteRelation());
+                    break;
+
+                case 'addMariage':
+                    requireAdmin();
+                    echo json_encode($this->addMariage());
+                    break;
+
+                case 'updateMariage':
+                    requireAdmin();
+                    echo json_encode($this->updateMariage());
+                    break;
+
+                case 'deleteMariage':
+                    requireAdmin();
+                    echo json_encode($this->deleteMariage());
+                    break;
+
+                case 'updateMariageOrder':
+                    requireAdmin();
+                    echo json_encode($this->updateMariageOrder());
+                    break;
+
+                case 'updateLieu':
+                    requireAdmin();
+                    $manager = new LieuxManager();
+                    $ancien = $_POST['ancien_lieu'] ?? '';
+                    $nouveau = $_POST['nouveau_lieu'] ?? '';
+                    if (empty($ancien) || empty($nouveau)) throw new Exception('Lieux manquants');
+                    echo json_encode($manager->mettreAJourLieu($ancien, $nouveau));
+                    break;
+
+                case 'deleteLieu':
+                    requireAdmin();
+                    $manager = new LieuxManager();
+                    $lieu = $_POST['lieu'] ?? '';
+                    if (empty($lieu)) throw new Exception('Lieu manquant');
+                    echo json_encode($manager->supprimerLieu($lieu));
                     break;
 
                 default:
@@ -154,38 +226,38 @@ class FamilyTreeAPI {
     }
 
     // ============================================
-    // MÉTHODES MODIFIÉES POUR MARIAGES MULTIPLES
+    // LECTURE
     // ============================================
 
     private function getMembres() {
         $stmt = $this->pdo->query("
-            SELECT m.*, 
+            SELECT m.*,
             (
                 SELECT JSON_ARRAYAGG(
                     JSON_OBJECT(
                         'type', r.type,
                         'id', m.id,
-                        'relation_id', 
-                        CASE 
+                        'relation_id',
+                        CASE
                             WHEN r.enfant_id = m.id THEN COALESCE(r.parent_id, 0)
                             WHEN r.parent_id = m.id THEN r.enfant_id
                             ELSE r.enfant_id
                         END,
                         'mariage_id', r.mariage_id,
                         'date_naissance',
-                        CASE 
+                        CASE
                             WHEN r.enfant_id = m.id AND r.type = 'parent' THEN m3.date_naissance
                             WHEN r.enfant_id = m.id AND r.type = 'sibling' THEN m2.date_naissance
                             ELSE m2.date_naissance
                         END,
-                        'nom', 
-                        CASE 
+                        'nom',
+                        CASE
                             WHEN r.enfant_id = m.id AND r.type = 'parent' THEN m3.nom
                             WHEN r.enfant_id = m.id AND r.type = 'sibling' THEN m2.nom
                             ELSE m2.nom
                         END,
                         'prenom',
-                        CASE 
+                        CASE
                             WHEN r.enfant_id = m.id AND r.type = 'parent' THEN m3.prenom
                             WHEN r.enfant_id = m.id AND r.type = 'sibling' THEN m2.prenom
                             ELSE m2.prenom
@@ -206,7 +278,7 @@ class FamilyTreeAPI {
 
     private function getRelations() {
         $stmt = $this->pdo->query("
-            SELECT r.*, 
+            SELECT r.*,
                    r.mariage_id,
                    m1.prenom as enfant_prenom, m1.nom as enfant_nom,
                    m2.prenom as parent_prenom, m2.nom as parent_nom
@@ -226,56 +298,66 @@ class FamilyTreeAPI {
             $id = $membre['id'];
             $parentIds = $this->getParentIds($id);
             $siblingIds = $this->getSiblingIds($id);
-            
-            // MODIFIÉ : Utiliser la nouvelle méthode pour récupérer les mariages
             $marriages = $this->getMarriagesForMember($id);
 
-            $result[$id] = [
-                'id' => $id,
-                'firstName' => $this->getFirstName($membre['firstName']),
-                'firstNames' => $this->getAllFirstNames($membre['firstName']),
-                'lastName' => $membre['lastName'],
-                'surnom' => $membre['surnom'] ?? '',
-                'sex' => $membre['sex'],
-                'birthDate' => $this->formatDate($membre['birthDate']),
-                'deathDate' => $this->formatDate($membre['deathDate']),
-                'fullBirthDate' => $this->formatDate($membre['birthDate'], true),
-                'fullDeathDate' => $this->formatDate($membre['deathDate'], true),
-                'isoBirthDate' => $this->formatDateISO($membre['birthDate']),
-                'isoDeathDate' => $this->formatDateISO($membre['deathDate']),
-                'birthPlace' => $membre['birthPlace'] ?? '',
-                'deathPlace' => $membre['deathPlace'] ?? '',
-                'doc_naissance' => $membre['doc_naissance'] ?? '',
-                'doc_deces' => $membre['doc_deces'] ?? '',
-                'occupation' => $membre['occupation'] ?? '',
-                'notes' => $membre['notes'] ?? '',
-                'parentIds' => $parentIds,
-                'siblingIds' => array_values(array_unique($siblingIds)),
-                'spouseIds' => array_keys($marriages), // Liste de tous les conjoints
-                'marriages' => $marriages // MODIFIÉ : Nouveau format avec support multi-mariages
+            $data = [
+                'id'              => $id,
+                'firstName'       => $this->getFirstName($membre['firstName']),
+                'firstNames'      => $this->getAllFirstNames($membre['firstName']),
+                'lastName'        => $membre['lastName'],
+                'surnom'          => $membre['surnom'] ?? '',
+                'sex'             => $membre['sex'],
+                'birthDate'       => $this->formatDate($membre['birthDate']),
+                'deathDate'       => $this->formatDate($membre['deathDate']),
+                'fullBirthDate'   => $membre['birthDateDisplay'] ?: $this->formatDate($membre['birthDate'], true),
+                'fullDeathDate'   => $membre['deathDateDisplay'] ?: $this->formatDate($membre['deathDate'], true),
+                'isoBirthDate'    => $this->formatDateISO($membre['birthDate']),
+                'isoDeathDate'    => $this->formatDateISO($membre['deathDate']),
+                'birthDateDisplay'=> $membre['birthDateDisplay'] ?? null,
+                'deathDateDisplay'=> $membre['deathDateDisplay'] ?? null,
+                'birthPlace'      => $membre['birthPlace'] ?? '',
+                'deathPlace'      => $membre['deathPlace'] ?? '',
+                'doc_naissance'   => $membre['doc_naissance'] ?? '',
+                'doc_deces'       => $membre['doc_deces'] ?? '',
+                'occupation'      => $membre['occupation'] ?? '',
+                'notes'           => $membre['notes'] ?? '',
+                'parentIds'       => $parentIds,
+                'siblingIds'      => array_values(array_unique($siblingIds)),
+                'spouseIds'       => array_keys($marriages),
+                'marriages'       => $marriages,
+                'isConfidential'  => false,
+                'force_public'    => (bool)($membre['force_public'] ?? false),
             ];
+
+            if (!isAdmin() && $this->isConfidential($membre)) {
+                $data = $this->maskMembre($data);
+            }
+
+            $result[$id] = $data;
         }
 
         return $result;
     }
 
     private function getAllMembers() {
-        // MODIFIÉ : Suppression des champs date_mariage et lieu_mariage
         $stmt = $this->pdo->query("
-            SELECT 
+            SELECT
                 id,
                 prenom as firstName,
                 nom as lastName,
                 surnom,
                 date_naissance as birthDate,
+                date_naissance_affichage as birthDateDisplay,
                 lieu_naissance as birthPlace,
                 doc_naissance,
                 date_deces as deathDate,
+                date_deces_affichage as deathDateDisplay,
                 lieu_deces as deathPlace,
                 doc_deces,
                 sex,
                 occupation,
-                notes
+                notes,
+                force_public
             FROM membres
             ORDER BY nom, prenom
         ");
@@ -284,9 +366,7 @@ class FamilyTreeAPI {
 
     private function getParentIds($id) {
         $stmt = $this->pdo->prepare("
-            SELECT parent_id
-            FROM relations
-            WHERE enfant_id = ? AND type = 'parent'
+            SELECT parent_id FROM relations WHERE enfant_id = ? AND type = 'parent'
         ");
         $stmt->execute([$id]);
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
@@ -294,8 +374,8 @@ class FamilyTreeAPI {
 
     private function getSiblingIds($id) {
         $stmt = $this->pdo->prepare("
-            SELECT DISTINCT 
-                CASE 
+            SELECT DISTINCT
+                CASE
                     WHEN r1.enfant_id = ? THEN r1.parent_id
                     ELSE r1.enfant_id
                 END as sibling_id
@@ -308,30 +388,28 @@ class FamilyTreeAPI {
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
-    // NOUVELLE MÉTHODE : Récupérer les mariages pour un membre
+    // Point 3 : champs dupliqués (date/marriageDate, place/marriagePlace, endDate/divorceDate) supprimés
     private function getMarriagesForMember($id) {
         $mariages = $this->mariageManager->getMariagesPersonne($id);
         $result = [];
 
         foreach ($mariages as $mariage) {
             $conjoint_id = ($mariage['epoux_id'] == $id) ? $mariage['epouse_id'] : $mariage['epoux_id'];
-            
             $result[$conjoint_id] = [
-                'marriageId' => $mariage['id'],
-                'numeroOrdre' => $mariage['numero_ordre'] ?? 1, // Ajout du numéro d'ordre
-                'date' => $this->formatDate($mariage['date_mariage']),
-                'marriageDate' => $this->formatDate($mariage['date_mariage']),
-                'fullMarriageDate' => $this->formatDate($mariage['date_mariage'], true),
-                'place' => $mariage['lieu_mariage'] ?? '',
-                'marriagePlace' => $mariage['lieu_mariage'] ?? '',
-                'marriageYear' => $this->formatDate($mariage['date_mariage']),
-                'endDate' => $this->formatDate($mariage['date_fin']),
-                'divorceDate' => $this->formatDate($mariage['date_fin']),
-                'fullDivorceDate' => $this->formatDate($mariage['date_fin'], true),
-                'divorcePlace' => ($mariage['type_fin'] === 'divorce') ? ($mariage['lieu_fin'] ?? '') : '',
-                'endType' => $mariage['type_fin'],
-                'hasDivorce' => ($mariage['type_fin'] === 'divorce'), // Nouveau: flag pour divorce sans date
-                'notes' => $mariage['notes'] ?? ''
+                'marriageId'          => $mariage['id'],
+                'numeroOrdre'         => $mariage['numero_ordre'] ?? 1,
+                'marriageDate'        => $this->formatDate($mariage['date_mariage']),
+                'fullMarriageDate'    => $mariage['date_mariage_affichage'] ?: $this->formatDate($mariage['date_mariage'], true),
+                'marriageDateDisplay' => $mariage['date_mariage_affichage'] ?? null,
+                'marriagePlace'       => $mariage['lieu_mariage'] ?? '',
+                'marriageYear'        => $this->formatDate($mariage['date_mariage']),
+                'divorceDate'         => $this->formatDate($mariage['date_fin']),
+                'fullDivorceDate'     => $mariage['date_fin_affichage'] ?: $this->formatDate($mariage['date_fin'], true),
+                'endDateDisplay'      => $mariage['date_fin_affichage'] ?? null,
+                'divorcePlace'        => ($mariage['type_fin'] === 'divorce') ? ($mariage['lieu_fin'] ?? '') : '',
+                'endType'             => $mariage['type_fin'],
+                'hasDivorce'          => ($mariage['type_fin'] === 'divorce'),
+                'notes'               => $mariage['notes'] ?? '',
             ];
         }
 
@@ -339,61 +417,66 @@ class FamilyTreeAPI {
     }
 
     // ============================================
-    // MÉTHODES POUR LES MARIAGES
+    // MARIAGES
     // ============================================
 
     private function addMariage() {
-    $epoux_id = $_POST['epoux_id'] ?? null;
-    $epouse_id = $_POST['epouse_id'] ?? null;
-    $date_mariage = $_POST['date_mariage'] ?? null;
-    $lieu_mariage = $_POST['lieu_mariage'] ?? null;
-    $date_fin = $_POST['date_fin'] ?? null;
-    $type_fin = $_POST['type_fin'] ?? null;
-    $notes = $_POST['notes'] ?? null;
+        $epoux_id  = $_POST['epoux_id']  ?? null;
+        $epouse_id = $_POST['epouse_id'] ?? null;
 
-    if (!$epoux_id || !$epouse_id) {
-        throw new Exception('Les deux conjoints sont requis');
-    }
-
-    $mariage_id = $this->mariageManager->ajouterMariage(
-        $epoux_id,
-        $epouse_id,
-        $date_mariage,
-        $lieu_mariage,
-        $date_fin,
-        $type_fin,
-        $notes
-    );
-
-    if ($mariage_id) {
-        return [
-            'success' => true,
-            'mariage_id' => $mariage_id,
-            'message' => 'Mariage ajouté avec succès'
-        ];
-    } else {
-        throw new Exception('Erreur lors de l\'ajout du mariage');
-    }
-}
-
-    private function updateMariage() {
-        $mariage_id = $_POST['mariage_id'] ?? null;
-        
-        if (!$mariage_id) {
-            throw new Exception('ID du mariage requis');
+        if (!$epoux_id || !$epouse_id) {
+            throw new Exception('Les deux conjoints sont requis');
         }
-
-        $data = [];
-        $allowed_fields = ['date_mariage', 'lieu_mariage', 'date_fin', 'type_fin', 'notes'];
-        
-        foreach ($allowed_fields as $field) {
-            if (isset($_POST[$field])) {
-                $data[$field] = $_POST[$field];
+        if ($epoux_id == $epouse_id) throw new Exception('Un conjoint ne peut pas se marier avec lui-même');
+        $lieu = $_POST['lieu_mariage'] ?? '';
+        if (mb_strlen($lieu) > 200) throw new Exception('Lieu de mariage trop long (max 200 car.)');
+        $notesM = $_POST['notes'] ?? '';
+        if (mb_strlen($notesM) > 2000) throw new Exception('Notes de mariage trop longues (max 2000 car.)');
+        foreach (['date_mariage', 'date_fin'] as $field) {
+            $val = $_POST[$field] ?? '';
+            if (!empty($val) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $val)) {
+                throw new Exception('Format de date invalide (' . $field . ')');
             }
         }
 
-        $success = $this->mariageManager->modifierMariage($mariage_id, $data);
+        $mariage_id = $this->mariageManager->ajouterMariage(
+            $epoux_id,
+            $epouse_id,
+            $_POST['date_mariage']           ?? null,
+            $_POST['lieu_mariage']           ?? null,
+            $_POST['date_fin']               ?? null,
+            $_POST['type_fin']               ?? null,
+            $_POST['notes']                  ?? null,
+            $_POST['date_mariage_affichage'] ?? null,
+            $_POST['date_fin_affichage']     ?? null
+        );
 
+        if ($mariage_id) {
+            return ['success' => true, 'mariage_id' => $mariage_id, 'message' => 'Mariage ajouté avec succès'];
+        }
+        throw new Exception('Erreur lors de l\'ajout du mariage');
+    }
+
+    private function updateMariage() {
+        $mariage_id = $_POST['mariage_id'] ?? null;
+        if (!$mariage_id) throw new Exception('ID du mariage requis');
+        $lieu = $_POST['lieu_mariage'] ?? '';
+        if (mb_strlen($lieu) > 200) throw new Exception('Lieu de mariage trop long (max 200 car.)');
+        $notesM = $_POST['notes'] ?? '';
+        if (mb_strlen($notesM) > 2000) throw new Exception('Notes de mariage trop longues (max 2000 car.)');
+        foreach (['date_mariage', 'date_fin'] as $field) {
+            $val = $_POST[$field] ?? '';
+            if (!empty($val) && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $val)) {
+                throw new Exception('Format de date invalide (' . $field . ')');
+            }
+        }
+
+        $data = [];
+        foreach (['date_mariage', 'date_mariage_affichage', 'lieu_mariage', 'date_fin', 'date_fin_affichage', 'type_fin', 'notes'] as $field) {
+            if (isset($_POST[$field])) $data[$field] = $_POST[$field];
+        }
+
+        $success = $this->mariageManager->modifierMariage($mariage_id, $data);
         return [
             'success' => $success,
             'message' => $success ? 'Mariage modifié avec succès' : 'Erreur lors de la modification'
@@ -402,13 +485,9 @@ class FamilyTreeAPI {
 
     private function deleteMariage() {
         $mariage_id = $_POST['mariage_id'] ?? null;
-        
-        if (!$mariage_id) {
-            throw new Exception('ID du mariage requis');
-        }
+        if (!$mariage_id) throw new Exception('ID du mariage requis');
 
         $success = $this->mariageManager->supprimerMariage($mariage_id);
-
         return [
             'success' => $success,
             'message' => $success ? 'Mariage supprimé avec succès' : 'Erreur lors de la suppression'
@@ -417,64 +496,35 @@ class FamilyTreeAPI {
 
     private function getMariagesPersonne() {
         $personne_id = $_GET['personne_id'] ?? null;
-        
-        if (!$personne_id) {
-            throw new Exception('ID de la personne requis');
-        }
+        if (!$personne_id) throw new Exception('ID de la personne requis');
 
-        $mariages = $this->mariageManager->getMariagesPersonne($personne_id);
-        
-        // Formater pour l'affichage
         $result = [];
-        foreach ($mariages as $mariage) {
+        foreach ($this->mariageManager->getMariagesPersonne($personne_id) as $mariage) {
             $result[] = $this->mariageManager->formatMariagePourAffichage($mariage, $personne_id);
         }
-
-        return [
-            'success' => true,
-            'mariages' => $result
-        ];
+        return ['success' => true, 'mariages' => $result];
     }
 
     private function getMariageDetails() {
         $mariage_id = $_GET['mariage_id'] ?? null;
-        
-        if (!$mariage_id) {
-            throw new Exception('ID du mariage requis');
-        }
+        if (!$mariage_id) throw new Exception('ID du mariage requis');
 
         $mariage = $this->mariageManager->getMariageComplet($mariage_id);
+        if (!$mariage) throw new Exception('Mariage non trouvé');
 
-        if (!$mariage) {
-            throw new Exception('Mariage non trouvé');
-        }
-
-        return [
-            'success' => true,
-            'mariage' => $mariage
-        ];
+        return ['success' => true, 'mariage' => $mariage];
     }
 
     private function updateMariageOrder() {
-        $mariage_id = $_POST['mariage_id'] ?? null;
-        $numero_ordre = $_POST['numero_ordre'] ?? null;
-        
-        if (!$mariage_id || !$numero_ordre) {
-            throw new Exception('ID du mariage et numéro d\'ordre requis');
-        }
+        $mariage_id   = $_POST['mariage_id']   ?? null;
+        $numero_ordre = $_POST['numero_ordre']  ?? null;
+        if (!$mariage_id || !$numero_ordre) throw new Exception('ID du mariage et numéro d\'ordre requis');
 
-        // Valider que numero_ordre est un nombre positif
         $numero_ordre = intval($numero_ordre);
-        if ($numero_ordre < 1) {
-            throw new Exception('Le numéro d\'ordre doit être supérieur ou égal à 1');
-        }
+        if ($numero_ordre < 1) throw new Exception('Le numéro d\'ordre doit être supérieur ou égal à 1');
 
-        // Mettre à jour le numéro d'ordre dans la table mariages
         $stmt = $this->pdo->prepare("UPDATE mariages SET numero_ordre = :numero_ordre WHERE id = :mariage_id");
-        $success = $stmt->execute([
-            'numero_ordre' => $numero_ordre,
-            'mariage_id' => $mariage_id
-        ]);
+        $success = $stmt->execute(['numero_ordre' => $numero_ordre, 'mariage_id' => $mariage_id]);
 
         return [
             'success' => $success,
@@ -483,144 +533,120 @@ class FamilyTreeAPI {
     }
 
     // ============================================
-    // MÉTHODES MODIFIÉES POUR SAUVEGARDER
+    // ÉCRITURE
     // ============================================
 
     private function saveMember() {
         $id = $_POST['id'] ?? null;
-        
-        // MODIFIÉ : Suppression des champs date_mariage et lieu_mariage
+
         $data = [
-            'prenom' => $_POST['prenom'],
-            'nom' => $_POST['nom'],
-            'surnom' => $_POST['surnom'] ?? null,
-            'sex' => $_POST['sex'],
-            'date_naissance' => $_POST['date_naissance'],
-            'lieu_naissance' => $_POST['lieu_naissance'] ?? null,
-            'doc_naissance' => $_POST['doc_naissance'] ?? null,
-            'date_deces' => $_POST['date_deces'] ?: null,
-            'lieu_deces' => $_POST['lieu_deces'] ?? null,
-            'doc_deces' => $_POST['doc_deces'] ?? null,
-            'occupation' => $_POST['occupation'] ?? null,
-            'notes' => $_POST['notes'] ?? null
+            'prenom'                    => $_POST['prenom'],
+            'nom'                       => $_POST['nom'],
+            'surnom'                    => $_POST['surnom'] ?? null,
+            'sex'                       => $_POST['sex'],
+            'date_naissance'            => $_POST['date_naissance'] ?: null,
+            'date_naissance_affichage'  => $_POST['date_naissance_affichage'] ?: null,
+            'lieu_naissance'            => $_POST['lieu_naissance'] ?? null,
+            'doc_naissance'             => $_POST['doc_naissance'] ?? null,
+            'date_deces'                => $_POST['date_deces'] ?: null,
+            'date_deces_affichage'      => $_POST['date_deces_affichage'] ?: null,
+            'lieu_deces'                => $_POST['lieu_deces'] ?? null,
+            'doc_deces'                 => $_POST['doc_deces'] ?? null,
+            'occupation'                => $_POST['occupation'] ?? null,
+            'notes'                     => $_POST['notes'] ?? null,
+            'force_public'              => isset($_POST['force_public']) ? 1 : 0,
         ];
 
+        $this->validateMemberData($data);
+
         if ($id) {
-            $sql = "UPDATE membres SET 
-                    prenom=:prenom, 
-                    nom=:nom, 
-                    surnom=:surnom,
-                    sex=:sex, 
-                    date_naissance=:date_naissance,
-                    lieu_naissance=:lieu_naissance,
-                    doc_naissance=:doc_naissance,
-                    date_deces=:date_deces,
-                    lieu_deces=:lieu_deces,
-                    doc_deces=:doc_deces,
-                    occupation=:occupation,
-                    notes=:notes
+            $sql = "UPDATE membres SET
+                    prenom=:prenom, nom=:nom, surnom=:surnom, sex=:sex,
+                    date_naissance=:date_naissance, date_naissance_affichage=:date_naissance_affichage,
+                    lieu_naissance=:lieu_naissance, doc_naissance=:doc_naissance,
+                    date_deces=:date_deces, date_deces_affichage=:date_deces_affichage,
+                    lieu_deces=:lieu_deces, doc_deces=:doc_deces,
+                    occupation=:occupation, notes=:notes, force_public=:force_public
                     WHERE id=:id";
             $data['id'] = $id;
         } else {
-            $sql = "INSERT INTO membres 
-                    (prenom, nom, surnom, sex, date_naissance, lieu_naissance, doc_naissance, date_deces, lieu_deces, doc_deces, occupation, notes) 
-                    VALUES 
-                    (:prenom, :nom, :surnom, :sex, :date_naissance, :lieu_naissance, :doc_naissance, :date_deces, :lieu_deces, :doc_deces, :occupation, :notes)";
+            $sql = "INSERT INTO membres
+                    (prenom, nom, surnom, sex, date_naissance, date_naissance_affichage, lieu_naissance, doc_naissance,
+                     date_deces, date_deces_affichage, lieu_deces, doc_deces, occupation, notes, force_public)
+                    VALUES
+                    (:prenom, :nom, :surnom, :sex, :date_naissance, :date_naissance_affichage, :lieu_naissance, :doc_naissance,
+                     :date_deces, :date_deces_affichage, :lieu_deces, :doc_deces, :occupation, :notes, :force_public)";
         }
 
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute($data);
-        
-        $membre_id = $id ?: $this->pdo->lastInsertId();
-        
-        return [
-            'success' => true, 
-            'id' => $membre_id
-        ];
+
+        return ['success' => true, 'id' => $id ?: $this->pdo->lastInsertId()];
     }
 
+    // Point 1 : validation déplacée avant beginTransaction pour éviter une transaction non annulée
     private function saveRelation() {
         $enfant_id = $_POST['enfant_id'];
         $parent_id = $_POST['parent_id'];
-        $type = $_POST['type'];
+        $type      = $_POST['type'];
         $mariage_id = $_POST['mariage_id'] ?? null;
+
+        if (!$enfant_id || !$parent_id) {
+            throw new Exception('IDs manquants pour la relation');
+        }
 
         try {
             $this->pdo->beginTransaction();
 
-            // Vérifier que les deux IDs existent
-            if (!$enfant_id || !$parent_id) {
-                throw new Exception('IDs manquants pour la relation');
-            }
-
-            // Pour les relations de type 'sibling', on stocke dans les deux sens
             if ($type === 'sibling') {
-                // Vérifier si la relation existe déjà (dans un sens ou l'autre)
                 $stmt = $this->pdo->prepare("
-                    SELECT COUNT(*) FROM relations 
-                    WHERE type = 'sibling' 
+                    SELECT COUNT(*) FROM relations
+                    WHERE type = 'sibling'
                     AND ((enfant_id = ? AND parent_id = ?) OR (enfant_id = ? AND parent_id = ?))
                 ");
                 $stmt->execute([$enfant_id, $parent_id, $parent_id, $enfant_id]);
-                
                 if ($stmt->fetchColumn() > 0) {
                     throw new Exception('Cette relation de fratrie existe déjà');
                 }
 
-                // Insérer la relation dans les deux sens
-                $stmt = $this->pdo->prepare("
-                    INSERT INTO relations (enfant_id, parent_id, type) 
-                    VALUES (?, ?, 'sibling')
-                ");
+                $stmt = $this->pdo->prepare("INSERT INTO relations (enfant_id, parent_id, type) VALUES (?, ?, 'sibling')");
                 $stmt->execute([$enfant_id, $parent_id]);
-                
                 $stmt->execute([$parent_id, $enfant_id]);
             } else {
-                // Pour les relations parent-enfant normales
                 $stmt = $this->pdo->prepare("
-                    INSERT INTO relations (enfant_id, parent_id, mariage_id, type) 
+                    INSERT INTO relations (enfant_id, parent_id, mariage_id, type)
                     VALUES (:enfant_id, :parent_id, :mariage_id, :type)
                 ");
-
                 $stmt->execute([
-                    'enfant_id' => $enfant_id,
-                    'parent_id' => $parent_id,
+                    'enfant_id'  => $enfant_id,
+                    'parent_id'  => $parent_id,
                     'mariage_id' => $mariage_id,
-                    'type' => $type
+                    'type'       => $type
                 ]);
             }
 
             $this->pdo->commit();
             return ['success' => true];
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->pdo->rollBack();
-            throw new Exception('Erreur lors de la sauvegarde de la relation: ' . $e->getMessage());
+            throw $e;
         }
     }
 
     private function deleteMember() {
         $id = $_POST['id'];
-        
+
         $this->pdo->beginTransaction();
         try {
             $stmt = $this->pdo->prepare("DELETE FROM membres WHERE id = ?");
             $stmt->execute([$id]);
 
-            // Supprimer les relations parent-enfant
-            $stmt = $this->pdo->prepare("
-                DELETE FROM relations 
-                WHERE enfant_id = ? OR parent_id = ?
-            ");
+            $stmt = $this->pdo->prepare("DELETE FROM relations WHERE enfant_id = ? OR parent_id = ?");
             $stmt->execute([$id, $id]);
 
-            // Supprimer les mariages (avec gestion des enfants)
-            $stmt = $this->pdo->prepare("
-                SELECT id FROM mariages WHERE epoux_id = ? OR epouse_id = ?
-            ");
+            $stmt = $this->pdo->prepare("SELECT id FROM mariages WHERE epoux_id = ? OR epouse_id = ?");
             $stmt->execute([$id, $id]);
-            $mariages = $stmt->fetchAll(PDO::FETCH_COLUMN);
-            
-            foreach ($mariages as $mariage_id) {
+            foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) as $mariage_id) {
                 $this->mariageManager->supprimerMariage($mariage_id);
             }
 
@@ -642,21 +668,16 @@ class FamilyTreeAPI {
 
         try {
             $this->pdo->beginTransaction();
-
-            // Supprimer la relation (fonctionne pour parent et sibling)
-            // Pour les siblings, on supprime dans les deux sens
             $stmt = $this->pdo->prepare("
-                DELETE FROM relations 
-                WHERE (enfant_id = ? AND parent_id = ?) 
-                   OR (enfant_id = ? AND parent_id = ?)
+                DELETE FROM relations
+                WHERE (enfant_id = ? AND parent_id = ?) OR (enfant_id = ? AND parent_id = ?)
             ");
             $stmt->execute([$enfant_id, $parent_id, $parent_id, $enfant_id]);
-
             $this->pdo->commit();
             return ['success' => true];
-        } catch (PDOException $e) {
+        } catch (Exception $e) {
             $this->pdo->rollBack();
-            throw new Exception('Erreur lors de la suppression de la relation: ' . $e->getMessage());
+            throw $e;
         }
     }
 }
@@ -672,101 +693,68 @@ class LieuxManager {
         $this->pdo = getConnection();
     }
 
-    // Récupérer tous les lieux uniques (naissance et décès)
+    // Point 5 : délègue à la fonction partagée
+    // Point 2 : $date_deces_affichage ajouté pour corriger le cas "décédé sans date ISO valide"
+    private function isConfidential($date_naissance, $date_deces, $force_public = 0, $date_deces_affichage = null): bool {
+        return isPersonConfidential($date_naissance, $date_deces, $force_public, $date_deces_affichage);
+    }
+
+    // Point 7 : sous-requête UNION ALL factorisée, partagée par getLieuxUniques et rechercherLieux
+    private function buildLieuxSubquery(bool $withTerme = false): string {
+        $fb = $withTerme ? " AND lieu_naissance LIKE :terme" : '';
+        $fd = $withTerme ? " AND lieu_deces LIKE :terme"    : '';
+        $fm = $withTerme ? " AND lieu_mariage LIKE :terme"  : '';
+        return "
+            SELECT lieu_naissance as lieu, 'naissance' as type, COUNT(*) as occurrences
+            FROM membres WHERE lieu_naissance IS NOT NULL AND lieu_naissance != ''{$fb} GROUP BY lieu_naissance
+            UNION ALL
+            SELECT lieu_deces as lieu, 'décès' as type, COUNT(*) as occurrences
+            FROM membres WHERE lieu_deces IS NOT NULL AND lieu_deces != ''{$fd} GROUP BY lieu_deces
+            UNION ALL
+            SELECT lieu_mariage as lieu, 'mariage' as type, COUNT(*) as occurrences
+            FROM mariages WHERE lieu_mariage IS NOT NULL AND lieu_mariage != ''{$fm} GROUP BY lieu_mariage
+        ";
+    }
+
     public function getTousLesLieux() {
-        $query = "
+        $stmt = $this->pdo->query("
             SELECT lieu, type, COUNT(*) as occurrences
             FROM (
-                SELECT lieu_naissance as lieu, 'naissance' as type
-                FROM membres
-                WHERE lieu_naissance IS NOT NULL AND lieu_naissance != ''
+                SELECT lieu_naissance as lieu, 'naissance' as type FROM membres WHERE lieu_naissance IS NOT NULL AND lieu_naissance != ''
                 UNION ALL
-                SELECT lieu_deces as lieu, 'décès' as type
-                FROM membres
-                WHERE lieu_deces IS NOT NULL AND lieu_deces != ''
+                SELECT lieu_deces as lieu, 'décès' as type FROM membres WHERE lieu_deces IS NOT NULL AND lieu_deces != ''
                 UNION ALL
-                SELECT lieu_mariage as lieu, 'mariage' as type
-                FROM mariages
-                WHERE lieu_mariage IS NOT NULL AND lieu_mariage != ''
+                SELECT lieu_mariage as lieu, 'mariage' as type FROM mariages WHERE lieu_mariage IS NOT NULL AND lieu_mariage != ''
             ) as tous_lieux
             GROUP BY lieu, type
             ORDER BY lieu, type
-        ";
-        
-        $stmt = $this->pdo->query($query);
+        ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Récupérer les lieux uniques sans distinction de type
+    // Point 7 : DISTINCT supprimé (redondant avec GROUP BY), sous-requête déléguée
     public function getLieuxUniques() {
-        $query = "
-            SELECT DISTINCT lieu, 
+        $stmt = $this->pdo->query("
+            SELECT lieu,
                    SUM(CASE WHEN type = 'naissance' THEN occurrences ELSE 0 END) as nb_naissances,
-                   SUM(CASE WHEN type = 'décès' THEN occurrences ELSE 0 END) as nb_deces,
-                   SUM(CASE WHEN type = 'mariage' THEN occurrences ELSE 0 END) as nb_mariages,
+                   SUM(CASE WHEN type = 'décès'     THEN occurrences ELSE 0 END) as nb_deces,
+                   SUM(CASE WHEN type = 'mariage'   THEN occurrences ELSE 0 END) as nb_mariages,
                    SUM(occurrences) as total
-            FROM (
-                SELECT lieu_naissance as lieu, 'naissance' as type, COUNT(*) as occurrences
-                FROM membres
-                WHERE lieu_naissance IS NOT NULL AND lieu_naissance != ''
-                GROUP BY lieu_naissance
-                UNION ALL
-                SELECT lieu_deces as lieu, 'décès' as type, COUNT(*) as occurrences
-                FROM membres
-                WHERE lieu_deces IS NOT NULL AND lieu_deces != ''
-                GROUP BY lieu_deces
-                UNION ALL
-                SELECT lieu_mariage as lieu, 'mariage' as type, COUNT(*) as occurrences
-                FROM mariages
-                WHERE lieu_mariage IS NOT NULL AND lieu_mariage != ''
-                GROUP BY lieu_mariage
-            ) as tous_lieux
+            FROM ({$this->buildLieuxSubquery()}) as tous_lieux
             GROUP BY lieu
             ORDER BY lieu
-        ";
-        
-        $stmt = $this->pdo->query($query);
+        ");
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Mettre à jour un lieu (remplace toutes les occurrences)
+    // Point 6 : boucle sur les 3 tables/colonnes au lieu de 3 blocs identiques
     public function mettreAJourLieu($ancienLieu, $nouveauLieu) {
         try {
             $this->pdo->beginTransaction();
-
-            // Mise à jour dans la table membres (naissances)
-            $stmt = $this->pdo->prepare("
-                UPDATE membres 
-                SET lieu_naissance = :nouveau_lieu 
-                WHERE lieu_naissance = :ancien_lieu
-            ");
-            $stmt->execute([
-                'nouveau_lieu' => $nouveauLieu,
-                'ancien_lieu' => $ancienLieu
-            ]);
-
-            // Mise à jour dans la table membres (décès)
-            $stmt = $this->pdo->prepare("
-                UPDATE membres 
-                SET lieu_deces = :nouveau_lieu 
-                WHERE lieu_deces = :ancien_lieu
-            ");
-            $stmt->execute([
-                'nouveau_lieu' => $nouveauLieu,
-                'ancien_lieu' => $ancienLieu
-            ]);
-
-            // Mise à jour dans la table mariages
-            $stmt = $this->pdo->prepare("
-                UPDATE mariages 
-                SET lieu_mariage = :nouveau_lieu 
-                WHERE lieu_mariage = :ancien_lieu
-            ");
-            $stmt->execute([
-                'nouveau_lieu' => $nouveauLieu,
-                'ancien_lieu' => $ancienLieu
-            ]);
-
+            foreach ([['membres', 'lieu_naissance'], ['membres', 'lieu_deces'], ['mariages', 'lieu_mariage']] as [$table, $col]) {
+                $stmt = $this->pdo->prepare("UPDATE $table SET $col = :nouveau_lieu WHERE $col = :ancien_lieu");
+                $stmt->execute(['nouveau_lieu' => $nouveauLieu, 'ancien_lieu' => $ancienLieu]);
+            }
             $this->pdo->commit();
             return ['success' => true, 'message' => 'Lieu mis à jour avec succès'];
         } catch (Exception $e) {
@@ -775,35 +763,14 @@ class LieuxManager {
         }
     }
 
-    // Supprimer un lieu (met à NULL toutes les occurrences)
+    // Point 6 : même factorisation
     public function supprimerLieu($lieu) {
         try {
             $this->pdo->beginTransaction();
-
-            // Suppression dans la table membres (naissances)
-            $stmt = $this->pdo->prepare("
-                UPDATE membres 
-                SET lieu_naissance = NULL 
-                WHERE lieu_naissance = :lieu
-            ");
-            $stmt->execute(['lieu' => $lieu]);
-
-            // Suppression dans la table membres (décès)
-            $stmt = $this->pdo->prepare("
-                UPDATE membres 
-                SET lieu_deces = NULL 
-                WHERE lieu_deces = :lieu
-            ");
-            $stmt->execute(['lieu' => $lieu]);
-
-            // Suppression dans la table mariages
-            $stmt = $this->pdo->prepare("
-                UPDATE mariages 
-                SET lieu_mariage = NULL 
-                WHERE lieu_mariage = :lieu
-            ");
-            $stmt->execute(['lieu' => $lieu]);
-
+            foreach ([['membres', 'lieu_naissance'], ['membres', 'lieu_deces'], ['mariages', 'lieu_mariage']] as [$table, $col]) {
+                $stmt = $this->pdo->prepare("UPDATE $table SET $col = NULL WHERE $col = :lieu");
+                $stmt->execute(['lieu' => $lieu]);
+            }
             $this->pdo->commit();
             return ['success' => true, 'message' => 'Lieu supprimé avec succès'];
         } catch (Exception $e) {
@@ -812,39 +779,47 @@ class LieuxManager {
         }
     }
 
-    // Obtenir les détails d'utilisation d'un lieu
+    // Point 2 : date_deces_affichage récupérée et transmise à isConfidential pour les 3 sections
     public function getDetailsLieu($lieu) {
-        $details = [
-            'naissances' => [],
-            'deces' => [],
-            'mariages' => []
-        ];
+        $details = ['naissances' => [], 'deces' => [], 'mariages' => []];
+        $admin = isAdmin();
 
-        // Naissances
         $stmt = $this->pdo->prepare("
-            SELECT id, prenom, nom, date_naissance
-            FROM membres
-            WHERE lieu_naissance = :lieu
-            ORDER BY date_naissance, nom, prenom
+            SELECT id, prenom, nom, date_naissance, date_naissance_affichage, date_deces, date_deces_affichage, force_public
+            FROM membres WHERE lieu_naissance = :lieu ORDER BY date_naissance, nom, prenom
         ");
         $stmt->execute(['lieu' => $lieu]);
-        $details['naissances'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
+            if (!$admin && $this->isConfidential($p['date_naissance'], $p['date_deces'], $p['force_public'], $p['date_deces_affichage'])) {
+                $p['prenom'] = '👤'; $p['nom'] = '🔒';
+                $p['date_naissance'] = null; $p['date_naissance_affichage'] = null;
+                $p['date_deces'] = null;     $p['date_deces_affichage'] = null;
+            }
+            $details['naissances'][] = $p;
+        }
 
-        // Décès
         $stmt = $this->pdo->prepare("
-            SELECT id, prenom, nom, date_deces
-            FROM membres
-            WHERE lieu_deces = :lieu
-            ORDER BY date_deces, nom, prenom
+            SELECT id, prenom, nom, date_naissance, date_naissance_affichage, date_deces, date_deces_affichage, force_public
+            FROM membres WHERE lieu_deces = :lieu ORDER BY date_deces, nom, prenom
         ");
         $stmt->execute(['lieu' => $lieu]);
-        $details['deces'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $p) {
+            if (!$admin && $this->isConfidential($p['date_naissance'], $p['date_deces'], $p['force_public'], $p['date_deces_affichage'])) {
+                $p['prenom'] = '👤'; $p['nom'] = '🔒';
+                $p['date_naissance'] = null; $p['date_naissance_affichage'] = null;
+                $p['date_deces'] = null;     $p['date_deces_affichage'] = null;
+            }
+            $details['deces'][] = $p;
+        }
 
-        // Mariages
         $stmt = $this->pdo->prepare("
-            SELECT m.id, m.date_mariage,
-                   e1.prenom as epoux_prenom, e1.nom as epoux_nom,
-                   e2.prenom as epouse_prenom, e2.nom as epouse_nom
+            SELECT m.id, m.date_mariage, m.date_mariage_affichage,
+                   e1.prenom as epoux_prenom,  e1.nom as epoux_nom,
+                   e1.date_naissance as epoux_dn,  e1.date_deces as epoux_dd,
+                   e1.date_deces_affichage as epoux_dda,  e1.force_public as epoux_fp,
+                   e2.prenom as epouse_prenom, e2.nom as epouse_nom,
+                   e2.date_naissance as epouse_dn, e2.date_deces as epouse_dd,
+                   e2.date_deces_affichage as epouse_dda, e2.force_public as epouse_fp
             FROM mariages m
             JOIN membres e1 ON m.epoux_id = e1.id
             JOIN membres e2 ON m.epouse_id = e2.id
@@ -852,50 +827,34 @@ class LieuxManager {
             ORDER BY m.date_mariage
         ");
         $stmt->execute(['lieu' => $lieu]);
-        $details['mariages'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $m) {
+            $epoux_conf  = !$admin && $this->isConfidential($m['epoux_dn'],  $m['epoux_dd'],  $m['epoux_fp'], $m['epoux_dda']);
+            $epouse_conf = !$admin && $this->isConfidential($m['epouse_dn'], $m['epouse_dd'], $m['epouse_fp'], $m['epouse_dda']);
+            if ($epoux_conf)  { $m['epoux_prenom']  = '👤'; $m['epoux_nom']  = '🔒'; $m['epoux_dn']  = null; $m['epoux_dd']  = null; }
+            if ($epouse_conf) { $m['epouse_prenom'] = '👤'; $m['epouse_nom'] = '🔒'; $m['epouse_dn'] = null; $m['epouse_dd'] = null; }
+            if ($epoux_conf || $epouse_conf) { $m['date_mariage'] = null; $m['date_mariage_affichage'] = null; }
+            $details['mariages'][] = $m;
+        }
 
         return $details;
     }
 
-    // Rechercher des lieux
+    // Point 7 : sous-requête déléguée
     public function rechercherLieux($terme) {
         $stmt = $this->pdo->prepare("
-            SELECT DISTINCT lieu,
+            SELECT lieu,
                    SUM(CASE WHEN type = 'naissance' THEN occurrences ELSE 0 END) as nb_naissances,
-                   SUM(CASE WHEN type = 'décès' THEN occurrences ELSE 0 END) as nb_deces,
-                   SUM(CASE WHEN type = 'mariage' THEN occurrences ELSE 0 END) as nb_mariages,
+                   SUM(CASE WHEN type = 'décès'     THEN occurrences ELSE 0 END) as nb_deces,
+                   SUM(CASE WHEN type = 'mariage'   THEN occurrences ELSE 0 END) as nb_mariages,
                    SUM(occurrences) as total
-            FROM (
-                SELECT lieu_naissance as lieu, 'naissance' as type, COUNT(*) as occurrences
-                FROM membres
-                WHERE lieu_naissance IS NOT NULL 
-                  AND lieu_naissance != ''
-                  AND lieu_naissance LIKE :terme
-                GROUP BY lieu_naissance
-                UNION ALL
-                SELECT lieu_deces as lieu, 'décès' as type, COUNT(*) as occurrences
-                FROM membres
-                WHERE lieu_deces IS NOT NULL 
-                  AND lieu_deces != ''
-                  AND lieu_deces LIKE :terme
-                GROUP BY lieu_deces
-                UNION ALL
-                SELECT lieu_mariage as lieu, 'mariage' as type, COUNT(*) as occurrences
-                FROM mariages
-                WHERE lieu_mariage IS NOT NULL 
-                  AND lieu_mariage != ''
-                  AND lieu_mariage LIKE :terme
-                GROUP BY lieu_mariage
-            ) as tous_lieux
+            FROM ({$this->buildLieuxSubquery(true)}) as tous_lieux
             GROUP BY lieu
             ORDER BY lieu
         ");
-        
         $stmt->execute(['terme' => '%' . $terme . '%']);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 
-// Initialize and run
 $api = new FamilyTreeAPI();
 $api->handleRequest();

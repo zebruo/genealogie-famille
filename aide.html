@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aide — Généalogie Durel Truffert Hélaine</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles/family-tree-styles.css" />
+  <link rel="stylesheet" href="styles/readonly.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* ── Mise en page ──────────────────────────────────────────────────── */
+    .aide-layout {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* ── Sommaire latéral ──────────────────────────────────────────────── */
+    .aide-toc {
+      position: sticky;
+      top: 55px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+    }
+
+    .aide-toc h3 {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.75rem;
+    }
+
+    .aide-toc a {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 6px;
+      border-radius: var(--radius-sm);
+      color: var(--text-color);
+      text-decoration: none;
+      font-size: 0.82rem;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .aide-toc a:hover,
+    .aide-toc a.active {
+      background: var(--table-hover-bg);
+      color: var(--accent-color);
+    }
+
+    .aide-toc a i {
+      color: var(--accent-color);
+      width: 14px;
+      text-align: center;
+      font-size: 0.75rem;
+      flex-shrink: 0;
+    }
+
+    /* ── Sections de contenu ───────────────────────────────────────────── */
+    .aide-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .aide-section {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 1.5rem;
+      box-shadow: var(--controls-shadow);
+      scroll-margin-top: 55px;
+    }
+
+    .aide-section-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      padding-bottom: 0.6rem;
+      border-bottom: 1px solid var(--card-border);
+    }
+
+    .aide-section-title i {
+      color: var(--accent-color);
+      font-size: 1rem;
+    }
+
+    /* ── Contenu texte ─────────────────────────────────────────────────── */
+    .aide-section p {
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: var(--text-color);
+      margin-bottom: 0.75rem;
+    }
+
+    .aide-section p:last-child { margin-bottom: 0; }
+
+    /* ── Grille de fonctionnalités ─────────────────────────────────────── */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 0.85rem;
+      margin-top: 0.25rem;
+    }
+
+    .feature-card {
+      background: var(--bg-color);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem 1rem;
+    }
+
+    .feature-card-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .feature-card-title i {
+      color: var(--accent-color);
+      width: 14px;
+      text-align: center;
+    }
+
+    .feature-card p {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.5;
+    }
+
+    /* ── Liste avec icônes ─────────────────────────────────────────────── */
+    .aide-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .aide-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.87rem;
+      color: var(--text-color);
+      line-height: 1.5;
+    }
+
+    .aide-list li i {
+      color: var(--accent-color);
+      width: 16px;
+      text-align: center;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ── Raccourcis / touches ──────────────────────────────────────────── */
+    .shortcut-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 0.6rem;
+    }
+
+    .shortcut-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-size: 0.82rem;
+      color: var(--text-color);
+    }
+
+    kbd {
+      background: var(--bg-color);
+      border: 1px solid var(--input-border);
+      border-radius: 4px;
+      padding: 2px 7px;
+      font-family: monospace;
+      font-size: 0.78rem;
+      color: var(--text-primary);
+      white-space: nowrap;
+    }
+
+    /* ── Badge info ────────────────────────────────────────────────────── */
+    .info-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: rgba(96,165,250,0.1);
+      border: 1px solid rgba(96,165,250,0.3);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem 1rem;
+      font-size: 0.85rem;
+      color: var(--text-color);
+      line-height: 1.5;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-banner i { color: #60a5fa; margin-top: 2px; flex-shrink: 0; }
+
+    @media (max-width: 700px) {
+      .aide-layout { grid-template-columns: 1fr; }
+      .aide-toc { position: static; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Menu chargé dynamiquement -->
+
+  <div class="container">
+    <div class="controls-header">
+      <div class="controls-title">
+        <i class="fas fa-question-circle"></i>
+        <span>Aide</span>
+      </div>
+    </div>
+
+    <div class="aide-layout">
+
+      <!-- ── Sommaire ──────────────────────────────────────────────────── -->
+      <aside class="aide-toc">
+        <h3><i class="fas fa-list"></i> Sommaire</h3>
+        <a href="#presentation"><i class="fas fa-home"></i> Présentation</a>
+        <a href="#navigation"><i class="fas fa-compass"></i> Navigation</a>
+        <a href="#arbre"><i class="fas fa-sitemap"></i> Arbre généalogique</a>
+        <a href="#panel"><i class="fas fa-user-circle"></i> Panel de détails</a>
+        <a href="#pages"><i class="fas fa-th-large"></i> Les pages</a>
+        <a href="#recherche"><i class="fas fa-search"></i> Recherche</a>
+        <a href="#astuces"><i class="fas fa-lightbulb"></i> Astuces</a>
+      </aside>
+
+      <!-- ── Contenu ───────────────────────────────────────────────────── -->
+      <div class="aide-content">
+
+        <!-- Présentation -->
+        <section class="aide-section" id="presentation">
+          <div class="aide-section-title">
+            <i class="fas fa-home"></i> Présentation
+          </div>
+          <p>
+            Ce site vous permet d'explorer l'arbre généalogique de la famille
+            <strong>Durel&nbsp;Truffert&nbsp;Hélaine</strong>. Il rassemble les membres de la famille,
+            leurs relations, les lieux qui leur sont associés, les documents d'archives
+            et les statistiques de la généalogie.
+          </p>
+          <p>
+            La navigation est accessible depuis le <strong>panneau latéral</strong>
+            (icônes à gauche de l'écran sur ordinateur) ou le <strong>menu burger</strong>
+            (en haut à gauche sur mobile).
+          </p>
+          <p>
+            Pour toute question ou remarque, contactez-moi à <a href="mailto:durel.eric@sfr.fr" style="color: var(--accent-color);">durel.eric@sfr.fr</a>.
+          </p>
+        </section>
+
+        <!-- Navigation générale -->
+        <section class="aide-section" id="navigation">
+          <div class="aide-section-title">
+            <i class="fas fa-compass"></i> Navigation générale
+          </div>
+          <div class="feature-grid">
+            <div class="feature-card">
+              <div class="feature-card-title"><i class="fas fa-sitemap fa-rotate-270"></i> Arbres</div>
+              <p>Visualisation de l'arbre généalogique ascendant à partir d'un individu racine.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card-title"><i class="fas fa-users"></i> Individus</div>
+              <p>Liste complète des membres de la famille avec leurs informations et relations.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card-title"><i class="fas fa-map-marker-alt"></i> Lieux</div>
+              <p>Tous les lieux de naissance, mariage et décès référencés dans la généalogie.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card-title"><i class="fas fa-file-alt"></i> Documents</div>
+              <p>Archives numérisées (actes d'état civil, registres paroissiaux, photos…).</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card-title"><i class="fas fa-chart-bar"></i> Statistiques</div>
+              <p>Chiffres clés, répartitions, durées de vie et événements marquants.</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card-title"><i class="fas fa-book-open"></i> Histoires</div>
+              <p>Récits, anecdotes et portraits sur les membres de la famille. <em style="color: var(--text-secondary);">(non implémenté)</em></p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-card-title"><i class="fas fa-calendar-alt"></i> Calendrier républicain</div>
+              <p>Convertisseur de dates entre le calendrier grégorien et le calendrier républicain français.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Arbre généalogique -->
+        <section class="aide-section" id="arbre">
+          <div class="aide-section-title">
+            <i class="fas fa-sitemap"></i> Arbre généalogique
+          </div>
+          <div class="info-banner">
+            <i class="fas fa-info-circle"></i>
+            L'arbre affiche les ancêtres de la personne racine, génération par génération, avec les mariages et optionnellement la fratrie.
+          </div>
+          <ul class="aide-list">
+            <li><i class="fas fa-mouse-pointer"></i> <span><strong>Cliquer sur une carte</strong> le panel à gauche affiche le nom de la personne. Cliquez pour plus de détails.</span></li>
+            <li><i class="fas fa-users"></i> <span>La case <strong>Fratrie</strong> (en haut) affiche ou masque les frères et sœurs de chaque génération.</span></li>
+            <li><i class="fas fa-calendar-alt"></i> <span>La case <strong>Mariages</strong> (en haut) affiche ou masque les dates de mariage sur les liens conjugaux.</span></li>
+            <li><i class="fas fa-flag"></i> <span>Le bouton <strong>Point de départ</strong> permet de choisir un nouvel individu racine.</span></li>
+            <li><i class="fa-solid fa-bullseye"></i> <span>Le bouton <strong>Individu racine</strong> permet de retourner à l'individu racine.</span></li>
+            <li><i class="fas fa-compress-arrows-alt"></i> <span>Le bouton <strong>Recentrer</strong> : repositionne l'arbre sur la personne racine.</span></li>
+          </ul>
+        </section>
+
+        <!-- Panel de détails -->
+        <section class="aide-section" id="panel">
+          <div class="aide-section-title">
+            <i class="fas fa-user-circle"></i> Panel de détails
+          </div>
+          <p>
+            Quand vous cliquez sur un nœud de l'arbre, un <strong>panel latéral</strong> affiche
+            à gauche le nom de la personne. Cliquez pour afficher toutes les informations de la personne.
+          </p>
+          <ul class="aide-list">
+            <li><i class="fas fa-id-card"></i> <span>Prénom, nom, surnom, genre, statut (vivant / décédé).</span></li>
+            <li><i class="fas fa-baby"></i> <span>Date et lieu de naissance — avec lien vers le document d'état civil si disponible.</span></li>
+            <li><i class="fas fa-cross"></i> <span>Date et lieu de décès le cas échéant.</span></li>
+            <li><i class="fas fa-briefcase"></i> <span>Profession et notes libres.</span></li>
+            <li><i class="fas fa-ring"></i> <span>Mariages : conjoint(e), date, lieu.</span></li>
+            <li><i class="fas fa-child"></i> <span>Enfants listés avec accès direct à leur fiche. <em style="color: var(--text-secondary);">(non implémenté)</em></span></li>
+            <li><i class="fas fa-file-alt"></i> <span>Onglet <strong>Documents</strong> : sources et archives liées à la personne.</span></li>
+          </ul>
+        </section>
+
+        <!-- Les pages -->
+        <section class="aide-section" id="pages">
+          <div class="aide-section-title">
+            <i class="fas fa-th-large"></i> Les pages en détail
+          </div>
+
+          <p><strong><i class="fas fa-users" style="color:var(--accent-color);margin-right:5px;"></i>Individus</strong></p>
+          <p>
+            Liste paginée et triée alphabétiquement de tous les membres. Une barre de recherche permet
+            de filtrer par nom, prénom ou lieu. L'index alphabétique en haut filtre par initiale.
+            Le bouton <i class="fas fa-eye" style="color:var(--accent-color);"></i> sur chaque ligne
+            ouvre une fiche récapitulative avec les relations familiales en lecture seule.
+          </p>
+
+          <p style="margin-top: 0.75rem;"><strong><i class="fas fa-map-marker-alt" style="color:var(--accent-color);margin-right:5px;"></i>Lieux</strong></p>
+          <p>
+            Tableau de tous les lieux avec le nombre de naissances, mariages et décès associés.
+            Cliquer sur le bouton <i class="fas fa-eye" style="color:var(--accent-color);"></i>
+            d'un lieu affiche la liste des personnes concernées.
+          </p>
+
+          <p style="margin-top: 0.75rem;"><strong><i class="fas fa-file-alt" style="color:var(--accent-color);margin-right:5px;"></i>Documents</strong></p>
+          <p>
+            Bibliothèque de tous les documents numérisés (PDF, images). Chaque document est lié
+            à un ou plusieurs membres de la famille. Cliquer sur l'icône source ouvre un aperçu
+            ou télécharge le document.
+          </p>
+
+          <p style="margin-top: 0.75rem;"><strong><i class="fas fa-chart-bar" style="color:var(--accent-color);margin-right:5px;"></i>Statistiques</strong></p>
+          <p>
+            Vue d'ensemble chiffrée : total des membres, naissances, mariages, décès, âges extrêmes,
+            répartition par siècle, derniers événements enregistrés, espérance de vie…
+          </p>
+
+          <p style="margin-top: 0.75rem;"><strong><i class="fas fa-book-open" style="color:var(--accent-color);margin-right:5px;"></i>Histoires &amp; Anecdotes</strong> <em style="color: var(--text-secondary);">(non implémenté)</em></p>
+          <p>
+            Récits familiaux classés par catégorie (Histoire, Anecdote, Portrait, Document).
+            Cliquer sur <em>Lire</em> ouvre le texte complet dans une fenêtre.
+          </p>
+
+          <p style="margin-top: 0.75rem;"><strong><i class="fas fa-calendar-alt" style="color:var(--accent-color);margin-right:5px;"></i>Calendrier républicain</strong></p>
+          <p>
+            Outil de conversion de dates utile pour interpréter les actes d'archives révolutionnaires
+            (an II, an III…) en dates du calendrier grégorien.
+          </p>
+        </section>
+
+        <!-- Recherche -->
+        <section class="aide-section" id="recherche">
+          <div class="aide-section-title">
+            <i class="fas fa-search"></i> Recherche
+          </div>
+          <p>
+            Une barre de recherche est disponible sur plusieurs pages. Elle filtre les résultats
+            en temps réel à partir de <strong>3 caractères</strong>.
+          </p>
+          <ul class="aide-list">
+            <li><i class="fas fa-font"></i> <span>Insensible à la casse et aux accents : <em>durel</em> trouve <em>Durel</em>.</span></li>
+            <li><i class="fas fa-search-plus"></i> <span>Des suggestions apparaissent sous le champ au fil de la frappe.</span></li>
+            <li><i class="fas fa-times-circle"></i> <span>La croix <kbd>×</kbd> à droite du champ efface la recherche et rétablit la liste complète.</span></li>
+          </ul>
+        </section>
+
+        <!-- Astuces -->
+        <section class="aide-section" id="astuces">
+          <div class="aide-section-title">
+            <i class="fas fa-lightbulb"></i> Astuces
+          </div>
+          <p style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 10px;">
+            <i class="fas fa-desktop"></i> Raccourcis PC bureau uniquement — non disponibles sur mobile.
+          </p>
+          <div class="shortcut-grid">
+            <div class="shortcut-item"><kbd>Molette ↑↓</kbd> <span>Zoomer dans l'arbre</span></div>
+            <div class="shortcut-item"><kbd>Clic droit</kbd> <span>Déplacer l'arbre</span></div>
+            <div class="shortcut-item"><kbd>Clic gauche</kbd> <span>Sélectionner un individu</span></div>
+            <div class="shortcut-item"><kbd>Échap</kbd> <span>Fermer une fenêtre</span></div>
+          </div>
+          <ul class="aide-list" style="margin-top: 1rem;">
+            <li><i class="fas fa-moon"></i> <span>Le <strong>mode nuit</strong> est activable depuis le menu ou l'icône lune/soleil dans le panneau latéral. La préférence est mémorisée.</span></li>
+            <li><i class="fas fa-expand-arrows-alt"></i> <span>Sur mobile, utilisez le menu <strong>burger</strong> (☰) pour accéder à toutes les sections.</span></li>
+            <li><i class="fas fa-arrow-right-to-bracket"></i> <span>Le bouton <strong>Se déconnecter</strong> met fin à votre session.</span></li>
+          </ul>
+        </section>
+
+      </div><!-- /aide-content -->
+    </div><!-- /aide-layout -->
+    <div style="height: 60vh;"></div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+  <script src="js/darkMode.js"></script>
+  <script src="js/burger.js"></script>
+  <script>
+    // Surligner la section active dans le sommaire au scroll
+    const sections = Array.from(document.querySelectorAll('.aide-section'));
+    const tocLinks = Array.from(document.querySelectorAll('.aide-toc a'));
+
+    function updateActiveToc() {
+      const bar = document.querySelector('.top-fixed-bar');
+      const threshold = (bar ? bar.getBoundingClientRect().bottom : 55) + 10;
+      const atBottom = window.pageYOffset + window.innerHeight >= document.documentElement.scrollHeight - 20;
+
+      let current = sections[0];
+      sections.forEach(s => {
+        if (s.getBoundingClientRect().top < threshold) current = s;
+      });
+
+      if (atBottom) {
+        let first = null;
+        let minTop = Infinity;
+        sections.forEach(s => {
+          const top = s.getBoundingClientRect().top;
+          if (top >= threshold && top < window.innerHeight && top < minTop) {
+            minTop = top;
+            first = s;
+          }
+        });
+        if (first) current = first;
+      }
+
+      tocLinks.forEach(a => a.classList.remove('active'));
+      const link = tocLinks.find(a => a.getAttribute('href') === '#' + current?.id);
+      if (link) link.classList.add('active');
+    }
+
+    // Boucle RAF pendant le scroll pour fiabilité sur mobile
+    let _rafId = null;
+    let _scrollTimer = null;
+
+    window.addEventListener('scroll', () => {
+      if (!_rafId) {
+        _rafId = requestAnimationFrame(function tick() {
+          updateActiveToc();
+          _rafId = requestAnimationFrame(tick);
+        });
+      }
+      clearTimeout(_scrollTimer);
+      _scrollTimer = setTimeout(() => {
+        cancelAnimationFrame(_rafId);
+        _rafId = null;
+        updateActiveToc();
+      }, 150);
+    }, { passive: true });
+
+    updateActiveToc();
+  </script>
+</body>
+
+</html>

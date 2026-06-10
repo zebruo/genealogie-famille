@@ -23,7 +23,7 @@
     <li>
       <a href="add-person.html" class="burger-nav-item" id="burgerTabUsers">
         <i class="fas fa-users"></i>
-        <span>Gestion des individus</span>
+        <span>Liste des individus</span>
       </a>
     </li>
     <li>
@@ -39,18 +39,30 @@
       </a>
     </li>
     <li>
+      <a href="liens-documents.html" class="burger-nav-item" id="burgerTabLiens">
+        <i class="fas fa-link"></i>
+        <span>Permaliens</span>
+      </a>
+    </li>
+    <li>
       <a href="statistics.html" class="burger-nav-item" id="burgerTabStats">
         <i class="fas fa-chart-bar"></i>
         <span>Statistiques</span>
       </a>
     </li>
-    <li>
-      <a href="#" class="burger-nav-item" id="burgerTabStories">
+    <li class="admin-only">
+      <a href="histoires.html" class="burger-nav-item" id="burgerTabStories">
         <i class="fas fa-book-open"></i>
         <span>Histoires</span>
       </a>
     </li>
     <li>
+      <a href="aide.html" class="burger-nav-item" id="burgerTabAide">
+        <i class="fas fa-question-circle"></i>
+        <span>Aide</span>
+      </a>
+    </li>
+    <li class="admin-only">
       <a href="#" class="burger-nav-item" id="burgerTabGedcom">
         <i class="fas fa-file-import"></i>
         <span>Importer/Exporter GEDCOM</span>
@@ -62,12 +74,30 @@
         <span>Calendrier Républicain</span>
       </a>
     </li>
-    <li class="burger-nav-divider"></li>
+    <li class="admin-only">
+      <a href="gestion_mariages_multiples.html" class="burger-nav-item" id="burgerTabMariages">
+        <i class="fas fa-ring"></i>
+        <span>Mariages multiples</span>
+      </a>
+    </li>
+    <li class="admin-only">
+      <a href="backup-database.html" class="burger-nav-item" id="burgerTabBackup">
+        <i class="fas fa-database"></i>
+        <span>Sauvegarde base de données</span>
+      </a>
+    </li>
     <li>
       <a href="#" class="burger-nav-item" id="burgerDarkMode">
         <i class="fas fa-sun"></i><i class="fas fa-moon"></i>
         <span>Mode jour/nuit</span>
       </a>
+    </li>
+    <li class="burger-nav-divider"></li>
+    <li>
+      <button class="burger-nav-item logout-btn" onclick="AuthManager.logout()">
+        <i class="fas fa-right-from-bracket"></i>
+        <span>Se déconnecter</span>
+      </button>
     </li>
   </ul>
 </nav>
@@ -83,7 +113,7 @@
       </a>
       <a href="add-person.html" class="root-tab-icon" id="rootTabUsers">
         <i class="fas fa-users"></i>
-        <span class="tooltip">Gestion des individus</span>
+        <span class="tooltip">Liste des individus</span>
       </a>
       <a href="gestion-des-lieux.html" class="root-tab-icon" id="rootTabMap">
         <i class="fas fa-map-marker-alt"></i>
@@ -93,15 +123,23 @@
         <i class="fas fa-file-alt"></i>
         <span class="tooltip">Documents</span>
       </a>
+      <a href="liens-documents.html" class="root-tab-icon" id="rootTabLiens">
+        <i class="fas fa-link"></i>
+        <span class="tooltip">Permaliens</span>
+      </a>
       <a href="statistics.html" class="root-tab-icon" id="rootTabStats">
         <i class="fas fa-chart-bar"></i>
         <span class="tooltip">Statistiques</span>
       </a>
-      <a href="#" class="root-tab-icon" id="rootTabStories">
+      <a href="histoires.html" class="root-tab-icon admin-only" id="rootTabStories">
         <i class="fas fa-book-open"></i>
         <span class="tooltip">Histoires</span>
       </a>
-      <a href="#" class="root-tab-icon" id="rootTabGedcom">
+      <a href="aide.html" class="root-tab-icon" id="rootTabAide">
+        <i class="fas fa-question-circle"></i>
+        <span class="tooltip">Aide</span>
+      </a>
+      <a href="#" class="root-tab-icon admin-only" id="rootTabGedcom">
         <i class="fas fa-file-import"></i>
         <span class="tooltip">Importer/Exporter GEDCOM</span>
       </a>
@@ -109,9 +147,21 @@
         <i class="fas fa-calendar-alt"></i>
         <span class="tooltip">Calendrier Républicain</span>
       </a>
+      <a href="gestion_mariages_multiples.html" class="root-tab-icon admin-only" id="rootTabMariages">
+        <i class="fas fa-ring"></i>
+        <span class="tooltip">Mariages multiples</span>
+      </a>
+      <a href="backup-database.html" class="root-tab-icon admin-only" id="rootTabBackup">
+        <i class="fas fa-database"></i>
+        <span class="tooltip">Sauvegarde base de données</span>
+      </a>
       <a href="#" class="root-tab-icon" id="dark-mode-toggle">
         <i class="fas fa-sun"></i><i class="fas fa-moon"></i>
         <span class="tooltip">Mode jour/nuit</span>
+      </a>
+      <a href="#" class="root-tab-icon" onclick="AuthManager.logout(); return false;">
+        <i class="fas fa-right-from-bracket"></i>
+        <span class="tooltip">Se déconnecter</span>
       </a>
     </div>
   </div>

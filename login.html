@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connexion — Généalogie Durel</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0f172a;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: #e2e8f0;
+    }
+
+    .login-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      padding: 1.2rem 2rem;
+      width: 90%;
+      max-width: 380px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .login-header i {
+      font-size: 2.5rem;
+      color: #60a5fa;
+      margin-bottom: 0.75rem;
+      display: block;
+    }
+
+    .login-header h1 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #f1f5f9;
+      margin-bottom: 0.25rem;
+    }
+
+    .login-header p {
+      font-size: 0.76rem;
+      color: #94a3b8;
+    }
+
+    .form-group {
+      margin-bottom: 1.25rem;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+
+    .input-wrapper {
+      display: flex;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+
+    .input-wrapper:focus-within {
+      border-color: #60a5fa;
+    }
+
+    .input-wrapper > i {
+      padding-left: 0.875rem;
+      color: #64748b;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+
+    input[type="password"],
+    input[type="text"] {
+      flex: 1;
+      min-width: 0;
+      padding: 0.7rem 0.5rem;
+      background: transparent;
+      border: none;
+      color: #f1f5f9;
+      font-size: 1rem;
+      outline: none;
+    }
+
+    .toggle-password {
+      padding: 0.5rem 0.75rem;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #64748b;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+      transition: color 0.2s;
+    }
+
+    .toggle-password:hover { color: #94a3b8; }
+
+    .btn-login {
+      width: 100%;
+      padding: 0.75rem;
+      background: #2563eb;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .btn-login:hover  { background: #1d4ed8; }
+    .btn-login:active { background: #1e40af; }
+    .btn-login:disabled { background: #334155; cursor: not-allowed; }
+
+    .error-msg {
+      display: none;
+      background: #450a0a;
+      border: 1px solid #991b1b;
+      color: #fca5a5;
+      border-radius: 8px;
+      padding: 0.65rem 0.875rem;
+      font-size: 0.85rem;
+      margin-top: 1rem;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .error-msg.show { display: flex; }
+
+    .spinner {
+      display: none;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    .btn-login.loading .spinner { display: block; }
+    .btn-login.loading .btn-text { display: none; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-header">
+      <i class="fas fa-sitemap fa-rotate-270"></i>
+      <h1>Généalogie DUREL HÉLAINE</h1>
+      <p>Entrez votre mot de passe pour accéder au site</p>
+    </div>
+
+    <form id="loginForm" novalidate>
+      <div class="form-group">
+        <label for="password">Mot de passe</label>
+        <div class="input-wrapper">
+          <i class="fas fa-lock"></i>
+          <input type="password" id="password" name="password"
+                 placeholder="•••••••••••" autocomplete="current-password" autofocus />
+          <button type="button" class="toggle-password" aria-label="Afficher/masquer le mot de passe">
+            <i class="fas fa-eye" id="toggleIcon"></i>
+          </button>
+        </div>
+      </div>
+
+      <button type="submit" class="btn-login" id="submitBtn">
+        <div class="spinner"></div>
+        <span class="btn-text"><i class="fas fa-arrow-right-to-bracket"></i> Se connecter</span>
+      </button>
+
+      <div class="error-msg" id="errorMsg">
+        <i class="fas fa-circle-exclamation"></i>
+        <span id="errorText">Mot de passe incorrect.</span>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Afficher/masquer le mot de passe
+    document.querySelector('.toggle-password').addEventListener('click', function() {
+      const input = document.getElementById('password');
+      const icon  = document.getElementById('toggleIcon');
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.className = 'fas fa-eye-slash';
+      } else {
+        input.type = 'password';
+        icon.className = 'fas fa-eye';
+      }
+    });
+
+    // Soumission du formulaire
+    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const password  = document.getElementById('password').value;
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMsg  = document.getElementById('errorMsg');
+      const errorText = document.getElementById('errorText');
+
+      if (!password) return;
+
+      submitBtn.classList.add('loading');
+      submitBtn.disabled = true;
+      errorMsg.classList.remove('show');
+
+      try {
+        const formData = new FormData();
+        formData.append('password', password);
+
+        const response = await fetch('admin/login.php', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          // Redirection selon le rôle
+          window.location.href = 'index.html';
+        } else {
+          errorText.textContent = data.error || 'Mot de passe incorrect.';
+          errorMsg.classList.add('show');
+          document.getElementById('password').value = '';
+          document.getElementById('password').focus();
+        }
+      } catch (err) {
+        errorText.textContent = 'Erreur de connexion. Réessayez.';
+        errorMsg.classList.add('show');
+      } finally {
+        submitBtn.classList.remove('loading');
+        submitBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

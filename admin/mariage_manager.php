@@ -20,8 +20,10 @@ class MariageManager {
                     m.epoux_id,
                     m.epouse_id,
                     m.date_mariage,
+                    m.date_mariage_affichage,
                     m.lieu_mariage,
                     m.date_fin,
+                    m.date_fin_affichage,
                     m.type_fin,
                     m.numero_ordre,
                     m.notes,
@@ -47,22 +49,24 @@ class MariageManager {
     /**
  * Ajouter un nouveau mariage
  */
-public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lieu_mariage = null, $date_fin = null, $type_fin = null, $notes = null) {
+public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lieu_mariage = null, $date_fin = null, $type_fin = null, $notes = null, $date_mariage_affichage = null, $date_fin_affichage = null) {
     // Calculer le numéro d'ordre pour chaque conjoint
     $numero_ordre_epoux = $this->getProchainNumeroOrdre($epoux_id);
     $numero_ordre_epouse = $this->getProchainNumeroOrdre($epouse_id);
-    
-    $sql = "INSERT INTO mariages (epoux_id, epouse_id, date_mariage, lieu_mariage, date_fin, type_fin, notes, numero_ordre) 
-            VALUES (:epoux_id, :epouse_id, :date_mariage, :lieu_mariage, :date_fin, :type_fin, :notes, :numero_ordre)";
-    
+
+    $sql = "INSERT INTO mariages (epoux_id, epouse_id, date_mariage, date_mariage_affichage, lieu_mariage, date_fin, date_fin_affichage, type_fin, notes, numero_ordre)
+            VALUES (:epoux_id, :epouse_id, :date_mariage, :date_mariage_affichage, :lieu_mariage, :date_fin, :date_fin_affichage, :type_fin, :notes, :numero_ordre)";
+
     $stmt = $this->pdo->prepare($sql);
     $numero_ordre = max($numero_ordre_epoux, $numero_ordre_epouse);
-    
+
     $stmt->bindValue(':epoux_id', $epoux_id, PDO::PARAM_INT);
     $stmt->bindValue(':epouse_id', $epouse_id, PDO::PARAM_INT);
     $stmt->bindValue(':date_mariage', $date_mariage, PDO::PARAM_STR);
+    $stmt->bindValue(':date_mariage_affichage', $date_mariage_affichage, PDO::PARAM_STR);
     $stmt->bindValue(':lieu_mariage', $lieu_mariage, PDO::PARAM_STR);
     $stmt->bindValue(':date_fin', $date_fin, PDO::PARAM_STR);
+    $stmt->bindValue(':date_fin_affichage', $date_fin_affichage, PDO::PARAM_STR);
     $stmt->bindValue(':type_fin', $type_fin, PDO::PARAM_STR);
     $stmt->bindValue(':notes', $notes, PDO::PARAM_STR);
     $stmt->bindValue(':numero_ordre', $numero_ordre, PDO::PARAM_INT);
@@ -97,7 +101,7 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
         $fields = [];
         $params = [];
         
-        $allowed_fields = ['date_mariage', 'lieu_mariage', 'date_fin', 'type_fin', 'notes'];
+        $allowed_fields = ['date_mariage', 'date_mariage_affichage', 'lieu_mariage', 'date_fin', 'date_fin_affichage', 'type_fin', 'notes'];
         
         foreach ($allowed_fields as $field) {
             if (isset($data[$field])) {

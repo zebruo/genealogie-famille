@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Histoires & Anecdotes — Généalogie Durel</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles/family-tree-styles.css" />
+  <link rel="stylesheet" href="styles/readonly.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <style>
+    /* ── Grille de cartes ─────────────────────────────────────────────── */
+    .stories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 1.25rem;
+      margin-top: 1.5rem;
+    }
+
+    .story-card {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--controls-shadow);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+
+    .story-card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    /* ── En-tête de carte ─────────────────────────────────────────────── */
+    .story-card-header {
+      padding: 1rem 1.25rem 0.75rem;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+
+    .story-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      padding: 3px 10px;
+      border-radius: 99px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .badge-histoire   { background: rgba(96,165,250,0.15); color: #60a5fa; }
+    .badge-anecdote   { background: rgba(163,230,53,0.15);  color: #a3e635; }
+    .badge-portrait   { background: rgba(251,191,36,0.15);  color: #fbbf24; }
+    .badge-document   { background: rgba(167,139,250,0.15); color: #a78bfa; }
+
+    .story-card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      line-height: 1.3;
+      flex: 1;
+    }
+
+    /* ── Méta (date + personnes) ──────────────────────────────────────── */
+    .story-card-meta {
+      padding: 0 1.25rem 0.75rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .story-card-meta span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .story-card-meta i {
+      color: var(--accent-color);
+      font-size: 0.7rem;
+    }
+
+    /* ── Corps (extrait) ──────────────────────────────────────────────── */
+    .story-card-body {
+      padding: 0 1.25rem 1rem;
+      font-size: 0.85rem;
+      color: var(--text-color);
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .story-excerpt {
+      display: -webkit-box;
+      -webkit-line-clamp: 4;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* ── Pied de carte ────────────────────────────────────────────────── */
+    .story-card-footer {
+      padding: 0.75rem 1.25rem;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+    }
+
+    .btn-read-more {
+      background: none;
+      border: 1px solid var(--accent-color);
+      color: var(--accent-color);
+      padding: 5px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .btn-read-more:hover {
+      background: var(--accent-color);
+      color: #fff;
+    }
+
+    .story-card-actions {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    /* ── Bouton Ajouter ───────────────────────────────────────────────── */
+    .btn-add-story {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: var(--button-bg);
+      color: var(--button-text);
+      border: none;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .btn-add-story:hover { background: var(--button-hover); }
+
+    /* ── Modal de lecture ─────────────────────────────────────────────── */
+    .story-modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+
+    .story-modal-overlay.open { display: flex; }
+
+    .story-modal {
+      background: var(--bg-color);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .story-modal-header {
+      padding: 1.25rem 1.5rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .story-modal-header-text { flex: 1; }
+
+    .story-modal-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 0.4rem;
+    }
+
+    .story-modal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .story-modal-meta span {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .story-modal-meta i { color: var(--accent-color); font-size: 0.7rem; }
+
+    .story-modal-body {
+      padding: 1.25rem 1.5rem;
+      overflow-y: auto;
+      flex: 1;
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: var(--text-color);
+    }
+
+    .story-modal-body p { margin-bottom: 0.9rem; }
+    .story-modal-body p:last-child { margin-bottom: 0; }
+
+    .story-modal-footer {
+      padding: 0.75rem 1.5rem;
+      border-top: 1px solid var(--card-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    /* ── État vide ────────────────────────────────────────────────────── */
+    .empty-stories {
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-secondary);
+    }
+
+    .empty-stories i {
+      font-size: 3rem;
+      color: var(--accent-color);
+      opacity: 0.4;
+      margin-bottom: 1rem;
+      display: block;
+    }
+
+    @media (max-width: 600px) {
+      .stories-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Menu chargé dynamiquement -->
+
+  <div class="container">
+    <div class="controls-header">
+      <div class="controls-title">
+        <i class="fas fa-book-open"></i>
+        <span>Histoires &amp; Anecdotes</span>
+      </div>
+      <div class="controls-actions">
+        <button class="btn-add-story admin-only" onclick="openAddModal()">
+          <i class="fas fa-plus"></i> Ajouter
+        </button>
+      </div>
+    </div>
+
+    <!-- ── Cartes d'histoires ───────────────────────────────────────── -->
+    <div class="stories-grid" id="storiesGrid">
+
+      <!-- CARTE 1 -->
+      <div class="story-card">
+        <div class="story-card-header">
+          <span class="story-badge badge-histoire">
+            <i class="fas fa-scroll"></i> Histoire
+          </span>
+          <div class="story-card-title">Les origines bretonnes des Durel</div>
+        </div>
+        <div class="story-card-meta">
+          <span><i class="fas fa-calendar-alt"></i> XIXe siècle</span>
+          <span><i class="fas fa-users"></i> Famille Durel</span>
+        </div>
+        <div class="story-card-body">
+          <div class="story-excerpt">
+            La famille Durel est originaire du Finistère, établie depuis plusieurs générations
+            dans la région de Landerneau. Les premiers ancêtres recensés étaient cultivateurs
+            et marins, tirant leur subsistance de la mer et de la terre bretonne.
+          </div>
+        </div>
+        <div class="story-card-footer">
+          <button class="btn-read-more" onclick="openStory(0)">
+            <i class="fas fa-book-open"></i> Lire
+          </button>
+          <div class="story-card-actions admin-only">
+            <button class="btn-edit" title="Modifier"><i class="fas fa-pen"></i></button>
+            <button class="btn-delete" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARTE 2 -->
+      <div class="story-card">
+        <div class="story-card-header">
+          <span class="story-badge badge-anecdote">
+            <i class="fas fa-star"></i> Anecdote
+          </span>
+          <div class="story-card-title">Le mariage de Joseph et Marie-Anne</div>
+        </div>
+        <div class="story-card-meta">
+          <span><i class="fas fa-calendar-alt"></i> 12 juin 1887</span>
+          <span><i class="fas fa-user"></i> Joseph Durel · Marie-Anne Truffert</span>
+        </div>
+        <div class="story-card-body">
+          <div class="story-excerpt">
+            Le mariage fut célébré par un temps exceptionnel pour la saison. Selon la tradition
+            familiale, la noce dura trois jours et réunit plus de cent convives venus des
+            communes voisines. On raconte que le marié arriva à cheval, coiffé d'un chapeau haut-de-forme
+            hérité de son propre père.
+          </div>
+        </div>
+        <div class="story-card-footer">
+          <button class="btn-read-more" onclick="openStory(1)">
+            <i class="fas fa-book-open"></i> Lire
+          </button>
+          <div class="story-card-actions admin-only">
+            <button class="btn-edit" title="Modifier"><i class="fas fa-pen"></i></button>
+            <button class="btn-delete" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARTE 3 -->
+      <div class="story-card">
+        <div class="story-card-header">
+          <span class="story-badge badge-portrait">
+            <i class="fas fa-user-circle"></i> Portrait
+          </span>
+          <div class="story-card-title">Portrait de l'arrière-grand-père Pierre</div>
+        </div>
+        <div class="story-card-meta">
+          <span><i class="fas fa-calendar-alt"></i> 1862 – 1941</span>
+          <span><i class="fas fa-user"></i> Pierre Durel</span>
+        </div>
+        <div class="story-card-body">
+          <div class="story-excerpt">
+            Pierre Durel était forgeron de son état, homme de grande stature réputé pour sa
+            droiture et son sens de la communauté. Il participa à la construction de l'église
+            du village et fut conseiller municipal pendant vingt ans. Ses descendants se
+            souviennent de lui comme d'un homme juste et généreux.
+          </div>
+        </div>
+        <div class="story-card-footer">
+          <button class="btn-read-more" onclick="openStory(2)">
+            <i class="fas fa-book-open"></i> Lire
+          </button>
+          <div class="story-card-actions admin-only">
+            <button class="btn-edit" title="Modifier"><i class="fas fa-pen"></i></button>
+            <button class="btn-delete" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CARTE 4 -->
+      <div class="story-card">
+        <div class="story-card-header">
+          <span class="story-badge badge-document">
+            <i class="fas fa-file-alt"></i> Document
+          </span>
+          <div class="story-card-title">La lettre retrouvée de 1914</div>
+        </div>
+        <div class="story-card-meta">
+          <span><i class="fas fa-calendar-alt"></i> Août 1914</span>
+          <span><i class="fas fa-user"></i> Henri Durel</span>
+        </div>
+        <div class="story-card-body">
+          <div class="story-excerpt">
+            Parmi les archives familiales a été retrouvée une lettre écrite par Henri Durel
+            à sa femme Marguerite, depuis le front. Elle témoigne de la dureté des premiers
+            mois de guerre et de sa foi dans un retour rapide. Henri fut rapatrié blessé
+            en 1916 et survécut au conflit.
+          </div>
+        </div>
+        <div class="story-card-footer">
+          <button class="btn-read-more" onclick="openStory(3)">
+            <i class="fas fa-book-open"></i> Lire
+          </button>
+          <div class="story-card-actions admin-only">
+            <button class="btn-edit" title="Modifier"><i class="fas fa-pen"></i></button>
+            <button class="btn-delete" title="Supprimer"><i class="fas fa-trash"></i></button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /stories-grid -->
+  </div>
+
+  <!-- ── Modal de lecture ──────────────────────────────────────────────── -->
+  <div class="story-modal-overlay" id="storyModal">
+    <div class="story-modal">
+      <div class="story-modal-header">
+        <div class="story-modal-header-text">
+          <div class="story-modal-title" id="modalTitle"></div>
+          <div class="story-modal-meta" id="modalMeta"></div>
+        </div>
+        <button class="btn-close-modal" onclick="closeStoryModal()" aria-label="Fermer">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="story-modal-body" id="modalBody"></div>
+      <div class="story-modal-footer">
+        <button class="btn-close-modal" onclick="closeStoryModal()">
+          <i class="fas fa-times"></i> Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/auth.js"></script>
+  <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
+  <script src="js/darkMode.js"></script>
+  <script src="js/burger.js"></script>
+
+  <script>
+    /* ── Données des histoires ──────────────────────────────────────── */
+    const STORIES = [
+      {
+        titre: "Les origines bretonnes des Durel",
+        badge: '<span class="story-badge badge-histoire"><i class="fas fa-scroll"></i> Histoire</span>',
+        meta: [
+          { icon: "fa-calendar-alt", text: "XIXe siècle" },
+          { icon: "fa-users",        text: "Famille Durel" }
+        ],
+        contenu: `
+          <p>La famille Durel est originaire du Finistère, établie depuis plusieurs générations
+          dans la région de Landerneau. Les premiers ancêtres recensés étaient cultivateurs
+          et marins, tirant leur subsistance de la mer et de la terre bretonne.</p>
+          <p>Les registres paroissiaux attestent de la présence du patronyme Durel dès 1780
+          dans la commune de Saint-Thonan. La famille s'y est progressivement agrandie,
+          les enfants épousant souvent des familles des villages voisins.</p>
+          <p>Au tournant du XXe siècle, plusieurs branches ont migré vers les villes côtières,
+          notamment Brest et Landerneau, attirées par le développement industriel et naval
+          de la région. C'est lors de cette période qu'apparaît le lien avec la famille Truffert,
+          originaire de Plougastel-Daoulas.</p>
+        `
+      },
+      {
+        titre: "Le mariage de Joseph et Marie-Anne",
+        badge: '<span class="story-badge badge-anecdote"><i class="fas fa-star"></i> Anecdote</span>',
+        meta: [
+          { icon: "fa-calendar-alt", text: "12 juin 1887" },
+          { icon: "fa-user",         text: "Joseph Durel · Marie-Anne Truffert" }
+        ],
+        contenu: `
+          <p>Le mariage fut célébré par un temps exceptionnel pour la saison. Selon la tradition
+          familiale, la noce dura trois jours et réunit plus de cent convives venus des
+          communes voisines.</p>
+          <p>On raconte que le marié arriva à cheval, coiffé d'un chapeau haut-de-forme
+          hérité de son propre père. La mariée portait une robe confectionnée par sa mère
+          pendant plusieurs mois, en dentelle de Pont-l'Abbé.</p>
+          <p>Le banquet fut animé par un accordéoniste de Landerneau dont le répertoire
+          mêlait airs bretons et chansons parisiennes à la mode. La tradition voulait que
+          les invités déposent une pièce d'or dans le sabot de la mariée — en 1887, la
+          collecte aurait atteint une somme considérable pour l'époque.</p>
+          <p>Joseph et Marie-Anne eurent sept enfants entre 1888 et 1903. Leur descendance
+          constitue le cœur de l'arbre généalogique de la famille Durel-Truffert.</p>
+        `
+      },
+      {
+        titre: "Portrait de l'arrière-grand-père Pierre",
+        badge: '<span class="story-badge badge-portrait"><i class="fas fa-user-circle"></i> Portrait</span>',
+        meta: [
+          { icon: "fa-calendar-alt", text: "1862 – 1941" },
+          { icon: "fa-user",         text: "Pierre Durel" }
+        ],
+        contenu: `
+          <p>Pierre Durel était forgeron de son état, homme de grande stature réputé pour
+          sa droiture et son sens de la communauté. Né le 3 mars 1862 à Saint-Thonan,
+          il apprit le métier auprès de son père dès l'âge de douze ans.</p>
+          <p>Il participa à la construction de l'église du village et fut conseiller municipal
+          pendant vingt ans, de 1895 à 1914. Son registre de forge, conservé dans la famille,
+          témoigne d'une clientèle étendue à une douzaine de communes environnantes.</p>
+          <p>Ses descendants se souviennent de lui comme d'un homme juste et généreux,
+          n'hésitant pas à accorder crédit aux agriculteurs dans la difficulté. Il refusa
+          toujours la politique nationale, préférant se consacrer aux affaires locales.</p>
+          <p>Pierre Durel s'éteignit le 14 janvier 1941, à l'âge de 78 ans, entouré de
+          ses enfants et petits-enfants. Sa forge fut reprise par son fils aîné jusqu'en 1958.</p>
+        `
+      },
+      {
+        titre: "La lettre retrouvée de 1914",
+        badge: '<span class="story-badge badge-document"><i class="fas fa-file-alt"></i> Document</span>',
+        meta: [
+          { icon: "fa-calendar-alt", text: "Août 1914" },
+          { icon: "fa-user",         text: "Henri Durel" }
+        ],
+        contenu: `
+          <p>Parmi les archives familiales a été retrouvée une lettre écrite par Henri Durel
+          à sa femme Marguerite, depuis le front, au mois d'août 1914. Elle témoigne de la
+          dureté des premiers mois de guerre et de sa foi dans un retour rapide.</p>
+          <p><em>« Ma chère Marguerite, je t'écris depuis un village dont je ne peux te
+          donner le nom. Nous avons marché trois jours sans véritable repos. Les camarades
+          tiennent bon, mais l'inquiétude grandit. Embrasse les enfants pour moi et dis
+          à ma mère de ne pas se tourmenter. Je rentrerai avant les vendanges. »</em></p>
+          <p>Henri ne rentra pas avant les vendanges. Il fut blessé à l'épaule droite lors
+          de la bataille de la Marne en septembre 1914, puis rapatrié en soin à Brest en
+          mars 1916. Il survécut au conflit et ne parla jamais de la guerre à ses enfants.</p>
+          <p>La lettre, écrite au crayon sur papier réglementé, est conservée avec soin.
+          L'écriture en est ferme malgré les conditions, l'encre légèrement effacée sur
+          les pliures. Elle reste l'un des documents les plus précieux des archives familiales.</p>
+        `
+      }
+    ];
+
+    /* ── Ouverture / fermeture de la modal de lecture ───────────────── */
+    function openStory(index) {
+      const s = STORIES[index];
+      document.getElementById('modalTitle').textContent = s.titre;
+
+      const metaHtml = s.meta.map(m =>
+        `<span><i class="fas ${m.icon}"></i> ${m.text}</span>`
+      ).join('');
+      document.getElementById('modalMeta').innerHTML = s.badge + metaHtml;
+      document.getElementById('modalBody').innerHTML = s.contenu;
+
+      document.getElementById('storyModal').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeStoryModal() {
+      document.getElementById('storyModal').classList.remove('open');
+      document.body.style.overflow = '';
+    }
+
+    /* Fermer en cliquant sur l'overlay */
+    document.getElementById('storyModal').addEventListener('click', function(e) {
+      if (e.target === this) closeStoryModal();
+    });
+
+    /* Fermer avec Échap */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeStoryModal();
+    });
+
+    /* ── Placeholder admin ──────────────────────────────────────────── */
+    function openAddModal() {
+      alert('Fonctionnalité d\'ajout : modifier directement histoires.html pour ajouter une carte et une entrée dans le tableau STORIES.');
+    }
+  </script>
+</body>
+
+</html>

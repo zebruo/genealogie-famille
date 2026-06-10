@@ -123,7 +123,9 @@ async function loadMemberInfoForQuickView(personId) {
       prenom: m.prenom,
       birthPlace: m.lieu_naissance,
       birthDate: m.date_naissance,
+      birthDateDisplay: m.date_naissance_affichage || '',
       deathDate: m.date_deces,
+      deathDateDisplay: m.date_deces_affichage || '',
       deathPlace: m.lieu_deces,
       doc_naissance: m.doc_naissance || '',
       doc_deces: m.doc_deces || '',
@@ -246,20 +248,24 @@ function renderAllDocumentsList(documents, personId) {
         }
       } else if (doc.source === 'naissance') {
         title = 'Source naissance';
-        meta = member.birthDate ? `Le ${formatDateDisplay(member.birthDate)}${member.birthPlace ? ', ' + member.birthPlace : ''} ...` : 'Naissance';
+        meta = (member.birthDateDisplay || member.birthDate)
+          ? `${member.birthDateDisplay || formatDateDisplayTab(member.birthDate)}${member.birthPlace ? ', ' + member.birthPlace : ''} ...`
+          : 'Naissance';
       } else if (doc.source === 'deces') {
         title = 'Source décès';
-        meta = member.deathDate ? `Le ${formatDateDisplay(member.deathDate)}${member.deathPlace ? ', ' + member.deathPlace : ''} ...` : 'Décès';
+        meta = (member.deathDateDisplay || member.deathDate)
+          ? `${member.deathDateDisplay || formatDateDisplayTab(member.deathDate)}${member.deathPlace ? ', ' + member.deathPlace : ''} ...`
+          : 'Décès';
       } else if (doc.source && doc.source.startsWith('mariage_')) {
         title = doc.title || 'Note de mariage';
         // Afficher la date de mariage si disponible
         if (doc.date_mariage && doc.date_mariage !== '0000-00-00') {
-          meta = `Le ${formatDateDisplay(doc.date_mariage)}`;
+          meta = formatDateDisplayTab(doc.date_mariage);
           // Ajouter le nom du conjoint après la date
           if (doc.source_label) {
             // Supprimer "Mariage " du début de source_label pour garder uniquement "avec [nom]"
             const labelClean = doc.source_label.replace(/^Mariage\s+/i, '');
-            meta += ` ${labelClean} ...`;
+            meta += `, ${labelClean} ...`;
           }
         } else {
           // Si pas de date, supprimer "Mariage " aussi
@@ -337,25 +343,7 @@ function viewNoteSimple(doc, personId) {
   document.getElementById("documentsList").innerHTML = html;
 }
 
-function openPhotoModal(photoPath, title) {
-  const modal = document.createElement("div");
-  modal.className = "photo-modal";
-  modal.innerHTML = `
-    <div class="photo-modal-content">
-      <button class="photo-modal-close" onclick="this.parentElement.parentElement.remove()">
-        <i class="fas fa-times"></i>
-      </button>
-      <img src="${photoPath}" alt="${escapeHtml(title)}" />
-      <div class="photo-modal-title">${escapeHtml(title)}</div>
-    </div>
-  `;
-  modal.onclick = (e) => {
-    if (e.target === modal) {
-      modal.remove();
-    }
-  };
-  document.body.appendChild(modal);
-}
+// openPhotoModal() est défini dans js/photo-modal.js
 
 // ========================================
 // UTILITAIRES
@@ -364,30 +352,14 @@ function closeDocumentsModal() {
   document.getElementById("documentsModal").classList.remove("show");
 }
 
-// Fonction pour formater une date au format "6 juin 1944"
-function formatDateDisplay(dateStr) {
+function formatDateDisplayTab(dateStr) {
   if (!dateStr || dateStr === '0000-00-00') return '-';
   const parts = dateStr.split('-');
   if (parts.length !== 3) return '-';
   const [year, month, day] = parts;
-  
-  // Noms des mois en français
-  const mois = [
-    '', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-    'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
-  ];
-  
-  // Gérer les dates partielles (jour ou mois manquant = 00)
-  if (day === '00' && month === '00') {
-    return year; // Seulement l'année
-  } else if (day === '00') {
-    const monthInt = parseInt(month, 10);
-    return `${mois[monthInt]} ${year}`; // Mois et année (ex: "juin 1944")
-  }
-  
-  const dayInt = parseInt(day, 10);
-  const monthInt = parseInt(month, 10);
-  return `${dayInt} ${mois[monthInt]} ${year}`; // Date complète (ex: "6 juin 1944")
+  if (day === '00' && month === '00') return year;
+  if (day === '00') return `${month}-${year}`;
+  return `${day}-${month}-${year}`;
 }
 
 function escapeHtml(text) {
@@ -402,10 +374,6 @@ function stripHtml(html) {
   return div.textContent || div.innerText || "";
 }
 
-function truncateText(text, maxLength) {
-  if (text.length <= maxLength) return escapeHtml(text);
-  return escapeHtml(text.substring(0, maxLength)) + "...";
-}
 
 function formatNotes(notes) {
   if (!notes) return '';

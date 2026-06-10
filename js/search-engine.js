@@ -246,17 +246,19 @@ class UniversalSearchEngine {
       const highlightedName = this.highlightText(fullName, searchTerm);
       
       let birthInfo = '';
-      if (person.birthDate) {
-        const year = person.birthDate.substring(0, 4);
+      const bDisp = person.birthDateDisplay || person.birthDate;
+      if (bDisp) {
+        const year = (bDisp.match(/\d{4}/) || [''])[0] || bDisp;
         birthInfo = '° ' + year;
         if (person.birthPlace) {
           birthInfo += ' à ' + this.highlightText(person.birthPlace, searchTerm);
         }
       }
-      
+
       let deathInfo = '';
-      if (person.deathDate) {
-        const year = person.deathDate.substring(0, 4);
+      const dDisp = person.deathDateDisplay || person.deathDate;
+      if (dDisp) {
+        const year = (dDisp.match(/\d{4}/) || [''])[0] || dDisp;
         deathInfo = '✟ ' + year;
         if (person.deathPlace) {
           deathInfo += ' à ' + this.highlightText(person.deathPlace, searchTerm);
@@ -323,9 +325,7 @@ class UniversalSearchEngine {
               ${this.highlightMatch(m.firstNames + ' ' + m.lastName, e.target.value)}
             </div>
             <div class="suggestion-details">
-              ${m.birthDate 
-                ? `<span>(${m.birthDate}${m.deathDate ? ' - ' + m.deathDate : ''})</span>` 
-                : ''}
+              ${(() => { const b = m.birthDateDisplay ? ((m.birthDateDisplay.match(/\d{4}/) || [''])[0] || m.birthDateDisplay) : (m.birthDate || ''); const d = m.deathDateDisplay ? ((m.deathDateDisplay.match(/\d{4}/) || [''])[0] || m.deathDateDisplay) : (m.deathDate || ''); return (b || d) ? `<span>(${b}${d ? ' - ' + d : ''})</span>` : ''; })()}
               ${m.birthPlace ? `<span>${m.birthPlace}</span>` : ''}
             </div>
           </div>
@@ -382,9 +382,7 @@ class UniversalSearchEngine {
             ${this.highlightMatch(m.firstNames + ' ' + m.lastName, e.target.value)}
           </div>
           <div class="suggestion-details">
-            ${m.birthDate 
-              ? `<span>(${m.birthDate}${m.deathDate ? ' - ' + m.deathDate : ''})</span>` 
-              : ''}
+            ${(() => { const b = m.birthDateDisplay ? ((m.birthDateDisplay.match(/\d{4}/) || [''])[0] || m.birthDateDisplay) : (m.birthDate || ''); const d = m.deathDateDisplay ? ((m.deathDateDisplay.match(/\d{4}/) || [''])[0] || m.deathDateDisplay) : (m.deathDate || ''); return (b || d) ? `<span>(${b}${d ? ' - ' + d : ''})</span>` : ''; })()}
             ${m.birthPlace ? `<span>${m.birthPlace}</span>` : ''}
           </div>
         </div>
@@ -413,9 +411,8 @@ class UniversalSearchEngine {
     searchWords.forEach((word) => {
       let lastIndex = 0;
       let tempResult = '';
-      const normalizedResult = this.normalizeString(result);
       let insideTag = false;
-      
+
       for (let i = 0; i < result.length; i++) {
         if (result[i] === '<') {
           insideTag = true;
@@ -427,8 +424,8 @@ class UniversalSearchEngine {
           continue;
         }
         if (insideTag) continue;
-        
-        if (normalizedResult.substr(i, word.length) === word && !insideTag) {
+
+        if (this.normalizeString(result.substr(i, word.length)) === word) {
           tempResult += result.substring(lastIndex, i);
           const matchedText = result.substr(i, word.length);
           tempResult += '<span class="search-highlight">' + matchedText + '</span>';
@@ -459,9 +456,8 @@ class UniversalSearchEngine {
     searchWords.forEach(word => {
       let lastIndex = 0;
       let tempResult = '';
-      const normalizedResult = this.normalizeString(result);
       let insideTag = false;
-      
+
       for (let i = 0; i < result.length; i++) {
         // Détecter si on est dans une balise HTML
         if (result[i] === '<') {
@@ -473,12 +469,12 @@ class UniversalSearchEngine {
           lastIndex = i + 1;
           continue;
         }
-        
+
         // Ne pas highlighter si on est dans une balise
         if (insideTag) continue;
-        
+
         // Vérifier si on a une correspondance
-        if (normalizedResult.substr(i, word.length) === word && !insideTag) {
+        if (this.normalizeString(result.substr(i, word.length)) === word) {
           tempResult += result.substring(lastIndex, i);
           const matchedText = result.substr(i, word.length);
           tempResult += '<span class="suggestion-highlight">' + matchedText + '</span>';
@@ -486,7 +482,7 @@ class UniversalSearchEngine {
           i += word.length - 1;
         }
       }
-      
+
       tempResult += result.substring(lastIndex);
       if (tempResult !== result) {
         result = tempResult;

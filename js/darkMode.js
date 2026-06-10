@@ -7,9 +7,10 @@ function loadDarkModeScript() {
         }
         darkModeToggle.addEventListener("click", () => {
           body.classList.toggle("dark-mode");
-          localStorage.setItem(
-            "darkMode",
-            body.classList.contains("dark-mode") ? "enabled" : null
-          );
+          if (body.classList.contains("dark-mode")) {
+            localStorage.setItem("darkMode", "enabled");
+          } else {
+            localStorage.removeItem("darkMode");
+          }
         });
       }

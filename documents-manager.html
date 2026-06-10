@@ -8,18 +8,19 @@
   <link rel="icon" href="data:,"> <!--source vide pour le moment-->
   <link rel="stylesheet" href="styles/family-tree-styles.css" />
   <link rel="stylesheet" href="styles/person-quick-view.css" />
+  <link rel="stylesheet" href="styles/readonly.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
 </head>
 
 <body>
-  <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-docs.html -->
+  <!-- Menu de navigation chargé dynamiquement depuis menu-navigation-users.html -->
   <!-- Le script menu-loader.js est chargé à la fin du fichier avant darkMode.js et burger.js -->
 
   <div class="container">
     <div class="controls-header">
       <div class="controls-title">
         <i class="fas fa-file-alt"></i>
-        <span>Gestion documentaire</span>
+        <span class="admin-title">Gestion documentaire</span><span class="viewer-only">Consultation documentaire</span>
       </div>
     </div>
     <div class="search-wrapper form-header">
@@ -81,29 +82,39 @@
         Photos
         <span class="filter-count" id="count-photos">0</span>
       </button>
+      <button class="filter-btn" data-filter="confidential">
+        <i class="fas fa-user-secret"></i>
+        Confidentielles
+        <span class="filter-count" id="count-confidential">0</span>
+      </button>
+      <button class="filter-btn" data-filter="linked-docs">
+        <i class="fas fa-link"></i>
+        Docs liés
+        <span class="filter-count" id="count-linked-docs">0</span>
+      </button>
     </div>
 
     <div class="alphabet-index"></div>
 
     <div class="table-container">
-      <table class="table">
+      <table class="table" style="table-layout: fixed; width: 100%;">
         <thead>
           <tr>
-            <th style="width: 22%;">Nom</th>
-            <th style="width: 22%;">Prénom</th>
-            <th style="width: 8%; text-align: center;">Naissance</th>
-            <th style="width: 8%; text-align: center;">Décès</th>
-            <th style="width: 5%; text-align: center;"><i class="fas fa-baby"></i> Sources naissance</th>
-            <th style="width: 5%; text-align: center;"><i class="fas fa-ring"></i> Sources mariage</th>
-            <th style="width: 5%; text-align: center;"><i class="fas fa-cross"></i> Sources décès</th>
-            <th style="width: 5%; text-align: center;"><i class="fas fa-sticky-note"></i> Notes membre</th>
-            <th style="width: 5%; text-align: center;"><i class="fas fa-file-alt"></i> Documents</th>
-            <th style="width: 5%; text-align: center;"><i class="fas fa-file-pdf"></i> PDF</th>
-            <th style="width: 5%; text-align: center;"><i class="fas fa-image"></i> Photos</th>
-            <th style="width: 5%; text-align: center;">Actions</th>
+            <th style="width: 20%; text-align: center;"><i class="fas fa-id-card" title="Nom"></i></th>
+            <th style="width: 11%; text-align: center;"><i class="fas fa-user" title="Prénom"></i></th>
+            <th style="width: 8%; text-align: center;"><i class="fas fa-calendar-alt" title="Naissance"></i></th>
+            <th style="width: 8%; text-align: center;"><i class="fas fa-calendar-alt" title="Décès"></i></th>
+            <th style="width: 6.5%; text-align: center;"><i class="fas fa-baby document-type-naissance" title="Sources naissance"></i></th>
+            <th style="width: 6.5%; text-align: center;"><i class="fas fa-ring document-type-mariage" title="Sources mariage"></i></th>
+            <th style="width: 6.5%; text-align: center;"><i class="fas fa-cross document-type-deces" title="Sources décès"></i></th>
+            <th style="width: 6.5%; text-align: center;"><i class="fas fa-sticky-note badge-note-membre" title="Notes membre"></i></th>
+            <th style="width: 6.5%; text-align: center;"><i class="fas fa-file-alt doc-icon-documents" title="Documents"></i></th>
+            <th style="width: 6.5%; text-align: center;"><i class="fas fa-file-pdf doc-icon-pdf" title="PDF"></i></th>
+            <th style="width: 6.5%; text-align: center;"><i class="fas fa-image doc-icon-photos" title="Photos"></i></th>
+            <th style="width: 7.5%; text-align: center;" class="admin-only"><i class="fas fa-sliders-h" title="Actions"></i></th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody><tr><td colspan="12"><div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i><p>Chargement des documents…</p></div></td></tr></tbody>
       </table>
     </div>
 
@@ -143,11 +154,11 @@
             <label id="simpleNoteLabel">Contenu de la note</label>
             <textarea class="form-control" id="simpleNoteContent" rows="15"></textarea>
           </div>
-          <div class="modal-buttons">
+          <div class="form-buttons-container">
             <button type="button" class="btn btn-secondary" onclick="closeNoteSimpleModal()">
-              <i class="fas fa-times"></i> Annuler
+              <i class="fas fa-times"></i> Fermer
             </button>
-            <button type="submit" class="btn btn-submit">
+            <button type="submit" class="btn btn-submit admin-only">
               <i class="fas fa-save"></i> Enregistrer
             </button>
           </div>
@@ -156,18 +167,20 @@
     </div>
   </div>
 
-  <div class="modal-overlay" id="documentFormModal">
-    <div class="modal-content">
-      <button class="btn-back" onclick="backToDocumentsList()" style="margin-right: auto;">
-        <i class="fas fa-arrow-left"></i> Retour
-      </button>
-      <div class="modal-header-qv">
-        <h2 id="documentFormTitle"><i class="fas fa-plus"></i> Ajouter un document</h2>
-        <button class="modal-close-qv" onclick="closeDocumentFormModal()">
-          <i class="fas fa-times"></i>
+  <div class="modal-overlay admin-only" id="documentFormModal">
+    <div class="modal-content" style="display:flex; flex-direction:column; max-height:85vh;">
+      <div style="flex-shrink:0;">
+        <button class="btn-back" onclick="backToDocumentsList()" style="margin-right: auto;">
+          <i class="fas fa-arrow-left"></i> Retour
         </button>
+        <div class="modal-header-qv">
+          <h2 id="documentFormTitle"><i class="fas fa-plus"></i> Ajouter un document</h2>
+          <button class="modal-close-qv" onclick="closeDocumentFormModal()">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
-      <div class="modal-body">
+      <div class="modal-body" style="flex:1; overflow-y:auto; padding-right:8px;">
         <form id="documentForm">
           <input type="hidden" id="documentId" />
           <input type="hidden" id="personId" />
@@ -214,14 +227,14 @@
               <p style="margin: 0; font-size: 0.9em; color: var(--text-secondary);">Taille max: 10 Mo</p>
             </div>
             <input type="file" id="pdfFile" accept="application/pdf" style="display: none;" />
-            <div class="file-info" id="fileInfo" style="display: none;">
+            <div class="file-info document-meta" id="fileInfo" style="display: none;">
               <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div>
-                  <i class="fas fa-file-pdf" style="color: #e65100; margin-right: 8px;"></i>
+                  <i class="fas fa-file-pdf document-type-badge document-type-pdf"></i>
                   <span id="fileName"></span>
-                  <span style="color: var(--text-secondary); margin-left: 10px;" id="fileSize"></span>
+                  <span style="color: var(--text-secondary); margin-left: 5px;" id="fileSize"></span>
                 </div>
-                <button type="button" class="btn btn-secondary" id="fileActionBtn" onclick="clearFile()">
+                <button type="button" class="btn-delete" id="fileActionBtn" onclick="clearFile()">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
@@ -246,14 +259,14 @@
             </div>
             <input type="file" id="photoFile" accept="image/jpeg,image/png,image/gif,image/webp"
               style="display: none;" />
-            <div class="file-info" id="photoInfo" style="display: none;">
+            <div class="file-info document-meta" id="photoInfo" style="display: none;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
                 <div>
-                  <i class="fas fa-image" style="color: #2e7d32; margin-right: 8px;"></i>
+                  <i class="fas fa-image document-type-badge document-type-photo"></i>
                   <span id="photoFileName"></span>
-                  <span style="color: var(--text-secondary); margin-left: 10px;" id="photoFileSize"></span>
+                  <span style="color: var(--text-secondary); margin-left: 5px;" id="photoFileSize"></span>
                 </div>
-                <button type="button" class="btn btn-secondary" id="photoActionBtn" onclick="clearPhotoFile()">
+                <button type="button" class="btn-delete" id="photoActionBtn" onclick="clearPhotoFile()">
                   <i class="fas fa-times"></i>
                 </button>
               </div>
@@ -264,20 +277,33 @@
             </div>
           </div>
 
-          <div class="modal-buttons">
-            <button type="button" class="btn btn-secondary" onclick="closeDocumentFormModal()">
-              <i class="fas fa-times"></i> Annuler
-            </button>
-            <button type="submit" class="btn btn-submit">
-              <i class="fas fa-save"></i> Enregistrer
-            </button>
+          <div id="linkedMembersSection" style="display:none; margin-top:20px; border-top:1px solid var(--input-border); padding-top:16px;">
+            <h4 style="margin-bottom:12px;"><i class="fas fa-users"></i> Personnes liées</h4>
+            <div id="linkedMembersList" style="margin-bottom:12px;"></div>
+            <div style="position:relative;">
+              <input type="text" id="linkedMemberSearch" class="form-control"
+                placeholder="Rechercher une personne à lier…" autocomplete="off" />
+              <div id="linkedMemberSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0;
+                background:var(--bg-primary); border:1px solid var(--input-border);
+                border-radius:var(--radius-sm); z-index:200; max-height:200px; overflow-y:auto; box-shadow:var(--shadow-md);"></div>
+            </div>
           </div>
         </form>
+      </div>
+      <div style="flex-shrink:0;">
+        <div class="form-buttons-container">
+          <button type="button" class="btn btn-secondary" onclick="closeDocumentFormModal()">
+            <i class="fas fa-times"></i> Annuler
+          </button>
+          <button type="submit" form="documentForm" class="btn btn-submit">
+            <i class="fas fa-save"></i> Enregistrer
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
-  <div class="modal-overlay" id="confirmDeleteModal">
+  <div class="modal-overlay admin-only" id="confirmDeleteModal">
     <div class="modal-content">
       <div class="modal-header-qv">
         <i class="fas fa-exclamation-triangle doc-icon-documents"></i>
@@ -288,7 +314,7 @@
       </div>
       <div class="modal-body">
         <p>Êtes-vous sûr de vouloir supprimer ce document ?</p>
-        <div class="modal-buttons">
+        <div class="form-buttons-container">
           <button class="btn btn-secondary" onclick="closeDeleteModal()">
             <i class="fas fa-times"></i> Annuler
           </button>
@@ -384,15 +410,6 @@
       return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
     }
 
-    function formatDate(dateString) {
-      if (!dateString) return 'Non renseigné';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('fr-FR', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-    }
 
     function formatNotes(notes) {
       if (!notes) return '';
@@ -426,7 +443,9 @@
           prenom: m.prenom,
           birthPlace: m.lieu_naissance,
           birthDate: m.date_naissance,
+          birthDateDisplay: m.date_naissance_affichage ? m.date_naissance_affichage.replace(/^Le /, '') : null,
           deathDate: m.date_deces,
+          deathDateDisplay: m.date_deces_affichage ? m.date_deces_affichage.replace(/^Le /, '') : null,
           deathPlace: m.lieu_deces,
           noteMembre: m.notes ? 1 : 0,
           sourceNaissance: m.doc_naissance && m.doc_naissance.trim() !== '' ? 1 : 0,
@@ -434,7 +453,8 @@
           noteMariage: 0, // À calculer
           documents: 0,
           pdf: 0,
-          photos: 0
+          photos: 0,
+          isConfidential: !!m.isConfidential
         }));
         await loadDocumentCounts();
         // Re-trier après avoir mis à jour les compteurs
@@ -457,10 +477,9 @@
         const response = await fetch(`${CONFIG.apiEndpoint}?action=getAllDocumentCounts`);
         const result = await response.json();
         if (result.success) {
-          // Appliquer les compteurs de sources de mariage
+          const linkedCounts = result.linkedCounts || {};
           state.members.forEach(member => {
             member.noteMariage = result.mariageCounts[member.id] || 0;
-            // Appliquer les compteurs de documents
             const counts = result.documentCounts[member.id];
             if (counts) {
               member.documents = counts.note || 0;
@@ -471,7 +490,16 @@
               member.pdf = 0;
               member.photos = 0;
             }
+            member.linkedDocuments = linkedCounts[member.id] || 0;
+            if (member.isConfidential && window.userRole !== 'admin') {
+              member.noteMariage = 0;
+              member.documents = 0;
+              member.pdf = 0;
+              member.photos = 0;
+              member.linkedDocuments = 0;
+            }
           });
+          state.documentTotals = result.documentTotals || { note: 0, pdf: 0, photo: 0 };
         }
       } catch (error) {
         console.error('Erreur lors du chargement des compteurs:', error);
@@ -480,6 +508,9 @@
 
     function sortMembers(members) {
       return [...members].sort((a, b) => {
+        const confA = a.isConfidential ? 1 : 0;
+        const confB = b.isConfidential ? 1 : 0;
+        if (confA !== confB) return confA - confB;
         const nameA = `${a.nom} ${a.prenom}`.toLowerCase();
         const nameB = `${b.nom} ${b.prenom}`.toLowerCase();
         return nameA.localeCompare(nameB);
@@ -519,6 +550,12 @@
         case 'photos':
           filtered = filtered.filter(m => m.photos > 0);
           break;
+        case 'confidential':
+          filtered = filtered.filter(m => m.isConfidential);
+          break;
+        case 'linked-docs':
+          filtered = filtered.filter(m => m.linkedDocuments > 0);
+          break;
       }
       state.filteredMembers = sortMembers(filtered);
       state.currentPage = 1; // Retour à la première page
@@ -541,14 +578,14 @@
       document.getElementById('count-source-deces').textContent = withSourceDeces;
       const withNoteMariage = state.members.filter(m => m.noteMariage > 0).length;
       document.getElementById('count-note-mariage').textContent = withNoteMariage;
-      // Correction du problème de comptage des filtres :
-      // On calcule le nombre TOTAL de documents/PDF/photos (somme), au lieu du nombre d'individus qui en possèdent (compte > 0).
-      const totalDocuments = state.members.reduce((sum, m) => sum + m.documents, 0);
-      const totalPdf = state.members.reduce((sum, m) => sum + m.pdf, 0);
-      const totalPhotos = state.members.reduce((sum, m) => sum + m.photos, 0);
-      document.getElementById('count-documents').textContent = totalDocuments;
-      document.getElementById('count-pdf').textContent = totalPdf;
-      document.getElementById('count-photos').textContent = totalPhotos;
+      const totals = state.documentTotals || { note: 0, pdf: 0, photo: 0 };
+      document.getElementById('count-documents').textContent = totals.note;
+      document.getElementById('count-pdf').textContent = totals.pdf;
+      document.getElementById('count-photos').textContent = totals.photo;
+      const confidentialCount = state.members.filter(m => m.isConfidential).length;
+      document.getElementById('count-confidential').textContent = confidentialCount;
+      const linkedDocsCount = state.members.filter(m => m.linkedDocuments > 0).length;
+      document.getElementById('count-linked-docs').textContent = linkedDocsCount;
     }
     // Gérer le clic sur un bouton de filtre
     function handleFilterClick(filterType) {
@@ -569,39 +606,25 @@
       const parts = dateStr.split('-');
       if (parts.length !== 3) return '-';
       const [year, month, day] = parts;
-      // GÃ©rer les dates partielles (jour ou mois manquant = 00)
-      if (day === '00' && month === '00') {
-        return year; // Seulement l'annÃ©e
-      } else if (day === '00') {
-        return `${month}-${year}`; // Mois et annÃ©e
-      }
-      return `${day}-${month}-${year}`; // Date complÃ¨te
-    }
-
-    // Fonction pour formater une date au format "6 juin 1944"
-    function formatDateDisplay(dateStr) {
-      if (!dateStr || dateStr === '0000-00-00') return '-';
-      const parts = dateStr.split('-');
-      if (parts.length !== 3) return '-';
-      const [year, month, day] = parts;
-
-      // Noms des mois en français
-      const mois = [
-        '', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
-        'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'
-      ];
-
       // Gérer les dates partielles (jour ou mois manquant = 00)
       if (day === '00' && month === '00') {
         return year; // Seulement l'année
       } else if (day === '00') {
-        const monthInt = parseInt(month, 10);
-        return `${mois[monthInt]} ${year}`; // Mois et année (ex: "juin 1944")
+        return `${month}-${year}`; // Mois et année
       }
+      return `${day}-${month}-${year}`; // Date complète
+    }
 
-      const dayInt = parseInt(day, 10);
-      const monthInt = parseInt(month, 10);
-      return `${dayInt} ${mois[monthInt]} ${year}`; // Date complète (ex: "6 juin 1944")
+    function getInitials(firstNames) {
+      if (!firstNames) return '';
+      if (firstNames === '👤') return '👤';
+      return firstNames.trim().split(/\s+/).map(n => n.charAt(0) + '.').join(' ');
+    }
+
+    function getYear(dateStr) {
+      if (!dateStr) return '';
+      const match = dateStr.match(/\d{4}/);
+      return match ? match[0] : '';
     }
 
     function renderTable() {
@@ -620,44 +643,52 @@
         `;
         return;
       }
-      tbody.innerHTML = pageMembers.map(member => `
+      const isViewer = window.userRole === 'viewer';
+      tbody.innerHTML = pageMembers.map(member => {
+        const birthDisplay = member.birthDateDisplay || formatDateDisplayTab(member.birthDate) || '?';
+        const deathDisplay = member.deathDateDisplay
+          ? member.deathDateDisplay + ' †'
+          : (member.deathDate && member.deathDate !== '0000-00-00'
+              ? formatDateDisplayTab(member.deathDate) + ' †'
+              : '-');
+        return `
        <tr>
   <td>${member.nom}</td>
-  <td>${member.prenom}</td>
-  <td style="text-align: center;">${formatDateDisplayTab(member.birthDate)}</td>
-  <td style="text-align: center;">${member.deathDate && member.deathDate !== '0000-00-00' ? formatDateDisplayTab(member.deathDate) + ' †' : '-'}</td>
+  <td style="text-align: center;"><span class="name-full">${member.prenom}</span><span class="name-initials">${getInitials(member.prenom)}</span></td>
+  <td style="text-align: center;"><span class="date-full">${birthDisplay}</span><span class="date-year">${getYear(birthDisplay)}</span></td>
+  <td style="text-align: center;"><span class="date-full">${deathDisplay}</span><span class="date-year">${getYear(deathDisplay)}</span></td>
   <td style="text-align: center;">
     ${member.sourceNaissance > 0
-          ? `<span class="doc-count-badge badge-note-naissance" style="cursor: pointer;" 
-            onclick="openEditSourceNaissance(${member.id})" 
-            title="Modifier les sources de naissance">
+          ? `<span class="doc-count-badge badge-note-naissance" style="cursor: pointer;"
+            onclick="openEditSourceNaissance(${member.id})"
+            title="${isViewer ? 'Consulter' : 'Modifier'} les sources de naissance">
             <i class="fas fa-baby"></i>
          </span>`
           : '-'}
   </td>
   <td style="text-align: center;">
     ${member.noteMariage > 0
-          ? `<span class="doc-count-badge badge-note-mariage" style="cursor: pointer;" 
-            onclick="openEditNotesMariage(${member.id})" 
-            title="Modifier les sources de mariage">
+          ? `<span class="doc-count-badge badge-note-mariage" style="cursor: pointer;"
+            onclick="openEditNotesMariage(${member.id})"
+            title="${isViewer ? 'Consulter' : 'Modifier'} les sources de mariage">
             <i class="fas fa-ring"></i>
          </span>`
           : '-'}
   </td>
   <td style="text-align: center;">
     ${member.sourceDeces > 0
-          ? `<span class="doc-count-badge badge-note-deces" style="cursor: pointer;" 
-            onclick="openEditSourceDeces(${member.id})" 
-            title="Modifier les sources de décès">
+          ? `<span class="doc-count-badge badge-note-deces" style="cursor: pointer;"
+            onclick="openEditSourceDeces(${member.id})"
+            title="${isViewer ? 'Consulter' : 'Modifier'} les sources de décès">
             <i class="fas fa-cross"></i>
          </span>`
           : '-'}
   </td>
   <td style="text-align: center;">
     ${member.noteMembre > 0
-          ? `<span class="doc-count-badge badge-note-membre" style="cursor: pointer;" 
-            onclick="openEditNoteMembre(${member.id})" 
-            title="Modifier la note du membre">
+          ? `<span class="doc-count-badge badge-note-membre" style="cursor: pointer;"
+            onclick="openEditNoteMembre(${member.id})"
+            title="${isViewer ? 'Consulter' : 'Modifier'} la note du membre">
             <i class="fas fa-sticky-note"></i>
          </span>`
           : '-'}
@@ -682,21 +713,23 @@
 
 <td style="text-align: center;">
   ${member.photos > 0
-          ? `<span class="doc-icon doc-icon-photos" onclick="openEditPhotos(${member.id})" title="Modifier les photos">
+          ? `<span class="doc-icon doc-icon-photos" style="cursor: pointer;"
+        onclick="openEditPhotos(${member.id})"
+        title="${isViewer ? 'Consulter' : 'Modifier'} les photos">
         <i class="fas fa-camera"></i>
         <span class="doc-icon-count">${member.photos}</span>
       </span>`
           : '-'}
 </td>
 
-  <td style="text-align: center;">
-    <i class="fas fa-plus btn-edit" 
-       onclick="openCreateDocumentModal(${member.id})" 
+  <td style="text-align: center;" class="admin-only">
+    <i class="fas fa-edit btn-edit"
+       onclick="openCreateDocumentModal(${member.id})"
        title="Ajouter un document (table documents)"></i>
   </td>
 </tr>
 
-      `).join('');
+      `; }).join('');
     }
 
     function renderPagination() {
@@ -782,22 +815,16 @@
         const suggestions = state.filteredMembers.slice(0, 10);
         if (suggestions.length > 0) {
           suggestionsContainer.innerHTML = suggestions.map(m => {
-            // Extraire l'année de naissance
-            const birthYear = m.birthDate ? m.birthDate.substring(0, 4) : null;
-            // Extraire l'année de décès
-            const deathYear = m.deathDate && m.deathDate !== '0000-00-00' ?
-              m.deathDate.substring(0, 4) :
-              null;
-            // Formater les dates : (aaaa - aaaa) ou (aaaa) si vivant ou (? - aaaa) si pas de naissance
+            const bDisp = m.birthDateDisplay || m.birthDate;
+            const birthYear = bDisp ? ((bDisp.match(/\d{4}/) || [''])[0] || bDisp) : null;
+            const dDisp = m.deathDateDisplay || (m.deathDate && m.deathDate !== '0000-00-00' ? m.deathDate : null);
+            const deathYear = dDisp ? ((dDisp.match(/\d{4}/) || [''])[0] || dDisp) : null;
             let dateInfo = '';
             if (birthYear && deathYear) {
-              // Personne décédée avec date de naissance connue
               dateInfo = `(${birthYear} - ${deathYear})`;
             } else if (birthYear) {
-              // Personne vivante ou décès inconnu
               dateInfo = `(${birthYear})`;
             } else if (deathYear) {
-              // Date de naissance inconnue mais décès connu
               dateInfo = `(? - ${deathYear})`;
             }
             // Formater la ville de naissance
@@ -864,7 +891,7 @@
         state.members
           .map(m => (m.nom || '').charAt(0).toUpperCase())
           .filter(c => /[A-ZÀ-Ü]/.test(c))
-      )].sort();
+      )].sort((a, b) => a.localeCompare(b, 'fr'));
       const indexHtml = `
           <button class="letter-btn active" onclick="showAllMembers()">
             <i class="fas fa-file-alt stat-number"></i> Tous
@@ -1045,12 +1072,12 @@
     // GESTION DES MODALS GÉNÉRALES
     // ========================================
     async function loadPersonDocuments(personId) {
+      state.documents = [];
       try {
         const response = await fetch(`${CONFIG.apiEndpoint}?action=getDocuments&person_id=${personId}`);
         const result = await response.json();
         if (result.success) {
           state.documents = result.documents || [];
-          // Note: Ne pas appeler renderDocumentsList ici, car il est appelé par openPersonQuickView
         }
       } catch (error) {
         console.error('Erreur:', error);
@@ -1133,7 +1160,7 @@
             <p>Aucun${state.documentFilter === 'photo' ? 'e' : ''} ${filterText} pour cette personne</p>
           </div>
         `;
-        if (!isSimpleList) {
+        if (!isSimpleList && window.userRole !== 'viewer') {
           container.innerHTML += `
             <div style="border-top: 2px solid var(--input-border); padding-top: 20px; margin-top: 20px;">
               <button class="btn btn-submit" onclick="openCreateDocumentModal(${state.selectedPerson.id})">
@@ -1183,20 +1210,24 @@
             }
           } else if (doc.source === 'naissance') {
             title = 'Source naissance';
-            meta = state.selectedPerson.birthDate ? `Le ${formatDateDisplay(state.selectedPerson.birthDate)}, ${state.selectedPerson.birthPlace} ...` : 'Naissance';
+            meta = state.selectedPerson.birthDateDisplay
+              ? `${state.selectedPerson.birthDateDisplay}, ${state.selectedPerson.birthPlace} ...`
+              : (state.selectedPerson.birthDate ? `${formatDateDisplayTab(state.selectedPerson.birthDate)}, ${state.selectedPerson.birthPlace} ...` : 'Naissance');
           } else if (doc.source === 'deces') {
             title = 'Source décès';
-            meta = state.selectedPerson.deathDate ? `Le  ${formatDateDisplay(state.selectedPerson.deathDate)}, ${state.selectedPerson.deathPlace} ... ` : 'Décès';
+            meta = state.selectedPerson.deathDateDisplay
+              ? `${state.selectedPerson.deathDateDisplay}, ${state.selectedPerson.deathPlace} ...`
+              : (state.selectedPerson.deathDate ? `${formatDateDisplayTab(state.selectedPerson.deathDate)}, ${state.selectedPerson.deathPlace} ...` : 'Décès');
           } else if (doc.source && doc.source.startsWith('mariage_')) {
             title = doc.title || 'Note de mariage';
             // Afficher la date de mariage si disponible
             if (doc.date_mariage && doc.date_mariage !== '0000-00-00') {
-              meta = `Le  ${formatDateDisplay(doc.date_mariage)}`;
+              meta = formatDateDisplayTab(doc.date_mariage);
               // Ajouter le nom du conjoint après la date
               if (doc.source_label) {
                 // Supprimer "Mariage " du début de source_label pour garder uniquement "avec [nom]"
                 const labelClean = doc.source_label.replace(/^Mariage\s+/i, '');
-                meta += ` ${labelClean} ...`;
+                meta += `, ${labelClean} ...`;
               }
             } else {
               // Si pas de date, supprimer "Mariage " aussi
@@ -1207,7 +1238,6 @@
         } else {
           title = doc.title || doc.file_name || 'Document';
           meta = doc.description ? `${doc.description} ... ` : '';
-          //meta += `Créé le ${formatDate(doc.created_at)}`;
         }
         // Bouton d'ouverture spécifique selon le type
         let viewButton = '';
@@ -1222,7 +1252,7 @@
         } else if (doc.type === 'pdf' && doc.file_path) {
           viewButton = `<i class="fas fa-eye btn-edit" onclick="openPDF('${doc.file_path}')" title="Ouvrir le PDF en plein écran"></i>`;
         } else if (doc.type === 'photo' && doc.file_path) {
-          viewButton = `<i class="fas fa-eye btn-edit" onclick="openPDF('${doc.file_path}')" title="Voir la photo"></i>`;
+          viewButton = `<i class="fas fa-eye btn-edit" onclick="openPhotoModal('${doc.file_path}', '${(doc.title || 'Photo').replace(/'/g, "\\'")}')" title="Voir la photo"></i>`;
         }
         return `
           <div class="document-item">
@@ -1234,14 +1264,14 @@
             <div class="document-actions">
               ${viewButton}
               <i class="fas fa-edit btn-edit" onclick="editDocument('${doc.id}')" title="Modifier"></i>
-              ${!isTemp ? `<i class="fas fa-trash btn-delete" onclick="confirmDeleteDocument('${doc.id}')" title="Supprimer"></i>` : ''}
+              ${!isTemp ? `<i class="fas fa-times btn-delete" onclick="confirmDeleteDocument('${doc.id}')" title="Supprimer"></i>` : ''}
             </div>
           </div>
         `;
       }).join('');
-      if (!isSimpleList) {
+      if (!isSimpleList && window.userRole !== 'viewer') {
         container.innerHTML += `
-          <div style="border-top: padding-top: 20px; margin-top: 20px;">
+          <div style="border-top: 2px solid var(--input-border); padding-top: 20px; margin-top: 20px;">
             <button class="btn btn-submit" onclick="openCreateDocumentModal(${state.selectedPerson.id})">
               <i class="fas fa-plus"></i> Ajouter un document
             </button>
@@ -1374,7 +1404,7 @@
     function openAddDocumentModal() {
       if (!state.selectedPerson) return;
       document.getElementById('documentFormTitle').innerHTML =
-        `<div><i class="fas fa-plus"></i> Nouv. document pour ${state.selectedPerson.prenom} ${state.selectedPerson.nom}</div>`;
+        `<div><i class="fas fa-plus"></i> NvDoc. pour ${state.selectedPerson.prenom} ${state.selectedPerson.nom}</div>`;
       document.getElementById('documentForm').reset();
       document.getElementById('documentId').value = '';
       document.getElementById('personId').value = state.selectedPerson.id;
@@ -1403,6 +1433,7 @@
       }
       // Ne plus fermer documentsModal car elle est maintenant ouverte en arrière-plan
       // closeDocumentsModal();
+      document.getElementById('linkedMembersSection').style.display = 'none';
       document.getElementById('documentFormModal').style.display = 'flex';
     }
 
@@ -1461,8 +1492,8 @@
           // Changer le bouton en icône poubelle pour supprimer
           const fileActionBtn = document.getElementById('fileActionBtn');
           fileActionBtn.onclick = deleteCurrentPdf;
-          fileActionBtn.innerHTML = '<i class="fas fa-trash"></i>';
-          fileActionBtn.className = 'btn btn-danger';
+          fileActionBtn.innerHTML = '<i class="fas fa-times"></i>';
+          fileActionBtn.className = 'btn-delete';
           fileActionBtn.title = 'Supprimer ce PDF';
         } else {
           clearFile();
@@ -1491,8 +1522,8 @@
             // Changer le bouton en icône poubelle pour supprimer
             const photoActionBtn = document.getElementById('photoActionBtn');
             photoActionBtn.onclick = deleteCurrentPhoto;
-            photoActionBtn.innerHTML = '<i class="fas fa-trash"></i>';
-            photoActionBtn.className = 'btn btn-danger';
+            photoActionBtn.innerHTML = '<i class="fas fa-times"></i>';
+            photoActionBtn.className = 'btn-delete';
             photoActionBtn.title = 'Supprimer cette photo';
           } else {
             clearPhotoFile();
@@ -1507,6 +1538,8 @@
       }
       // Ne plus fermer documentsModal car elle reste en arrière-plan
       // closeDocumentsModal();
+      loadLinkedMembers(doc.id);
+      document.getElementById('linkedMembersSection').style.display = 'block';
       document.getElementById('documentFormModal').style.display = 'flex';
     }
     async function handleDocumentSubmit(e) {
@@ -1626,7 +1659,7 @@
           const fileActionBtn = document.getElementById('fileActionBtn');
           fileActionBtn.onclick = clearFile;
           fileActionBtn.innerHTML = '<i class="fas fa-times"></i>';
-          fileActionBtn.className = 'btn btn-secondary';
+          fileActionBtn.className = 'btn-delete';
           fileActionBtn.title = '';
           // En cas de modification, si un nouveau fichier est sélectionné, on retire le required
           if (document.getElementById('documentId').value) {
@@ -1659,7 +1692,7 @@
             const photoActionBtn = document.getElementById('photoActionBtn');
             photoActionBtn.onclick = clearPhotoFile;
             photoActionBtn.innerHTML = '<i class="fas fa-times"></i>';
-            photoActionBtn.className = 'btn btn-secondary';
+            photoActionBtn.className = 'btn-delete';
             photoActionBtn.title = '';
             // En cas de modification, si une nouvelle photo est sélectionnée, on retire le required
             if (document.getElementById('documentId').value) {
@@ -1679,7 +1712,7 @@
       const photoActionBtn = document.getElementById('photoActionBtn');
       photoActionBtn.onclick = clearPhotoFile;
       photoActionBtn.innerHTML = '<i class="fas fa-times"></i>';
-      photoActionBtn.className = 'btn btn-secondary';
+      photoActionBtn.className = 'btn-delete';
       photoActionBtn.title = '';
       // Si on est en mode ajout, le fichier redevient 'required'
       if (!document.getElementById('documentId').value && state.currentDocumentType === 'photo') {
@@ -1694,7 +1727,7 @@
       const fileActionBtn = document.getElementById('fileActionBtn');
       fileActionBtn.onclick = clearFile;
       fileActionBtn.innerHTML = '<i class="fas fa-times"></i>';
-      fileActionBtn.className = 'btn btn-secondary';
+      fileActionBtn.className = 'btn-delete';
       fileActionBtn.title = '';
       // Si on est en mode ajout, le fichier redevient 'required'
       if (!document.getElementById('documentId').value && state.currentDocumentType === 'pdf') {
@@ -1778,9 +1811,125 @@
     }
 
     function openPDF(filePath) {
-      // Ouvre le PDF dans un nouvel onglet, ce qui est l'équivalent du "plein écran" pour un fichier PDF.
       window.open(filePath, '_blank');
     }
+
+    // openPhotoModal() est défini dans js/photo-modal.js
+
+    // ============================================
+    // GESTION DES PERSONNES LIÉES À UN DOCUMENT
+    // ============================================
+
+    async function loadLinkedMembers(documentId) {
+      document.getElementById('linkedMembersList').innerHTML =
+        '<span style="color:var(--text-secondary); font-size:0.85em;">Chargement…</span>';
+      document.getElementById('linkedMemberSearch').value = '';
+      document.getElementById('linkedMemberSuggestions').style.display = 'none';
+      try {
+        const res = await fetch(`${CONFIG.apiEndpoint}?action=getLinkedMembers&document_id=${documentId}`);
+        const data = await res.json();
+        if (data.success) renderLinkedMembers(data.members, documentId);
+      } catch (e) {
+        document.getElementById('linkedMembersList').innerHTML =
+          '<span style="color:#f44336; font-size:0.85em;">Erreur de chargement</span>';
+      }
+    }
+
+    function renderLinkedMembers(members, documentId) {
+      const ownerId = parseInt(document.getElementById('personId').value);
+      const container = document.getElementById('linkedMembersList');
+      if (!members.length) {
+        container.innerHTML = '<span style="color:var(--text-secondary); font-size:0.85em;">Aucune personne liée</span>';
+        return;
+      }
+      container.innerHTML = members.map(m => {
+        const isOwner = parseInt(m.id) === ownerId;
+        const name = `${m.prenom || ''} ${m.nom || ''}`.trim();
+        return `
+          <div style="display:flex; align-items:center; justify-content:space-between;
+            padding:6px 10px; margin-bottom:6px; border-radius:var(--radius-sm);
+            background:var(--bg-tertiary); font-size:0.88em;">
+            <span>
+              <i class="fas fa-user" style="color:var(--accent-color); margin-right:6px;"></i>
+              ${name}
+              ${isOwner ? '<span style="color:var(--text-secondary); font-size:0.8em; margin-left:6px;">(propriétaire)</span>' : ''}
+            </span>
+            ${!isOwner ? `<i class="fas fa-times btn-delete" style="cursor:pointer;"
+              onclick="removeMemberLink(${documentId}, ${m.id})" title="Supprimer le lien"></i>` : ''}
+          </div>`;
+      }).join('');
+    }
+
+    async function removeMemberLink(documentId, memberId) {
+      try {
+        const res = await fetch(`${CONFIG.apiEndpoint}?action=removeDocumentLink`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ document_id: documentId, member_id: memberId })
+        });
+        const data = await res.json();
+        if (data.success) { loadLinkedMembers(documentId); loadDocumentCounts(); }
+        else showTemporaryInfo('Erreur lors de la suppression du lien', 'error');
+      } catch (e) {
+        showTemporaryInfo('Erreur réseau', 'error');
+      }
+    }
+
+    async function addMemberLink(documentId, memberId) {
+      try {
+        const res = await fetch(`${CONFIG.apiEndpoint}?action=addDocumentLink`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ document_id: documentId, member_id: memberId })
+        });
+        const data = await res.json();
+        if (data.success) { loadLinkedMembers(documentId); loadDocumentCounts(); }
+        else showTemporaryInfo("Erreur lors de l'ajout du lien", 'error');
+      } catch (e) {
+        showTemporaryInfo('Erreur réseau', 'error');
+      }
+    }
+
+    function initLinkedMemberSearch() {
+      const input = document.getElementById('linkedMemberSearch');
+      const suggestions = document.getElementById('linkedMemberSuggestions');
+      input.addEventListener('input', () => {
+        const q = normalizeText(input.value.trim());
+        if (q.length < 2) { suggestions.style.display = 'none'; return; }
+        const results = state.members
+          .filter(m => normalizeText(`${m.prenom || ''} ${m.nom || ''}`).includes(q))
+          .slice(0, 10);
+        if (!results.length) { suggestions.style.display = 'none'; return; }
+        suggestions.innerHTML = results.map(m => `
+          <div class="suggestion-item" style="padding:8px 12px; cursor:pointer;"
+            onmousedown="event.preventDefault()"
+            onclick="selectLinkedMember(${m.id}, '${(m.prenom + ' ' + m.nom).replace(/'/g, "\\'")}')">
+            ${m.prenom || ''} ${m.nom || ''}
+          </div>`).join('');
+        suggestions.style.display = 'block';
+        // Ouvrir vers le haut si pas assez de place en dessous
+        const rect = input.getBoundingClientRect();
+        const spaceBelow = window.innerHeight - rect.bottom;
+        if (spaceBelow < 220) {
+          suggestions.style.top = 'auto';
+          suggestions.style.bottom = '100%';
+        } else {
+          suggestions.style.top = '100%';
+          suggestions.style.bottom = 'auto';
+        }
+      });
+      input.addEventListener('blur', () => {
+        setTimeout(() => suggestions.style.display = 'none', 150);
+      });
+    }
+
+    function selectLinkedMember(memberId) {
+      const documentId = parseInt(document.getElementById('documentId').value);
+      document.getElementById('linkedMemberSearch').value = '';
+      document.getElementById('linkedMemberSuggestions').style.display = 'none';
+      addMemberLink(documentId, memberId);
+    }
+
     // Fonction helper pour rafraîchir la vue actuelle après une modification
     async function refreshCurrentView() {
       if (!state.selectedPerson) return;
@@ -1789,67 +1938,21 @@
       // state.documentFilter et state.currentViewType pour filtrer
       renderDocumentsList(false);
     }
-    async function deleteCurrentPdf() {
+    function deleteCurrentPdf() {
       const documentId = document.getElementById('documentId').value;
       if (!documentId) {
         showTemporaryInfo('Erreur: Aucun document à supprimer', 'error');
         return;
       }
-      if (!confirm('Êtes-vous sûr de vouloir supprimer ce PDF ?')) {
-        return;
-      }
-      try {
-        const formData = new FormData();
-        formData.append('action', 'deleteDocument');
-        formData.append('document_id', documentId);
-        const response = await fetch(CONFIG.apiEndpoint, {
-          method: 'POST',
-          body: formData
-        });
-        const result = await response.json();
-        if (result.success) {
-          showTemporaryInfo('PDF supprimé !', 'success');
-          closeDocumentFormModal();
-          await loadMembers();
-          await refreshCurrentView();
-        } else {
-          throw new Error(result.message || 'Erreur lors de la suppression');
-        }
-      } catch (error) {
-        console.error('Erreur:', error);
-        showTemporaryInfo(error.message, 'error');
-      }
+      confirmDeleteDocument(documentId);
     }
-    async function deleteCurrentPhoto() {
+    function deleteCurrentPhoto() {
       const documentId = document.getElementById('documentId').value;
       if (!documentId) {
         showTemporaryInfo('Erreur: Aucun document à supprimer', 'error');
         return;
       }
-      if (!confirm('Êtes-vous sûr de vouloir supprimer cette photo ?')) {
-        return;
-      }
-      try {
-        const formData = new FormData();
-        formData.append('action', 'deleteDocument');
-        formData.append('document_id', documentId);
-        const response = await fetch(CONFIG.apiEndpoint, {
-          method: 'POST',
-          body: formData
-        });
-        const result = await response.json();
-        if (result.success) {
-          showTemporaryInfo('Photo supprimée !', 'success');
-          closeDocumentFormModal();
-          await loadMembers();
-          await refreshCurrentView();
-        } else {
-          throw new Error(result.message || 'Erreur lors de la suppression');
-        }
-      } catch (error) {
-        console.error('Erreur:', error);
-        showTemporaryInfo(error.message, 'error');
-      }
+      confirmDeleteDocument(documentId);
     }
 
     function confirmDeleteDocument(documentId) {
@@ -1875,6 +1978,7 @@
         if (result.success) {
           showTemporaryInfo('Document supprimé !', 'success');
           closeDeleteModal();
+          closeDocumentFormModal();
           await loadMembers();
           await refreshCurrentView();
         } else {
@@ -1914,8 +2018,11 @@
       });
       // Charger les membres
       await loadMembers();
+      initLinkedMemberSearch();
     });
   </script>
+  <script src="js/photo-modal.js"></script>
+  <script src="js/auth.js"></script>
   <script src="js/menu-loader.js" data-menu="menu-navigation-users.html"></script>
   <script src="js/darkMode.js"></script>
   <script src="js/burger.js"></script>

@@ -21,9 +21,9 @@ function updateQuickViewButtonClip(personId) {
           const hasInitialDocs = currentTitle === "Voir documents";
           const finalHasDocuments = hasInitialDocs || hasDocuments;
           // Mettre à jour le tooltip
-          var tooltip = button.querySelector('.tooltip');
-          if (tooltip) {
-            tooltip.textContent = finalHasDocuments ? 'Voir documents' : 'Pas de documents';
+          var label = button.querySelector('.qv-label');
+          if (label) {
+            label.textContent = finalHasDocuments ? 'Voir documents' : 'Pas de documents';
           }
           // Ajouter le trombone si des documents existent
           if (hasDocuments) {

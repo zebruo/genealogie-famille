@@ -25,6 +25,7 @@ class FamilyMember {
     this.marriages = data.marriages || {};
     this.occupation = data.occupation || "";
     this.notes = data.notes || "";
+    this.isConfidential = data.isConfidential || false;
   }
 
   getDisplayName() {

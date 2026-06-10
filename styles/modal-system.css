@@ -106,21 +106,12 @@
   background: #3b82f6;
 }
 
-/* Body commun */
-/*.modal-body {
-  padding: 24px;
-  font-size: 15px;
-  line-height: 1.6;
-  color: #333;
-}*/
-
 /* Footer commun */
 .modal-footer {
   padding: 16px 24px;
-  /*border-top: 1px solid #e5e7eb;*/
   display: flex;
   gap: 12px;
-  justify-content: flex-end;
+  justify-content: center;
 }
 
 /* Boutons communs */
@@ -192,7 +183,6 @@
 
 /* Mise en valeur du nom de personne dans les confirmations */
 .modal-person-name {
-  /*font-weight: 600;*/
   display: block;
   color: var(--text-secondary);
 }

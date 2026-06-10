@@ -1,0 +1,54 @@
+/**
+ * Styles pour le mode lecture seule (visiteurs)
+ * Appliqués quand <html class="read-only"> est présent (posé par auth.js)
+ */
+
+/* ── index.html : boutons "Point de départ" et "Retour" — visibles en lecture seule ── */
+
+/* ── Boutons d'édition dans les tableaux et modales ─────────────────────── */
+/* Supprimer */
+.read-only .btn-delete {
+  display: none !important;
+}
+
+/* Modifier — ciblage sur le <button> ET sur les <i> enfants */
+.read-only button.btn-edit,
+.read-only i.fa-edit.btn-edit,
+.read-only i.fa-pen.btn-edit,
+.read-only i.fa-pen-to-square.btn-edit {
+  display: none !important;
+}
+
+/* Ajouter (icône +) */
+.read-only i.fa-plus.btn-edit {
+  display: none !important;
+}
+
+/* ── Éléments génériques marqués admin-only ──────────────────────────────── */
+.read-only .admin-only {
+  display: none !important;
+}
+
+/* ── gestion-des-lieux.html : modal d'édition ────────────────────────────── */
+.read-only #editModal {
+  display: none !important;
+}
+
+/* ── Titres alternatifs en lecture seule ─────────────────────────────────── */
+.viewer-only { display: none; }
+.read-only .viewer-only { display: inline; }
+.read-only .admin-title  { display: none; }
+
+/* ── Bouton de déconnexion : visible seulement quand connecté ────────────── */
+.logout-btn {
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 6px 0px 0px 6px;
+  color: inherit;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
