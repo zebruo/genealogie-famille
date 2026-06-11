@@ -26,10 +26,10 @@ Application web professionnelle et interactive pour visualiser et gérer un arbr
 - Effets d'animation et survol
 
 ### Authentification et rôles
-- Page de connexion sécurisée (mots de passe hashés bcrypt)
-- Rôle **administrateur** : lecture + écriture + validation des liens
+- Deux accès par mot de passe : **administrateur** et **visiteur**
+- Rôle **administrateur** : lecture + écriture + validation des liens ARK
 - Rôle **visiteur** : lecture seule (éléments admin masqués via `readonly.css`)
-- Session PHP avec cookie HttpOnly
+- Mots de passe hashés bcrypt, session PHP avec cookie HttpOnly
 
 ### Gestion des données
 - Base de données MySQL
@@ -222,6 +222,6 @@ Développé avec l'assistance de Claude (Anthropic)
 
 ---
 
-**© 2026 - Généalogie Durel Hélaine**
+**© 2026 - Généalogie familiale**
 
 Créé avec soin pour préserver l'histoire familiale
