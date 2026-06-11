@@ -4,7 +4,6 @@
  * Fonctions pour afficher des notifications et confirmations stylisées
  * Compatible avec tous les navigateurs modernes
  * 
- * Auteur: Eric Durel
  * Date: Janvier 2026
  */
 
