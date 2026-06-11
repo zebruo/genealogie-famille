@@ -846,6 +846,11 @@ class FamilyTreeApp {
       node.y = -node.depth * CONFIG.tree.verticalSpacing;
     });
 
+    // Appliquer le transform optimal avant le dessin : les positions viennent
+    // du layout D3 (synchrone), pas du DOM, donc disponibles immédiatement.
+    var finalTransform = self.visualizer.calculateOptimalTransform(nodes);
+    svg.call(self.visualizer.zoom.transform, finalTransform);
+
     // Dessiner d'abord tous les liens (arrière-plan)
     this.drawTreeLinks(g, treeData);
     // Dessiner les fratries avant les nœuds principaux
@@ -855,14 +860,6 @@ class FamilyTreeApp {
 
     // Dessiner les nœuds EN DERNIER pour qu'ils soient au-dessus de tous les liens
     this.drawTreeNodes(g, treeData);
-
-    // Centrer la vue
-    requestAnimationFrame(function() {
-      setTimeout(function() {
-        var finalTransform = self.visualizer.calculateOptimalTransform(nodes);
-        svg.call(self.visualizer.zoom.transform, finalTransform);
-      }, 150);
-    });
   }
   drawTreeLinks(g, treeData) {
     var self = this;
