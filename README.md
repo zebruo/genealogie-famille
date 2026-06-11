@@ -1,6 +1,6 @@
 # Arbre Généalogique Familial
 
-**Version 2.5**
+**Version 1.0**
 
 Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne. Accès sécurisé par rôles (administrateur / visiteur).
 
@@ -205,12 +205,7 @@ genealogie-famille/
 
 ## Historique des versions
 
-- **v2.5** - Authentification admin/viewer, permaliens vérifiés, backup, aide, readonly
-- **v2.4** - Consolidation CSS, nouvelles pages, .htaccess
-- **v2.3** - Nettoyage code obsolète, nouvelles pages (add-person, menu-users)
-- **v2.2** - Améliorations UI panel et zoom optimal
-- **v2.1** - Gaps texte, liens mariage conditionnels, nettoyage
-- **v2.0** - Refonte majeure avec rectangles et liens orthogonaux
+- **v1.0** - Première version officielle : arbre D3.js, authentification admin/visiteur, permaliens ARK, backup, statistiques, aide
 
 ## Licence
 
