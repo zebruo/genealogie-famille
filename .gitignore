@@ -24,8 +24,10 @@ admin/config_serv.php
 admin/generate-password.php
 admin/backups/
 admin/gedcom-debug.php
-admin/backup-database.html
 admin/api-backup.php
+
+# Fichiers GEDCOM (données personnelles)
+*.ged
 
 # Uploads utilisateurs
 uploads/
@@ -34,6 +36,8 @@ uploads/
 test.html
 policeType.html
 taille_caractères.md
+fichiers-github.txt
+gestion-dates.md
 
 # Git Manager (interface de gestion Git)
 git-manager/

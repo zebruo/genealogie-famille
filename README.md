@@ -1,8 +1,8 @@
 # Arbre Généalogique Familial
 
-**Version 2.4**
+**Version 2.5**
 
-Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne.
+Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne. Accès sécurisé par rôles (administrateur / visiteur).
 
 ## Fonctionnalités
 
@@ -22,14 +22,34 @@ Application web professionnelle et interactive pour visualiser et gérer un arbr
 - Barre supérieure fixe avec contrôles
 - Panneau latéral avec informations détaillées
 - Quick View pour les documents
-- Recherche universelle avec autocomplétion
+- Recherche universelle avec autocomplétion et insensibilité aux accents
 - Effets d'animation et survol
+
+### Authentification et rôles
+- Page de connexion sécurisée (mots de passe hashés bcrypt)
+- Rôle **administrateur** : lecture + écriture + validation des liens
+- Rôle **visiteur** : lecture seule (éléments admin masqués via `readonly.css`)
+- Session PHP avec cookie HttpOnly
 
 ### Gestion des données
 - Base de données MySQL
 - API REST PHP pour les opérations CRUD
-- Système de backup automatique de la base de données
+- Système de backup de la base de données (SQL, JSON, CSV, GEDCOM)
 - Gestion des documents et fichiers GEDCOM
+- Table `liens_verification` pour la validation des permaliens ARK
+
+### Pages
+- **Arbre généalogique** — visualisation interactive
+- **Ajouter/éditer une personne** — formulaire complet
+- **Gestion des lieux** — lieux associés aux membres
+- **Gestion des unions** — mariages multiples
+- **Gestionnaire de documents** — notes, PDFs, photos
+- **Statistiques** — analyse de la généalogie
+- **Permaliens** — consultation et validation des liens ARK (admin : édition + validation)
+- **Backup** — sauvegarde et restauration de la base de données
+- **Aide** — documentation utilisateur
+- **Histoires & Anecdotes** — récits familiaux *(non implémenté)*
+- **Convertisseur républicain** — conversion de dates
 
 ## Structure du projet
 
@@ -37,47 +57,58 @@ Application web professionnelle et interactive pour visualiser et gérer un arbr
 genealogie-famille/
 ├── index.html                      # Page principale - Arbre généalogique
 ├── add-person.html                 # Formulaire d'ajout/édition de personne
-├── gestion-des-lieux.html          # Gestion des lieux
-├── gestion_mariages_multiples.html # Gestion des mariages multiples
-├── documents-manager.html          # Gestionnaire de documents
-├── statistics.html                 # Page de statistiques
+├── aide.html                       # Page d'aide utilisateur
+├── backup-database.html            # Interface de backup base de données
 ├── convertisseur-republicain.html  # Convertisseur calendrier républicain
-├── menu-navigation.html            # Menu de navigation principal
-├── menu-navigation-users.html      # Menu de navigation utilisateurs
-├── .htaccess                       # Configuration Apache pour pdf/photos
+├── documents-manager.html          # Gestionnaire de documents
+├── gestion-des-lieux.html          # Gestion des lieux
+├── gestion_mariages_multiples.html # Gestion des unions multiples
+├── histoires.html                  # Récits et histoires familiales
+├── liens-documents.html            # Permaliens ARK (lecture/validation)
+├── login.html                      # Page de connexion
+├── menu-navigation.html            # Menu navigation (admin)
+├── menu-navigation-users.html      # Menu navigation (tous rôles)
+├── statistics.html                 # Page de statistiques
+├── .htaccess                       # Configuration Apache
 ├── README.md                       # Documentation
 │
 ├── admin/                          # Backend PHP
 │   ├── api3.php                    # API principale pour les données
 │   ├── api4.php                    # API pour les documents
 │   ├── api-backup.php              # API de backup
-│   ├── config.php                  # Configuration (non versionné)
+│   ├── api-liens.php               # API gestion des permaliens et vérification
+│   ├── auth.php                    # Fonctions d'authentification et rôles
+│   ├── login.php                   # Endpoint de connexion/déconnexion
+│   ├── config.php                  # Configuration credentials (non versionné)
+│   ├── config_serv.php             # Configuration serveur production (non versionné)
 │   ├── config.example.php          # Template de configuration
-│   ├── famille_db.sql              # Structure de la base de données (schéma)
-│   ├── backup-database.html        # Interface de backup
-│   ├── gedcom-debug.php            # Débogueur GEDCOM
-│   └── mariage_manager.php         # Gestionnaire de mariages
+│   ├── famille_db.sql              # Structure de la base de données
+│   ├── mariage_manager.php         # Gestionnaire de mariages
+│   └── .htaccess                   # Protection du dossier admin
 │
 ├── js/                             # JavaScript modulaire
-│   ├── config.js                   # Configuration globale (dimensions, espacements, zoom)
+│   ├── auth.js                     # Gestion des rôles côté client
+│   ├── burger.js                   # Menu hamburger mobile
+│   ├── config.js                   # Configuration globale (dimensions, zoom)
+│   ├── darkMode.js                 # Mode sombre/clair
 │   ├── family-member.js            # Classe FamilyMember
-│   ├── ui-manager.js               # Gestionnaire d'interface
-│   ├── tree-visualizer.js          # Visualisation D3.js (SVG, zoom, centrage)
-│   ├── family-tree-app.js          # Application principale (dessin arbre, liens, nœuds)
+│   ├── family-tree-app.js          # Application principale (arbre, liens, nœuds)
 │   ├── helpers.js                  # Fonctions utilitaires
 │   ├── init.js                     # Initialisation et événements
-│   ├── search-engine.js            # Moteur de recherche
-│   ├── modal-system.js             # Système de modales
+│   ├── menu-loader.js              # Chargeur de menu dynamique
+│   ├── modal-system.js             # Système de modales (alert, confirm)
 │   ├── person-quick-view.js        # Quick View des personnes
-│   ├── menu-loader.js              # Chargeur de menu
-│   ├── darkMode.js                 # Mode sombre
-│   └── burger.js                   # Menu hamburger mobile
+│   ├── photo-modal.js              # Modal photos
+│   ├── search-engine.js            # Moteur de recherche
+│   ├── tree-visualizer.js          # Visualisation D3.js (SVG, zoom)
+│   └── ui-manager.js               # Gestionnaire d'interface
 │
 ├── styles/                         # Feuilles de style CSS
-│   ├── family-tree-styles.css      # Styles principaux (~3000 lignes)
-│   ├── person-quick-view.css       # Styles Quick View
+│   ├── family-tree-styles.css      # Styles principaux et système de badges
+│   ├── convertisseur-styles.css    # Styles convertisseur républicain
 │   ├── modal-system.css            # Styles des modales
-│   └── convertisseur-styles.css    # Styles convertisseur
+│   ├── person-quick-view.css       # Styles Quick View
+│   └── readonly.css                # Masquage des éléments admin pour les visiteurs
 │
 └── uploads/                        # Dossier uploads (non versionné)
 ```
@@ -99,20 +130,17 @@ genealogie-famille/
    cd genealogie-famille
    ```
 
-2. **Configurer la base de données**
+2. **Créer la base de données**
    ```bash
-   # Créer une base de données MySQL
    mysql -u root -p
-   CREATE DATABASE famille_db CHARACTER SET utf8 COLLATE utf8_general_ci;
+   CREATE DATABASE famille_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
    ```
 
 3. **Configurer les credentials**
    ```bash
    # Copier le fichier de configuration exemple
    cp admin/config.example.php admin/config.php
-
-   # Éditer admin/config.php avec vos credentials
-   nano admin/config.php
+   # Éditer admin/config.php avec vos credentials DB et mots de passe hashés
    ```
 
 4. **Importer la structure de la base de données**
@@ -121,22 +149,22 @@ genealogie-famille/
    ```
 
 5. **Lancer l'application**
-   - Ouvrir `index.html` dans votre navigateur via un serveur web local
-   - Ou utiliser l'extension "Live Server" dans VS Code
+   - Ouvrir via un serveur web local (Apache, Live Server, etc.)
+   - Accéder à `login.html` pour s'authentifier
 
 ## Utilisation
 
 ### Navigation dans l'arbre
 
-- **Zoom**: Molette de la souris ou pinch sur mobile
-- **Pan**: Cliquer-glisser pour déplacer l'arbre
-- **Centrer**: Bouton "Centrer" pour recentrer la vue
+- **Zoom** : molette de la souris ou pinch sur mobile
+- **Pan** : cliquer-glisser pour déplacer l'arbre
+- **Centrer** : bouton "Centrer" pour recentrer la vue
 
 ### Recherche
 
 - Taper dans la barre de recherche pour trouver une personne
+- Insensible aux accents, recherche multi-mots
 - Sélectionner un résultat pour centrer l'arbre sur cette personne
-- Autocomplétion en temps réel
 
 ### Informations détaillées
 
@@ -144,77 +172,56 @@ genealogie-famille/
 - Affichage des dates, lieux, profession, notes
 - Accès aux documents associés
 - Navigation vers les parents et enfants
+- Enfants listés avec accès direct à leur fiche *(non implémenté)*
 
-### Paramètres
+### Permaliens (liens ARK)
 
-- **Générations**: Choisir le nombre de générations à afficher (2-6)
-- **Point de départ**: Définir une personne comme point de départ par défaut
-- **Mode sombre**: Basculer entre thème clair et sombre
+- Page accessible à tous les utilisateurs connectés
+- Les administrateurs peuvent éditer les liens (double-clic) et les valider (bouton ✓)
+- La date de validation est visible directement dans le tableau
 
 ## Technologies utilisées
 
 ### Frontend
-- HTML5
-- CSS3 (Flexbox, Grid, animations, variables CSS)
+- HTML5, CSS3 (Flexbox, Grid, variables CSS)
 - JavaScript ES6+ (architecture modulaire)
 - D3.js v7.8.5 (visualisation)
 - Font Awesome 6.4.0 (icônes)
-- Google Fonts (Poppins, Inter, Lato)
 
 ### Backend
 - PHP 7.4+
-- MySQL 5.7+
+- MySQL 5.7+ / MariaDB
 - PDO pour les requêtes sécurisées
-- API REST
+- API REST, sessions PHP
 
-### Outils de développement
-- Git pour le versioning
-- GitHub pour l'hébergement du code
+## Sécurité
 
-## Architecture
-
-### Architecture modulaire
-
-Le code JavaScript est organisé en modules séparés pour une meilleure maintenabilité:
-
-- **config.js**: Configuration centralisée (dimensions nœuds, espacements, zoom)
-- **family-member.js**: Modèle de données pour les membres de la famille
-- **ui-manager.js**: Gestion de l'interface utilisateur et panneau latéral
-- **tree-visualizer.js**: Logique de visualisation D3.js (SVG, zoom, calcul bounds)
-- **family-tree-app.js**: Orchestration de l'application (dessin arbre, liens, nœuds)
-- **helpers.js**: Fonctions utilitaires réutilisables
-- **init.js**: Point d'entrée de l'application
-
-### Sécurité
-
-- Credentials de base de données non versionnés (.gitignore)
-- Fichier `config.example.php` pour template
-- Backups SQL exclus du versioning
-- Dossier uploads exclu du versioning
+- Credentials de base de données non versionnés (`.gitignore`)
+- Mots de passe hashés avec `password_hash()` (bcrypt)
+- Sessions PHP avec cookie HttpOnly/SameSite
 - Requêtes préparées PDO contre les injections SQL
+- Dossier `admin/` protégé par `.htaccess`
+- Mode lecture seule pour les visiteurs (`readonly.css`)
 
 ## Historique des versions
 
-- **v2.4** - Consolidation CSS (styles top-bar), nouvelles pages, .htaccess
+- **v2.5** - Authentification admin/viewer, permaliens vérifiés, backup, aide, readonly
+- **v2.4** - Consolidation CSS, nouvelles pages, .htaccess
 - **v2.3** - Nettoyage code obsolète, nouvelles pages (add-person, menu-users)
 - **v2.2** - Améliorations UI panel et zoom optimal
 - **v2.1** - Gaps texte, liens mariage conditionnels, nettoyage
 - **v2.0** - Refonte majeure avec rectangles et liens orthogonaux
 
-## Contribution
-
-Ce projet est un projet personnel familial. Les contributions externes ne sont pas acceptées.
-
 ## Licence
 
-Usage personnel - Tous droits réservés
+Usage personnel — Tous droits réservés
 
 ## Auteur
 
-Développé avec l'assistance de Claude
+Développé avec l'assistance de Claude (Anthropic)
 
 ---
 
-**© 2026 - Généalogie Zebruo**
+**© 2026 - Généalogie Durel Hélaine**
 
 Créé avec soin pour préserver l'histoire familiale
