@@ -5,6 +5,8 @@
  * Structure basée sur test.html
  */
 const CONFIG = {
+  version: "1.0.0",
+
   // Dimensions des nœuds (rectangles)
   node: {
     width: 96,

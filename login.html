@@ -161,6 +161,13 @@
     .btn-login.loading .btn-text { display: none; }
 
     @keyframes spin { to { transform: rotate(360deg); } }
+
+    .login-version {
+      text-align: center;
+      font-size: 0.75rem;
+      color: #475569;
+      margin-top: 1.25rem;
+    }
   </style>
 </head>
 <body>
@@ -194,9 +201,13 @@
         <span id="errorText">Mot de passe incorrect.</span>
       </div>
     </form>
+    <p class="login-version" id="appVersion"></p>
   </div>
 
+  <script src="js/config.js"></script>
   <script>
+    document.getElementById('appVersion').textContent = 'v' + CONFIG.version;
+
     // Afficher/masquer le mot de passe
     document.querySelector('.toggle-password').addEventListener('click', function() {
       const input = document.getElementById('password');
