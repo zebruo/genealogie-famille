@@ -5,16 +5,16 @@
  */
 
 class MariageManager {
-    private $pdo;
-    
-    public function __construct($connexion) {
+    private PDO $pdo;
+
+    public function __construct(PDO $connexion) {
         $this->pdo = $connexion;
     }
     
     /**
      * Récupérer tous les mariages d'une personne
      */
-    public function getMariagesPersonne($personne_id) {
+    public function getMariagesPersonne(string $personne_id) {
         $sql = "SELECT 
                     m.id,
                     m.epoux_id,
@@ -49,7 +49,7 @@ class MariageManager {
     /**
  * Ajouter un nouveau mariage
  */
-public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lieu_mariage = null, $date_fin = null, $type_fin = null, $notes = null, $date_mariage_affichage = null, $date_fin_affichage = null) {
+public function ajouterMariage(string $epoux_id, string $epouse_id, ?string $date_mariage = null, ?string $lieu_mariage = null, ?string $date_fin = null, ?string $type_fin = null, ?string $notes = null, ?string $date_mariage_affichage = null, ?string $date_fin_affichage = null) {
     // Calculer le numéro d'ordre pour chaque conjoint
     $numero_ordre_epoux = $this->getProchainNumeroOrdre($epoux_id);
     $numero_ordre_epouse = $this->getProchainNumeroOrdre($epouse_id);
@@ -81,7 +81,7 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
     /**
      * Obtenir le prochain numéro d'ordre pour une personne
      */
-    private function getProchainNumeroOrdre($personne_id) {
+    private function getProchainNumeroOrdre(string $personne_id) {
         $sql = "SELECT COALESCE(MAX(numero_ordre), 0) + 1 AS prochain
                 FROM mariages 
                 WHERE epoux_id = :personne_id OR epouse_id = :personne_id";
@@ -97,7 +97,7 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
     /**
      * Modifier un mariage existant
      */
-    public function modifierMariage($mariage_id, $data) {
+    public function modifierMariage(string $mariage_id, array $data) {
         $fields = [];
         $params = [];
         
@@ -127,23 +127,9 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
     }
     
     /**
-     * Terminer un mariage (divorce ou décès)
-     */
-    public function terminerMariage($mariage_id, $date_fin, $type_fin = 'divorce') {
-        $sql = "UPDATE mariages SET date_fin = :date_fin, type_fin = :type_fin WHERE id = :mariage_id";
-        $stmt = $this->pdo->prepare($sql);
-        
-        $stmt->bindValue(':date_fin', $date_fin, PDO::PARAM_STR);
-        $stmt->bindValue(':type_fin', $type_fin, PDO::PARAM_STR);
-        $stmt->bindValue(':mariage_id', $mariage_id, PDO::PARAM_INT);
-        
-        return $stmt->execute();
-    }
-    
-    /**
      * Supprimer un mariage
      */
-    public function supprimerMariage($mariage_id) {
+    public function supprimerMariage(string $mariage_id) {
         // Vérifier s'il y a des enfants liés à ce mariage
         $sql_check = "SELECT COUNT(*) as count FROM relations WHERE mariage_id = :mariage_id";
         $stmt = $this->pdo->prepare($sql_check);
@@ -170,7 +156,7 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
     /**
      * Récupérer les enfants d'un mariage
      */
-    public function getEnfantsMariage($mariage_id) {
+    public function getEnfantsMariage(string $mariage_id) {
         $sql = "SELECT DISTINCT m.* 
                 FROM membres m
                 INNER JOIN relations r ON m.id = r.enfant_id
@@ -185,24 +171,9 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
     }
     
     /**
-     * Lier un enfant à un mariage
-     */
-    public function lierEnfantMariage($enfant_id, $mariage_id) {
-        $sql = "UPDATE relations 
-                SET mariage_id = :mariage_id 
-                WHERE enfant_id = :enfant_id AND type = 'parent'";
-        
-        $stmt = $this->pdo->prepare($sql);
-        $stmt->bindValue(':mariage_id', $mariage_id, PDO::PARAM_INT);
-        $stmt->bindValue(':enfant_id', $enfant_id, PDO::PARAM_INT);
-        
-        return $stmt->execute();
-    }
-    
-    /**
      * Obtenir les informations complètes d'un mariage
      */
-    public function getMariageComplet($mariage_id) {
+    public function getMariageComplet(string $mariage_id) {
         $sql = "SELECT 
                     m.*,
                     me.prenom AS prenom_epoux,
@@ -261,7 +232,7 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
     /**
      * Formater l'affichage d'un mariage pour l'interface
      */
-    public function formatMariagePourAffichage($mariage, $personne_id) {
+    public function formatMariagePourAffichage(array $mariage, string $personne_id) {
         $conjoint_id = ($mariage['epoux_id'] == $personne_id) ? $mariage['epouse_id'] : $mariage['epoux_id'];
         $conjoint_prenom = ($mariage['epoux_id'] == $personne_id) ? $mariage['prenom_epouse'] : $mariage['prenom_epoux'];
         $conjoint_nom = ($mariage['epoux_id'] == $personne_id) ? $mariage['nom_epouse'] : $mariage['nom_epoux'];
@@ -300,52 +271,4 @@ public function ajouterMariage($epoux_id, $epouse_id, $date_mariage = null, $lie
         ];
     }
 }
-
-// ============================================================================
-// EXEMPLE D'UTILISATION
-// ============================================================================
-
-/*
-// Configuration de la connexion PDO
-require_once 'config.php';
-$pdo = getConnection();
-
-// Créer une instance du gestionnaire
-$mariageManager = new MariageManager($pdo);
-
-// Exemple 1 : Ajouter un mariage
-$mariage_id = $mariageManager->ajouterMariage(
-    1,  // ID de l'époux
-    2,  // ID de l'épouse
-    '2000-05-15',  // Date de mariage
-    'Paris, France'  // Lieu de mariage
-);
-
-// Exemple 2 : Récupérer tous les mariages d'une personne
-$mariages = $mariageManager->getMariagesPersonne(1);
-foreach ($mariages as $mariage) {
-    $affichage = $mariageManager->formatMariagePourAffichage($mariage, 1);
-    echo $affichage['texte_complet'] . "\n";
-}
-
-// Exemple 3 : Terminer un mariage (divorce)
-$mariageManager->terminerMariage($mariage_id, '2010-03-20', 'divorce');
-
-// Exemple 4 : Ajouter un deuxième mariage pour la même personne
-$mariage2_id = $mariageManager->ajouterMariage(
-    1,  // ID de l'époux (même personne)
-    3,  // ID du nouvel épouse
-    '2011-09-10',
-    'Lyon, France'
-);
-
-// Exemple 5 : Lier des enfants au bon mariage
-$mariageManager->lierEnfantMariage(10, $mariage_id);  // Enfant du 1er mariage
-$mariageManager->lierEnfantMariage(11, $mariage2_id);  // Enfant du 2e mariage
-
-// Exemple 6 : Obtenir les informations complètes d'un mariage
-$mariage_complet = $mariageManager->getMariageComplet($mariage_id);
-echo "Mariage entre {$mariage_complet['prenom_epoux']} et {$mariage_complet['prenom_epouse']}\n";
-echo "Nombre d'enfants : " . count($mariage_complet['enfants']) . "\n";
-*/
 ?>

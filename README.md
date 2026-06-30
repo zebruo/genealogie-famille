@@ -75,7 +75,7 @@ genealogie-famille/
 ├── admin/                          # Backend PHP
 │   ├── api3.php                    # API principale pour les données
 │   ├── api4.php                    # API pour les documents
-│   ├── api-backup.php              # API de backup
+│   ├── api-backup.php              # API de backup (non versionné)
 │   ├── api-liens.php               # API gestion des permaliens et vérification
 │   ├── auth.php                    # Fonctions d'authentification et rôles
 │   ├── login.php                   # Endpoint de connexion/déconnexion
@@ -151,6 +151,8 @@ genealogie-famille/
 5. **Lancer l'application**
    - Ouvrir via un serveur web local (Apache, Live Server, etc.)
    - Accéder à `login.html` pour s'authentifier
+
+> **Fonctionnalité optionnelle non incluse** : `backup-database.html` nécessite `admin/api-backup.php`, volontairement absent du dépôt public pour raisons de sécurité. Sans ce fichier, la page affiche simplement un message d'indisponibilité.
 
 ## Utilisation
 

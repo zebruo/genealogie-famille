@@ -4,7 +4,7 @@ ini_set('display_errors', 0);
 error_reporting(E_ALL);
 
 // Capturer toutes les erreurs et les transformer en JSON
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
+set_error_handler(function(int $errno, string $errstr, string $errfile, int $errline) {
     throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
 });
 
@@ -13,9 +13,9 @@ require_once 'config.php';
 require_once 'mariage_manager.php';
 
 class FamilyTreeAPI {
-    private $pdo;
-    private $mariageManager;
-    private $uploadDir = '../uploads/documents/'; // Répertoire pour les fichiers PDF
+    private PDO $pdo;
+    private MariageManager $mariageManager;
+    private string $uploadDir = '../uploads/documents/'; // Répertoire pour les fichiers PDF
 
     public function __construct() {
         $this->pdo = getConnection();
@@ -583,7 +583,7 @@ class FamilyTreeAPI {
         }
     }
 
-    private function updateDocumentFields($documentId, $personId, $updateFields) {
+    private function updateDocumentFields(string $documentId, string $personId, array $updateFields) {
         $setParts = [];
         foreach (array_keys($updateFields) as $key) {
             $setParts[] = "$key = :$key";
@@ -1310,7 +1310,7 @@ class FamilyTreeAPI {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function mettreAJourLieu($ancienLieu, $nouveauLieu) {
+    public function mettreAJourLieu(string $ancienLieu, string $nouveauLieu) {
         try {
             $this->pdo->beginTransaction();
 
@@ -1331,7 +1331,7 @@ class FamilyTreeAPI {
         }
     }
 
-    public function supprimerLieu($lieu) {
+    public function supprimerLieu(string $lieu) {
         try {
             $this->pdo->beginTransaction();
 
@@ -1352,7 +1352,7 @@ class FamilyTreeAPI {
         }
     }
 
-    public function getDetailsLieu($lieu) {
+    public function getDetailsLieu(string $lieu) {
         $details = [
             'naissances' => [],
             'deces' => [],
@@ -1381,7 +1381,7 @@ class FamilyTreeAPI {
         return $details;
     }
 
-    public function rechercherLieux($terme) {
+    public function rechercherLieux(string $terme) {
         $stmt = $this->pdo->prepare("
             SELECT DISTINCT lieu,
                    SUM(CASE WHEN type = 'naissance' THEN occurrences ELSE 0 END) as nb_naissances,

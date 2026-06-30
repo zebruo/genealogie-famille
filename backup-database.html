@@ -352,6 +352,12 @@
       <p>Gérez vos sauvegardes et restaurations de données généalogiques</p>
     </div>
 
+    <div id="apiUnavailableBanner" style="display:none; padding: 16px 20px; background: var(--accent-color-alpha); border-radius: var(--radius-md); margin-bottom: 25px; color: var(--text-primary);">
+      <i class="fas fa-triangle-exclamation" style="color: #ff9800; margin-right: 8px;"></i>
+      <strong>Fonctionnalité non disponible sur cette installation.</strong>
+      Le fichier <code>admin/api-backup.php</code> n'est pas inclus dans le dépôt public pour des raisons de sécurité — voir le README.
+    </div>
+
     <!-- Statistiques -->
     <div class="backup-section">
       <h2><i class="fas fa-chart-line"></i> Statistiques de la Base</h2>
@@ -528,6 +534,13 @@
       loadBackupHistory();
     });
 
+    // Afficher le bandeau "API indisponible" et stopper le spinner d'historique
+    function showApiUnavailable() {
+      document.getElementById('apiUnavailableBanner').style.display = 'block';
+      document.getElementById('backupHistory').innerHTML =
+        '<p style="color: var(--text-secondary); text-align: center; padding: 20px;">Historique indisponible</p>';
+    }
+
     // Charger les statistiques
     function loadStats() {
       fetch(API_URL + '?action=getStats')
@@ -541,7 +554,10 @@
             document.getElementById('statDocumentLinks').textContent = data.stats.documentLinks || '0';
           }
         })
-        .catch(error => console.error('Erreur chargement stats:', error));
+        .catch(error => {
+          console.error('Erreur chargement stats:', error);
+          showApiUnavailable();
+        });
     }
 
     // Charger l'historique des sauvegardes
@@ -553,7 +569,10 @@
             displayBackupHistory(data.backups);
           }
         })
-        .catch(error => console.error('Erreur chargement historique:', error));
+        .catch(error => {
+          console.error('Erreur chargement historique:', error);
+          showApiUnavailable();
+        });
     }
 
     // Afficher l'historique

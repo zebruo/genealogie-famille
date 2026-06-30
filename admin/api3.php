@@ -4,7 +4,7 @@ require_once 'config.php';
 require_once 'mariage_manager.php';
 
 // Point 5 : logique de confidentialité unifiée, partagée par les deux classes
-function isPersonConfidential($date_naissance, $date_deces, $force_public = 0, $date_deces_affichage = null): bool {
+function isPersonConfidential(?string $date_naissance, ?string $date_deces, bool $force_public = false, ?string $date_deces_affichage = null): bool {
     if (!empty($force_public)) return false;
     $hasDeath = !empty($date_deces) && $date_deces !== '0000-00-00';
     if ($hasDeath) return (int)substr($date_deces, 0, 4) > (date('Y') - 10);
@@ -14,8 +14,8 @@ function isPersonConfidential($date_naissance, $date_deces, $force_public = 0, $
 }
 
 class FamilyTreeAPI {
-    private $pdo;
-    private $mariageManager;
+    private PDO $pdo;
+    private MariageManager $mariageManager;
 
     public function __construct() {
         $this->pdo = getConnection();
@@ -26,7 +26,7 @@ class FamilyTreeAPI {
     }
 
     // Point 5 : délègue à la fonction partagée
-    private function isConfidential($membre): bool {
+    private function isConfidential(array $membre): bool {
         return isPersonConfidential(
             $membre['birthDate'] ?? null,
             $membre['deathDate'] ?? null,
@@ -60,7 +60,7 @@ class FamilyTreeAPI {
     }
 
     // Point 4 : garde partagée pour les dates invalides
-    private function isEmptyDate($date): bool {
+    private function isEmptyDate(?string $date): bool {
         return empty($date) || $date === '0000-00-00' || substr($date, 0, 4) === '0000';
     }
 
@@ -93,22 +93,22 @@ class FamilyTreeAPI {
         }
     }
 
-    private function formatDate($date, $fullFormat = false) {
+    private function formatDate(?string $date, bool $fullFormat = false) {
         if ($this->isEmptyDate($date)) return null;
         return $fullFormat ? date('d-m-Y', strtotime($date)) : substr($date, 0, 4);
     }
 
-    private function formatDateISO($date) {
+    private function formatDateISO(?string $date) {
         if ($this->isEmptyDate($date)) return null;
         return date('Y-m-d', strtotime($date));
     }
 
-    private function getFirstName($fullName) {
+    private function getFirstName(string $fullName) {
         $names = explode(' ', trim($fullName));
         return $names[0];
     }
 
-    private function getAllFirstNames($fullName) {
+    private function getAllFirstNames(string $fullName) {
         return trim(preg_replace('/\s+/', ' ', $fullName));
     }
 
@@ -364,7 +364,7 @@ class FamilyTreeAPI {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    private function getParentIds($id) {
+    private function getParentIds(string $id) {
         $stmt = $this->pdo->prepare("
             SELECT parent_id FROM relations WHERE enfant_id = ? AND type = 'parent'
         ");
@@ -372,7 +372,7 @@ class FamilyTreeAPI {
         return $stmt->fetchAll(PDO::FETCH_COLUMN);
     }
 
-    private function getSiblingIds($id) {
+    private function getSiblingIds(string $id) {
         $stmt = $this->pdo->prepare("
             SELECT DISTINCT
                 CASE
@@ -389,7 +389,7 @@ class FamilyTreeAPI {
     }
 
     // Point 3 : champs dupliqués (date/marriageDate, place/marriagePlace, endDate/divorceDate) supprimés
-    private function getMarriagesForMember($id) {
+    private function getMarriagesForMember(string $id) {
         $mariages = $this->mariageManager->getMariagesPersonne($id);
         $result = [];
 
@@ -687,7 +687,7 @@ class FamilyTreeAPI {
 // ========================================
 
 class LieuxManager {
-    private $pdo;
+    private PDO $pdo;
 
     public function __construct() {
         $this->pdo = getConnection();
@@ -695,7 +695,7 @@ class LieuxManager {
 
     // Point 5 : délègue à la fonction partagée
     // Point 2 : $date_deces_affichage ajouté pour corriger le cas "décédé sans date ISO valide"
-    private function isConfidential($date_naissance, $date_deces, $force_public = 0, $date_deces_affichage = null): bool {
+    private function isConfidential(?string $date_naissance, ?string $date_deces, bool $force_public = false, ?string $date_deces_affichage = null): bool {
         return isPersonConfidential($date_naissance, $date_deces, $force_public, $date_deces_affichage);
     }
 
@@ -748,7 +748,7 @@ class LieuxManager {
     }
 
     // Point 6 : boucle sur les 3 tables/colonnes au lieu de 3 blocs identiques
-    public function mettreAJourLieu($ancienLieu, $nouveauLieu) {
+    public function mettreAJourLieu(string $ancienLieu, string $nouveauLieu) {
         try {
             $this->pdo->beginTransaction();
             foreach ([['membres', 'lieu_naissance'], ['membres', 'lieu_deces'], ['mariages', 'lieu_mariage']] as [$table, $col]) {
@@ -764,7 +764,7 @@ class LieuxManager {
     }
 
     // Point 6 : même factorisation
-    public function supprimerLieu($lieu) {
+    public function supprimerLieu(string $lieu) {
         try {
             $this->pdo->beginTransaction();
             foreach ([['membres', 'lieu_naissance'], ['membres', 'lieu_deces'], ['mariages', 'lieu_mariage']] as [$table, $col]) {
@@ -780,7 +780,7 @@ class LieuxManager {
     }
 
     // Point 2 : date_deces_affichage récupérée et transmise à isConfidential pour les 3 sections
-    public function getDetailsLieu($lieu) {
+    public function getDetailsLieu(string $lieu) {
         $details = ['naissances' => [], 'deces' => [], 'mariages' => []];
         $admin = isAdmin();
 
@@ -840,7 +840,7 @@ class LieuxManager {
     }
 
     // Point 7 : sous-requête déléguée
-    public function rechercherLieux($terme) {
+    public function rechercherLieux(string $terme) {
         $stmt = $this->pdo->prepare("
             SELECT lieu,
                    SUM(CASE WHEN type = 'naissance' THEN occurrences ELSE 0 END) as nb_naissances,
