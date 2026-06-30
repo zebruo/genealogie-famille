@@ -21,7 +21,6 @@ desktop.ini
 # Configuration et données sensibles
 admin/config.php
 admin/config_serv.php
-admin/generate-password.php
 admin/backups/
 admin/gedcom-debug.php
 admin/api-backup.php

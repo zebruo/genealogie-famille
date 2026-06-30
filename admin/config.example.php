@@ -2,17 +2,20 @@
 /**
  * Fichier de configuration - EXEMPLE
  *
- * Pour utiliser ce fichier:
- * 1. Copiez ce fichier et renommez-le en 'config.php'
- * 2. Remplacez les valeurs ci-dessous par vos propres credentials
- * 3. Ne versionnez JAMAIS le fichier config.php (il est dans .gitignore)
+ * Pour utiliser ce fichier :
+ * 1. Renommer ce fichier en 'config.php'
+ * 2. Renseigner vos credentials de base de données ci-dessous
+ * 3. Accéder à admin/generate-password.php avec le mot de passe temporaire 'admin'
+ *    pour générer vos vrais hashs, puis remplacer les valeurs ci-dessous
+ * 4. Ne versionnez JAMAIS le fichier config.php (il est dans .gitignore)
  */
 
 // ─── Mots de passe ────────────────────────────────────────────────────────────
-// Générer un hash avec : echo password_hash('VOTRE_MOT_DE_PASSE', PASSWORD_DEFAULT);
-// Puis remplacer les placeholders ci-dessous.
-define('VIEWER_PASSWORD_HASH', 'PLACEHOLDER_VIEWER_HASH');  // mot de passe visiteur
-define('ADMIN_PASSWORD_HASH',  'PLACEHOLDER_ADMIN_HASH');   // mot de passe administrateur
+// ⚠️  MOT DE PASSE TEMPORAIRE — À CHANGER IMMÉDIATEMENT après la première connexion
+// Les deux comptes utilisent provisoirement le mot de passe : admin
+// Utiliser admin/generate-password.php pour générer vos propres hashs bcrypt.
+define('VIEWER_PASSWORD_HASH', '$2y$12$SNJgUOSaytJ15NYZd.4QtOrkJTrjQbFQH1e/50oJJUKvglImHZ1YK');  // temporaire : admin
+define('ADMIN_PASSWORD_HASH',  '$2y$12$SNJgUOSaytJ15NYZd.4QtOrkJTrjQbFQH1e/50oJJUKvglImHZ1YK');  // temporaire : admin
 
 define('DB_HOST', 'localhost');
 define('DB_NAME', 'votre_base_de_donnees');

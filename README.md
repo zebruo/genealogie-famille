@@ -117,40 +117,39 @@ genealogie-famille/
 
 ### Prérequis
 
-- Serveur web (Apache, Nginx, etc.)
-- PHP 7.4 ou supérieur
-- MySQL 5.7 ou supérieur
+- Serveur web avec PHP en module (Apache recommandé — WampServer, XAMPP...)
+- PHP 8.2 ou supérieur (testé en 8.4)
+- MySQL 8.0 ou supérieur (ou MariaDB 10.6 ou supérieur)
 - Navigateur web moderne
 
 ### Configuration
 
-1. **Cloner le dépôt**
-   ```bash
-   git clone https://github.com/zebruo/genealogie-famille.git
-   cd genealogie-famille
-   ```
+1. **Télécharger la release**
+   - Aller sur [github.com/zebruo/genealogie-famille/releases/latest](https://github.com/zebruo/genealogie-famille/releases/latest)
+   - Télécharger l'archive ZIP, l'extraire et renommer le dossier obtenu en `genealogie-famille`
 
-2. **Créer la base de données**
-   ```bash
-   mysql -u root -p
-   CREATE DATABASE famille_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-   ```
+2. **Rendre le projet accessible via le serveur web**
 
-3. **Configurer les credentials**
-   ```bash
-   # Copier le fichier de configuration exemple
-   cp admin/config.example.php admin/config.php
-   # Éditer admin/config.php avec vos credentials DB et mots de passe hashés
-   ```
+   **Option A — Dossier public** : copier le dossier du projet dans le répertoire public du serveur (`htdocs`, `www`, `public_html`...). Le projet sera accessible à `http://localhost/genealogie-famille/`.
 
-4. **Importer la structure de la base de données**
-   ```bash
-   mysql -u root -p famille_db < admin/famille_db.sql
-   ```
+   **Option B — Virtual host** : déclarer un vhost dans `httpd-vhosts.conf` pointant vers le dossier du projet. Le projet sera accessible à `http://genealogie-famille/`.
+
+3. **Créer la base de données et importer le schéma**
+   - Ouvrir phpMyAdmin (ex. `http://localhost/phpmyadmin` avec WampServer, ou autre selon votre environnement)
+   - Onglet **Bases de données** → créer `famille_db` (interclassement `utf8mb4_unicode_ci`)
+   - Sélectionner la base `famille_db` → onglet **Importer** → importer le modèle `famille_db.sql` situé dans le dossier `admin` → **Exécuter**
+
+4. **Configurer les credentials**
+   - Renommer `admin/config.example.php` en `admin/config.php` (contient un mot de passe temporaire `admin`) et renseigner les informations de connexion à la base de données (`DB_HOST`, `DB_NAME`, `DB_USER`, `DB_PASS`)
+   - Accéder à `http://genealogie-famille/login.html` et se connecter avec le mot de passe temporaire **`admin`** (valable pour les deux comptes)
+   - Ouvrir `http://genealogie-famille/admin/generate-password.php` — l'outil est maintenant accessible
+   - Saisir les vrais mots de passe (un pour le visiteur, un pour l'admin) → l'outil génère les deux hashs bcrypt
+   - Copier le snippet affiché et le coller dans `config.php` en remplaçant les hashs temporaires
+   - Se déconnecter et se reconnecter avec les vrais mots de passe — l'installation est terminée
+   - ⚠️ Le mot de passe `admin` par défaut doit impérativement être remplacé avant toute mise en production
 
 5. **Lancer l'application**
-   - Ouvrir via un serveur web local (Apache, Live Server, etc.)
-   - Accéder à `login.html` pour s'authentifier
+   - Accéder à `http://genealogie-famille/login.html` pour s'authentifier
 
 > **Fonctionnalité optionnelle non incluse** : `backup-database.html` nécessite `admin/api-backup.php`, volontairement absent du dépôt public pour raisons de sécurité. Sans ce fichier, la page affiche simplement un message d'indisponibilité.
 
