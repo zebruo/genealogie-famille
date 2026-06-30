@@ -1,6 +1,6 @@
 # Arbre Généalogique Familial
 
-**Version 1.0**
+**Version 1.1.0**
 
 Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne. Accès sécurisé par rôles (administrateur / visiteur).
 
@@ -83,6 +83,7 @@ genealogie-famille/
 │   ├── config_serv.php             # Configuration serveur production (non versionné)
 │   ├── config.example.php          # Template de configuration
 │   ├── famille_db.sql              # Structure de la base de données
+│   ├── generate-password.php       # Générateur de hashs bcrypt (première installation)
 │   ├── mariage_manager.php         # Gestionnaire de mariages
 │   └── .htaccess                   # Protection du dossier admin
 │
@@ -190,8 +191,8 @@ genealogie-famille/
 - Font Awesome 6.4.0 (icônes)
 
 ### Backend
-- PHP 7.4+
-- MySQL 5.7+ / MariaDB
+- PHP 8.2+ (testé en 8.4)
+- MySQL 8.0+ / MariaDB 10.6+
 - PDO pour les requêtes sécurisées
 - API REST, sessions PHP
 
@@ -202,11 +203,13 @@ genealogie-famille/
 - Sessions PHP avec cookie HttpOnly/SameSite
 - Requêtes préparées PDO contre les injections SQL
 - Dossier `admin/` protégé par `.htaccess`
+- Dossier `admin/backups/` protégé par `.htaccess` (accès direct aux dumps SQL bloqué)
 - Mode lecture seule pour les visiteurs (`readonly.css`)
 
 ## Historique des versions
 
-- **v1.0** - Première version officielle : arbre D3.js, authentification admin/visiteur, permaliens ARK, backup, statistiques, aide
+- **v1.1.0** - Typage PHP 8.4, refonte de l'installation guidée, générateur de mots de passe (double compte visiteur/admin), sécurisation du dossier backups
+- **v1.0.0** - Première version officielle : arbre D3.js, authentification admin/visiteur, permaliens ARK, backup, statistiques, aide
 
 ## Licence
 
