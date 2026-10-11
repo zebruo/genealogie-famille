@@ -37,6 +37,13 @@ class FamilyTreeApp {
       // Réinitialiser le flag après chaque clic
       self.nodeClickedFlag = false;
     });
+    // Le menu (cases à cocher...) est inséré en asynchrone par menu-loader.js et UIManager en a besoin :
+    // sans cette attente, une API plus rapide que le menu fait planter l'initialisation
+    var menuReady = document.getElementById("toggleSiblings")
+      ? Promise.resolve()
+      : new Promise(function(resolve) {
+          document.addEventListener("menuLoaded", resolve, { once: true });
+        });
     fetch("admin/api3.php?action=getFamilyData")
       .then(function(response) {
         if (!response.ok)
@@ -45,6 +52,9 @@ class FamilyTreeApp {
       })
       .then(function(data) {
         self.familyDatabase = data;
+        return menuReady;
+      })
+      .then(function() {
         self.ui = new UIManager(self);
         self.visualizer = new TreeVisualizer(self);
         var startingId = self.getStartingId();
