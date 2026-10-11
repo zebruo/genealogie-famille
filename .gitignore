@@ -37,8 +37,5 @@ fichiers-github.txt
 gestion-dates.md
 make-release.ps1
 
-# Git Manager (interface de gestion Git)
-git-manager/
-
 # Notes personnelles
 notes/
