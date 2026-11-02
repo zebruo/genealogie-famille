@@ -3,16 +3,6 @@ require_once 'auth.php';
 require_once 'config.php';
 require_once 'mariage_manager.php';
 
-// Point 5 : logique de confidentialité unifiée, partagée par les deux classes
-function isPersonConfidential(?string $date_naissance, ?string $date_deces, bool $force_public = false, ?string $date_deces_affichage = null): bool {
-    if (!empty($force_public)) return false;
-    $hasDeath = !empty($date_deces) && $date_deces !== '0000-00-00';
-    if ($hasDeath) return (int)substr($date_deces, 0, 4) > (date('Y') - 10);
-    if (!empty($date_deces_affichage)) return false;
-    if (empty($date_naissance) || $date_naissance === '0000-00-00') return true;
-    return (int)substr($date_naissance, 0, 4) > (date('Y') - 100);
-}
-
 class FamilyTreeAPI {
     private PDO $pdo;
     private MariageManager $mariageManager;

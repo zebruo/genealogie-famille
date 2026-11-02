@@ -29,15 +29,14 @@ class FamilyTreeAPI {
         }
     }
 
-    // Confidentialité : décédé depuis moins de 10 ans, ou vivant né il y a moins de 100 ans
+    // Délègue à la règle commune (auth.php)
     private function isConfidential(array $membre): bool {
-        if (!empty($membre['force_public'])) return false;
-        $deces = $membre['date_deces'] ?? '';
-        $hasDeath = !empty($deces) && $deces !== '0000-00-00';
-        if ($hasDeath) return (int)substr($deces, 0, 4) > (date('Y') - 10);
-        $naissance = $membre['date_naissance'] ?? '';
-        if (empty($naissance) || $naissance === '0000-00-00') return true;
-        return (int)substr($naissance, 0, 4) > (date('Y') - 100);
+        return isPersonConfidential(
+            $membre['date_naissance'] ?? null,
+            $membre['date_deces'] ?? null,
+            (bool)($membre['force_public'] ?? false),
+            $membre['date_deces_affichage'] ?? null
+        );
     }
 
     private function maskMembre(array $membre): array {
@@ -228,10 +227,10 @@ class FamilyTreeAPI {
 
         // Bloquer l'accès aux documents des personnes confidentielles
         if (!isAdmin()) {
-            $stmt = $this->pdo->prepare("SELECT date_naissance, date_deces FROM membres WHERE id = :id");
+            $stmt = $this->pdo->prepare("SELECT date_naissance, date_deces, force_public, date_deces_affichage FROM membres WHERE id = :id");
             $stmt->execute(['id' => $personId]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            if ($row && $this->isConfidential(['date_naissance' => $row['date_naissance'], 'date_deces' => $row['date_deces']])) {
+            if ($row && $this->isConfidential($row)) {
                 return ['success' => true, 'documents' => []];
             }
         }
