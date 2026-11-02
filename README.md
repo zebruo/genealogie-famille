@@ -1,6 +1,6 @@
 # Arbre Généalogique Familial
 
-**Version 1.1.0**
+**Version 1.2.0**
 
 Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne. Accès sécurisé par rôles (administrateur / visiteur).
 
@@ -113,7 +113,8 @@ genealogie-famille/
 │   ├── person-quick-view.css       # Styles Quick View
 │   └── readonly.css                # Masquage des éléments admin pour les visiteurs
 │
-└── uploads/                        # Dossier uploads (non versionné)
+└── uploads/                        # Documents et photos (non versionnés)
+    └── .htaccess                   # Bloque l'accès direct aux fichiers
 ```
 
 ## Installation
@@ -121,9 +122,11 @@ genealogie-famille/
 ### Prérequis
 
 - Serveur web avec PHP en module (Apache recommandé — WampServer, XAMPP...)
-- PHP 8.2 ou supérieur (testé en 8.4)
+- PHP 8.2 ou supérieur (testé en 8.4 et 8.5), avec les extensions `pdo_mysql`, `mbstring` et `fileinfo` (`zip` en plus pour la sauvegarde)
 - MySQL 8.0 ou supérieur (ou MariaDB 10.6 ou supérieur)
 - Navigateur web moderne
+
+> ⚠️ Les protections des dossiers reposent sur des fichiers `.htaccess`, que seul Apache applique. Avec un autre serveur (Nginx, `php -S`...), bloquez vous-même l'accès à `uploads/` et `admin/backups/`.
 
 ### Configuration
 
@@ -193,7 +196,7 @@ genealogie-famille/
 - Font Awesome 6.4.0 (icônes)
 
 ### Backend
-- PHP 8.2+ (testé en 8.4)
+- PHP 8.2+ (testé en 8.4 et 8.5)
 - MySQL 8.0+ / MariaDB 10.6+
 - PDO pour les requêtes sécurisées
 - API REST, sessions PHP
@@ -209,8 +212,20 @@ genealogie-famille/
 - Dossier `uploads/` protégé par `.htaccess` : PDF et photos servis par `admin/fichier.php` (connexion et confidentialité vérifiées)
 - Mode lecture seule pour les visiteurs (`readonly.css`)
 
+### Confidentialité
+
+- Sont masqués aux visiteurs les personnes vivantes nées il y a moins de 100 ans, ou décédées depuis moins de 10 ans, ainsi que leurs documents
+- Exceptions : une personne rendue publique par l'administrateur, ou décédée avec une simple date d'affichage (sans date précise)
+- Un document lié à plusieurs personnes reste visible si l'une d'elles est publique
+
+### Suppression d'une personne
+
+- Ses documents et leurs fichiers sont effacés définitivement (les sauvegardes SQL ne contiennent pas les fichiers)
+- Un document partagé est conservé et passe à une autre personne liée
+
 ## Historique des versions
 
+- **v1.2.0** - Documents et photos accessibles uniquement après connexion, règle de confidentialité unique, plus de fichiers orphelins ni de perte des documents partagés, correction du plantage de l'arbre quand les données arrivent avant le menu
 - **v1.1.0** - Typage PHP 8.4, refonte de l'installation guidée, générateur de mots de passe (double compte visiteur/admin), sécurisation du dossier backups
 - **v1.0.0** - Première version officielle : arbre D3.js, authentification admin/visiteur, permaliens ARK, backup, statistiques, aide
 
