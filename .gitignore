@@ -28,8 +28,9 @@ admin/api-backup.php
 # Fichiers GEDCOM (données personnelles)
 *.ged
 
-# Uploads utilisateurs
-uploads/
+# Uploads utilisateurs (la protection du dossier reste versionnée)
+uploads/*
+!uploads/.htaccess
 
 # Fichiers de travail
 taille_caractères.md

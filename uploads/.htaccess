@@ -1,0 +1,2 @@
+# Accès direct interdit : les fichiers sont servis par admin/fichier.php, qui vérifie la connexion
+Require all denied

@@ -83,6 +83,7 @@ genealogie-famille/
 │   ├── config_serv.php             # Configuration serveur production (non versionné)
 │   ├── config.example.php          # Template de configuration
 │   ├── famille_db.sql              # Structure de la base de données
+│   ├── fichier.php                 # Sert les PDF et photos après contrôle d'accès
 │   ├── generate-password.php       # Générateur de hashs bcrypt (première installation)
 │   ├── mariage_manager.php         # Gestionnaire de mariages
 │   └── .htaccess                   # Protection du dossier admin
@@ -204,6 +205,7 @@ genealogie-famille/
 - Requêtes préparées PDO contre les injections SQL
 - Dossier `admin/` protégé par `.htaccess`
 - Dossier `admin/backups/` protégé par `.htaccess` (accès direct aux dumps SQL bloqué)
+- Dossier `uploads/` protégé par `.htaccess` : PDF et photos servis par `admin/fichier.php` (connexion et confidentialité vérifiées)
 - Mode lecture seule pour les visiteurs (`readonly.css`)
 
 ## Historique des versions

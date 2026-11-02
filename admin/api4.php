@@ -339,6 +339,14 @@ class FamilyTreeAPI {
 
         $documents = array_merge($documents, $linkedDocuments);
 
+        // Les fichiers ne sont accessibles que via admin/fichier.php (contrôle de connexion)
+        foreach ($documents as &$document) {
+            if (!empty($document['file_path'])) {
+                $document['file_path'] = 'admin/fichier.php?id=' . (int)$document['id'];
+            }
+        }
+        unset($document);
+
         // Récupérer les sources de naissance
         $stmt = $this->pdo->prepare("
             SELECT 
