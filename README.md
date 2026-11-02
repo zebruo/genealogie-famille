@@ -82,6 +82,7 @@ genealogie-famille/
 │   ├── config.php                  # Configuration credentials (non versionné)
 │   ├── config_serv.php             # Configuration serveur production (non versionné)
 │   ├── config.example.php          # Template de configuration
+│   ├── documents_membre.php        # Fichiers des documents à la suppression d'un membre
 │   ├── famille_db.sql              # Structure de la base de données
 │   ├── fichier.php                 # Sert les PDF et photos après contrôle d'accès
 │   ├── generate-password.php       # Générateur de hashs bcrypt (première installation)

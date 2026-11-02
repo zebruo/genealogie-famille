@@ -2,6 +2,7 @@
 require_once 'auth.php';
 require_once 'config.php';
 require_once 'mariage_manager.php';
+require_once 'documents_membre.php';
 
 class FamilyTreeAPI {
     private PDO $pdo;
@@ -628,6 +629,8 @@ class FamilyTreeAPI {
 
         $this->pdo->beginTransaction();
         try {
+            $fichiers = preparerDocumentsMembre($this->pdo, (int)$id);
+
             $stmt = $this->pdo->prepare("DELETE FROM membres WHERE id = ?");
             $stmt->execute([$id]);
 
@@ -641,6 +644,7 @@ class FamilyTreeAPI {
             }
 
             $this->pdo->commit();
+            supprimerFichiersDocuments($fichiers);
             return ['success' => true];
         } catch (Exception $e) {
             $this->pdo->rollBack();

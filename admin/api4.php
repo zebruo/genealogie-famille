@@ -11,6 +11,7 @@ set_error_handler(function(int $errno, string $errstr, string $errfile, int $err
 require_once 'auth.php';
 require_once 'config.php';
 require_once 'mariage_manager.php';
+require_once 'documents_membre.php';
 
 class FamilyTreeAPI {
     private PDO $pdo;
@@ -734,8 +735,8 @@ class FamilyTreeAPI {
                     }
 
                     // Supprimer l'ancien fichier
-                    if (!empty($doc['file_path']) && file_exists($doc['file_path'])) {
-                        unlink($doc['file_path']);
+                    if (!empty($doc['file_path']) && file_exists(cheminDisque($doc['file_path']))) {
+                        unlink(cheminDisque($doc['file_path']));
                     }
 
                     $updateFields['file_name'] = $file['name'];
@@ -786,8 +787,8 @@ class FamilyTreeAPI {
                     }
 
                     // Supprimer l'ancienne photo
-                    if (!empty($doc['file_path']) && file_exists($doc['file_path'])) {
-                        unlink($doc['file_path']);
+                    if (!empty($doc['file_path']) && file_exists(cheminDisque($doc['file_path']))) {
+                        unlink(cheminDisque($doc['file_path']));
                     }
 
                     $updateFields['file_name'] = $file['name'];
@@ -866,8 +867,9 @@ class FamilyTreeAPI {
 
             // Si c'est un PDF ou une photo, supprimer le fichier physique
             if (($doc['type'] === 'pdf' || $doc['type'] === 'photo') && !empty($doc['file_path'])) {
-                if (file_exists($doc['file_path'])) {
-                    if (!unlink($doc['file_path'])) {
+                $cheminFichier = cheminDisque($doc['file_path']);
+                if (file_exists($cheminFichier)) {
+                    if (!unlink($cheminFichier)) {
                         error_log("Impossible de supprimer le fichier: " . $doc['file_path']);
                     }
                 } else {
@@ -1107,6 +1109,8 @@ class FamilyTreeAPI {
         $this->pdo->beginTransaction();
 
         try {
+            $fichiers = preparerDocumentsMembre($this->pdo, (int)$memberId);
+
             // Supprimer les relations
             $stmt = $this->pdo->prepare("DELETE FROM relations WHERE parent_id = :id OR enfant_id = :id");
             $stmt->execute(['id' => $memberId]);
@@ -1120,6 +1124,7 @@ class FamilyTreeAPI {
             $stmt->execute(['id' => $memberId]);
 
             $this->pdo->commit();
+            supprimerFichiersDocuments($fichiers);
 
             return [
                 'success' => true,

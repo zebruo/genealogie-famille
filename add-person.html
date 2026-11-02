@@ -1118,7 +1118,7 @@
         container.innerHTML = html;
       }
       async function confirmDeleteMember(id) {
-        const confirmed = await showConfirmDelete('Êtes-vous sûr de vouloir supprimer ce membre et toutes ses relations ?'); if (!confirmed) {
+        const confirmed = await showConfirmDelete('Êtes-vous sûr de vouloir supprimer ce membre, toutes ses relations et ses documents ? Les fichiers (PDF, photos) seront effacés définitivement, sauf ceux partagés avec une autre personne.'); if (!confirmed) {
           return;
         }
         const formData = new FormData();
