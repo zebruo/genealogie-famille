@@ -390,7 +390,14 @@
       <h2><i class="fas fa-save"></i> Créer une Sauvegarde</h2>
 
       <div id="tableSelectionSection">
-      <h3 style="margin-top: 0; color: var(--text-primary); font-size: 1.1em;">Tables à sauvegarder :</h3>
+      <h3 style="margin-top: 0; color: var(--text-primary); font-size: 1.1em;">Contenu de la sauvegarde :</h3>
+      <!-- Indique si la sauvegarde couvre toute la base (mis à jour par updateBackupScope) -->
+      <div id="backupScope" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 16px; border-radius: var(--radius-md); margin-bottom: 16px; color: var(--text-primary); font-size: 0.9em;">
+        <span id="backupScopeText"></span>
+        <button type="button" class="btn btn-secondary" id="btnSelectAllTables" style="padding: 6px 14px; font-size: 0.9em;">
+          <i class="fas fa-check-double"></i> Tout cocher
+        </button>
+      </div>
       <div class="backup-options">
         <div class="backup-option">
           <label>
@@ -422,7 +429,7 @@
             <i class="fas fa-file-alt"></i>
             Documents
           </label>
-          <div class="backup-option-description">Notes, PDFs et photos attachés (inclut automatiquement les liaisons entre documents et personnes)</div>
+          <div class="backup-option-description">Notes et références aux PDF et photos, avec leurs liens vers les personnes (tables documents et document_members)</div>
         </div>
         <div class="backup-option">
           <label>
@@ -440,13 +447,18 @@
         Le format GEDCOM exporte automatiquement <strong>membres, mariages et relations</strong> — la sélection des tables ci-dessus est ignorée.
       </div>
 
+      <div style="padding: 12px 16px; background: rgba(230, 160, 40, 0.15); border-radius: var(--radius-md); margin-bottom: 16px; color: var(--text-primary); font-size: 0.9em;">
+        <i class="fas fa-triangle-exclamation" style="color: #d99a1e; margin-right: 8px;"></i>
+        Les fichiers PDF et photos (dossier <code>uploads/</code>) ne sont pas inclus dans la sauvegarde : copiez ce dossier à part.
+      </div>
+
       <h3 style="color: var(--text-primary); font-size: 1.1em;">Format de sauvegarde :</h3>
       <div class="backup-options">
         <div class="backup-option">
           <label>
             <input type="radio" name="format" value="sql" checked>
             <i class="fas fa-database"></i>
-            SQL (Dump complet)
+            SQL (structure et données)
           </label>
           <div class="backup-option-description">Format standard MySQL avec structure et données</div>
         </div>
@@ -606,6 +618,38 @@
         </div>
       `).join('');
     }
+
+    // Indiquer si la sauvegarde couvre toute la base ou seulement une partie
+    const TABLE_CHECKBOX_IDS = ['tableMembres', 'tableMariages', 'tableRelations', 'tableDocuments', 'tableLiensVerification'];
+
+    function updateBackupScope() {
+      const checked = TABLE_CHECKBOX_IDS.filter(id => document.getElementById(id).checked).length;
+      const scope = document.getElementById('backupScope');
+      const text = document.getElementById('backupScopeText');
+      const allChecked = checked === TABLE_CHECKBOX_IDS.length;
+
+      if (allChecked) {
+        scope.style.background = 'var(--accent-color-alpha)';
+        text.innerHTML = '<i class="fas fa-circle-check" style="color: var(--accent-color); margin-right: 8px;"></i>'
+          + '<strong>Base de données complète</strong> : toutes les tables sont incluses';
+      } else if (checked === 0) {
+        scope.style.background = 'rgba(230, 160, 40, 0.15)';
+        text.innerHTML = '<i class="fas fa-triangle-exclamation" style="color: #d99a1e; margin-right: 8px;"></i>'
+          + '<strong>Aucune table sélectionnée</strong>';
+      } else {
+        scope.style.background = 'rgba(230, 160, 40, 0.15)';
+        text.innerHTML = '<i class="fas fa-triangle-exclamation" style="color: #d99a1e; margin-right: 8px;"></i>'
+          + '<strong>Sauvegarde partielle</strong> : la restaurer ne remettra que les tables cochées';
+      }
+      document.getElementById('btnSelectAllTables').style.display = allChecked ? 'none' : '';
+    }
+
+    TABLE_CHECKBOX_IDS.forEach(id => document.getElementById(id).addEventListener('change', updateBackupScope));
+    document.getElementById('btnSelectAllTables').addEventListener('click', function() {
+      TABLE_CHECKBOX_IDS.forEach(id => { document.getElementById(id).checked = true; });
+      updateBackupScope();
+    });
+    updateBackupScope();
 
     // Afficher/masquer la sélection de tables selon le format
     document.querySelectorAll('input[name="format"]').forEach(radio => {
