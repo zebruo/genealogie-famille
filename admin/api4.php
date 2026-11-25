@@ -592,8 +592,14 @@ class FamilyTreeAPI {
     }
 
     private function updateDocumentFields(string $documentId, string $personId, array $updateFields) {
+        // Les noms de colonnes entrent dans la requête : seuls ceux-ci sont acceptés
+        $colonnesAutorisees = ['source', 'title', 'content', 'description', 'file_name', 'file_path', 'file_size'];
+
         $setParts = [];
         foreach (array_keys($updateFields) as $key) {
+            if (!in_array($key, $colonnesAutorisees, true)) {
+                throw new Exception('Champ de document non autorisé');
+            }
             $setParts[] = "$key = :$key";
         }
         $setParts[] = "updated_at = NOW()";
@@ -894,7 +900,8 @@ class FamilyTreeAPI {
 
         } catch (Exception $e) {
             $this->pdo->rollBack();
-            error_log("Erreur lors de la suppression du document ID " . $documentId . ": " . $e->getMessage());
+            // (int) : une valeur envoyée par le navigateur ne doit pas pouvoir ajouter de lignes au journal
+            error_log("Erreur lors de la suppression du document ID " . (int)$documentId . ": " . $e->getMessage());
             throw $e;
         }
     }

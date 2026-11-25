@@ -4,7 +4,10 @@
  * Roles : 'viewer' (lecture seule) | 'admin' (accès complet)
  */
 
-session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Strict']);
+// « secure » (cookie envoyé en HTTPS uniquement) seulement en HTTPS, sinon la connexion échoue en local (http)
+$enHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+    || ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https';
+session_set_cookie_params(['path' => '/', 'httponly' => true, 'samesite' => 'Strict', 'secure' => $enHttps]);
 session_start();
 
 // ─── Fonctions utilitaires ────────────────────────────────────────────────────
