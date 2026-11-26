@@ -298,7 +298,7 @@
     <script src="js/burger.js"></script>
     <script>
         let familyData = {};
-        let pendingChanges = new Set();
+        const pendingChanges = new Set();
 
         // Charger les données depuis l'API
         async function loadData() {

@@ -256,7 +256,7 @@
           document.getElementById('password').value = '';
           document.getElementById('password').focus();
         }
-      } catch (err) {
+      } catch {
         errorText.textContent = 'Erreur de connexion. Réessayez.';
         errorMsg.classList.add('show');
       } finally {

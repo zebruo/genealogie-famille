@@ -604,7 +604,7 @@
         const totalDeaths = Object.values(centuriesStats).reduce((a, b) => a + b.deathCount, 0);
         const formatDataList = Object.entries(centuriesStats)
           .sort((a, b) => a[0] - b[0])
-          .map(([num, {
+          .map(([, {
             label,
             birthCount,
             deathCount
@@ -940,7 +940,7 @@
           if (!marriage.marriagePlace) missingMarriagePlacesList.push({ person, spouse, marriage });
         });
         document.getElementById('unknownMarriagePlaces').innerHTML = missingMarriagePlacesList.length > 0 ?
-          missingMarriagePlacesList.map(({ person, spouse, marriage }) => `<div class="event-item"><div class="event-info"><div class="event-name">${person.firstName} ${person.lastName} & ${spouse ? spouse.firstName + ' ' + spouse.lastName : 'Inconnu'}</div></div></div>`).join('') :
+          missingMarriagePlacesList.map(({ person, spouse }) => `<div class="event-item"><div class="event-info"><div class="event-name">${person.firstName} ${person.lastName} & ${spouse ? spouse.firstName + ' ' + spouse.lastName : 'Inconnu'}</div></div></div>`).join('') :
           '<div class="empty-state"><i class="fas fa-check-circle"></i><p>Tous les lieux de mariage sont renseignés</p></div>';      }
     </script>
   </body>

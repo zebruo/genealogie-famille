@@ -1610,7 +1610,7 @@
           try {
             const errorJson = JSON.parse(errorText);
             throw new Error(errorJson.message || 'Erreur serveur (HTTP ' + response.status + ')');
-          } catch (parseError) {
+          } catch {
             // Si ce n'est pas du JSON, afficher un message générique
             throw new Error('Erreur serveur (HTTP ' + response.status + '). Le fichier est peut-être trop volumineux ou le serveur a rencontré un problème.');
           }
@@ -1829,7 +1829,7 @@
         const res = await fetch(`${CONFIG.apiEndpoint}?action=getLinkedMembers&document_id=${documentId}`);
         const data = await res.json();
         if (data.success) renderLinkedMembers(data.members, documentId);
-      } catch (e) {
+      } catch {
         document.getElementById('linkedMembersList').innerHTML =
           '<span style="color:#f44336; font-size:0.85em;">Erreur de chargement</span>';
       }
@@ -1870,7 +1870,7 @@
         const data = await res.json();
         if (data.success) { loadLinkedMembers(documentId); loadDocumentCounts(); }
         else showTemporaryInfo('Erreur lors de la suppression du lien', 'error');
-      } catch (e) {
+      } catch {
         showTemporaryInfo('Erreur réseau', 'error');
       }
     }
@@ -1885,7 +1885,7 @@
         const data = await res.json();
         if (data.success) { loadLinkedMembers(documentId); loadDocumentCounts(); }
         else showTemporaryInfo("Erreur lors de l'ajout du lien", 'error');
-      } catch (e) {
+      } catch {
         showTemporaryInfo('Erreur réseau', 'error');
       }
     }

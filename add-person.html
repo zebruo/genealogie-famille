@@ -349,7 +349,7 @@
       function extractISOFromDisplay(display) {
         if (!display) return '';
         const val = display.replace(/^(Le|En|Avant|Après|Vers)\s+/, '').trim();
-        const dmy = val.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+        const dmy = val.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
         if (dmy) return dmy[3] + '-' + dmy[2].padStart(2,'0') + '-' + dmy[1].padStart(2,'0');
         if (/^\d{4}-\d{2}-\d{2}$/.test(val)) return val;
         const year = val.match(/\d{4}/);
@@ -363,7 +363,7 @@
         for (const q of qualifiers) {
           if (display.startsWith(q + ' ')) return { qualifier: q, value: display.slice(q.length + 1) };
         }
-        if (/^\d{1,2}[-\/]\d{2}[-\/]\d{4}$/.test(display)) return { qualifier: 'Le', value: display.replace(/-/g, '/') };
+        if (/^\d{1,2}[-/]\d{2}[-/]\d{4}$/.test(display)) return { qualifier: 'Le', value: display.replace(/-/g, '/') };
         return { qualifier: 'En', value: display };
       }
 
@@ -376,7 +376,7 @@
       function validateDateInput(qualifier, value, label) {
         if (!value) return null;
         if (qualifier === 'Le') {
-          const m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+          const m = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
           if (!m) return label + ' : format attendu JJ/MM/AAAA';
           const d = Number.parseInt(m[1]), mo = Number.parseInt(m[2]), y = Number.parseInt(m[3]);
           if (mo < 1 || mo > 12) return label + ' : mois invalide';
@@ -962,7 +962,7 @@
         container.innerHTML = `
                 <h4><i class="fas fa-ring"></i> Union (${marriages.length})</h4>
                 <div class="existing-relations">
-                    ${marriages.map((marriage, index) => {
+                    ${marriages.map((marriage) => {
                         const spouseDates = marriage.spouseBirthYear || marriage.spouseDeathYear 
                             ? ` (${marriage.spouseBirthYear}${marriage.spouseDeathYear ? ' - ' + marriage.spouseDeathYear : ''})` 
                             : '';
@@ -987,7 +987,7 @@
       window.editMarriage = function(marriageId) {
         const member = state.editingMember;
         if (!member) return;
-        const marriageEntry = Object.entries(member.marriages).find(([_, m]) => m.marriageId === marriageId);
+        const marriageEntry = Object.entries(member.marriages).find(([, m]) => m.marriageId === marriageId);
         if (!marriageEntry) return;
         const [spouseId, marriage] = marriageEntry;
         openMarriageModal(null, {

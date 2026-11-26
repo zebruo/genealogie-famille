@@ -232,13 +232,11 @@ function renderAllDocumentsList(documents, personId) {
     }
     
     // Construire les métadonnées comme dans documents-manager
-    let title = '';
     let meta = '';
     const member = quickViewState.selectedPerson;
     
     if (isTemp) {
       if (doc.source === 'membre') {
-        title = 'Note du membre';
         // Afficher les 20 premières lettres de la note
         if (doc.content) {
           const cleanContent = stripHtml(doc.content).trim();
@@ -247,17 +245,14 @@ function renderAllDocumentsList(documents, personId) {
           meta = 'Aucune note';
         }
       } else if (doc.source === 'naissance') {
-        title = 'Source naissance';
         meta = (member.birthDateDisplay || member.birthDate)
           ? `${member.birthDateDisplay || formatDateDisplayTab(member.birthDate)}${member.birthPlace ? ', ' + member.birthPlace : ''} ...`
           : 'Naissance';
       } else if (doc.source === 'deces') {
-        title = 'Source décès';
         meta = (member.deathDateDisplay || member.deathDate)
           ? `${member.deathDateDisplay || formatDateDisplayTab(member.deathDate)}${member.deathPlace ? ', ' + member.deathPlace : ''} ...`
           : 'Décès';
       } else if (doc.source && doc.source.startsWith('mariage_')) {
-        title = doc.title || 'Note de mariage';
         // Afficher la date de mariage si disponible
         if (doc.date_mariage && doc.date_mariage !== '0000-00-00') {
           meta = formatDateDisplayTab(doc.date_mariage);
@@ -274,7 +269,6 @@ function renderAllDocumentsList(documents, personId) {
         }
       }
     } else {
-      title = doc.title || doc.file_name || 'Document';
       meta = doc.description ? `${doc.description} ...` : '';
     }
     

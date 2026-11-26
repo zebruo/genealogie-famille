@@ -143,7 +143,7 @@ class FamilyTreeApp {
         if (!sibling || processedIds.has(String(siblingId))) return null;
         var siblingCopy = {};
         for (var key in sibling) {
-          if (sibling.hasOwnProperty(key))
+          if (Object.hasOwn(sibling, key))
             siblingCopy[key] = sibling[key];
         }
         siblingCopy.parents = [];
@@ -512,7 +512,6 @@ class FamilyTreeApp {
       };
       var currentFullName = getFullName(currentPerson);
       var referenceFullName = getFullName(referencePerson);
-      var refInfo = " <span style='color: #6c757d; font-size: 0.9em;'>(point de départ: " + referenceFullName + ")</span>";
       var html = '<div style="line-height: 1.6;">';
       if (relationType === "root") {
         return "Personne de départ (racine)";
@@ -716,8 +715,6 @@ class FamilyTreeApp {
         var divorceDate =
           marriageData.fullDivorceDate || marriageData.divorceDate || "";
         var hasDivorce = marriageData.hasDivorce || false;
-        var divorcePlace =
-          marriageData.divorcePlace || "";
         var marriageNotes =
           marriageData.notes || "";
         var marriageConfidential = person.isConfidential || spouse.isConfidential;
@@ -1089,7 +1086,6 @@ class FamilyTreeApp {
   drawSiblings(g, nodes) {
     var self = this;
     var h = CONFIG.node.height;
-    var nodeW = CONFIG.node.width;
     var bendHeight = CONFIG.tree.bendHeight;
 
     // Dessiner les fratries des ancêtres (pas la racine - gérée par drawRootFamily)
@@ -1309,7 +1305,7 @@ class FamilyTreeApp {
       .attr("dominant-baseline", "middle");
 
     var currentY = startY;
-    lines.forEach(function(line, i) {
+    lines.forEach(function(line) {
       textElem.append("tspan")
         .attr("x", 0)
         .attr("y", currentY)
