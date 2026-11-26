@@ -948,7 +948,7 @@
     // ÉDITION VIA COMPTEURS CLIQUABLES
     // ========================================
     async function openEditNoteMembre(personId) {
-      state.selectedPerson = state.members.find(m => m.id == personId);
+      state.selectedPerson = state.members.find(m => m.id === personId);
       if (!state.selectedPerson) return;
       await loadPersonDocuments(personId);
       const noteMembre = state.documents.find(d => d.id.toString().startsWith('temp_membre_'));
@@ -967,7 +967,7 @@
     }
 
     async function openEditSourceNaissance(personId) {
-      state.selectedPerson = state.members.find(m => m.id == personId);
+      state.selectedPerson = state.members.find(m => m.id === personId);
       if (!state.selectedPerson) return;
       await loadPersonDocuments(personId);
       const sourceNaissance = state.documents.find(d => d.id.toString().startsWith('temp_naissance_'));
@@ -985,7 +985,7 @@
     }
 
     async function openEditSourceDeces(personId) {
-      state.selectedPerson = state.members.find(m => m.id == personId);
+      state.selectedPerson = state.members.find(m => m.id === personId);
       if (!state.selectedPerson) return;
       await loadPersonDocuments(personId);
       const sourceDeces = state.documents.find(d => d.id.toString().startsWith('temp_deces_'));
@@ -1003,7 +1003,7 @@
     }
 
     async function openEditNotesMariage(personId) {
-      state.selectedPerson = state.members.find(m => m.id == personId);
+      state.selectedPerson = state.members.find(m => m.id === personId);
       if (!state.selectedPerson) return;
       await loadPersonDocuments(personId);
       const notesMariage = state.documents.filter(d =>
@@ -1023,7 +1023,7 @@
       }
     }
     async function openEditDocuments(personId, type) {
-      state.selectedPerson = state.members.find(m => m.id == personId);
+      state.selectedPerson = state.members.find(m => m.id === personId);
       if (!state.selectedPerson) return;
       await loadPersonDocuments(personId);
       // Simplement définir les filtres, renderDocumentsList fera le reste
@@ -1046,7 +1046,7 @@
       }
     }
     async function openEditPhotos(personId) {
-      state.selectedPerson = state.members.find(m => m.id == personId);
+      state.selectedPerson = state.members.find(m => m.id === personId);
       if (!state.selectedPerson) return;
       await loadPersonDocuments(personId);
       // Simplement définir les filtres, renderDocumentsList fera le reste
@@ -1313,7 +1313,7 @@
       const documentId = document.getElementById('simpleDocumentId').value;
       const personId = document.getElementById('simplePersonId').value;
       const content = document.getElementById('simpleNoteContent').value;
-      const doc = state.documents.find(d => d.id == documentId);
+      const doc = state.documents.find(d => String(d.id) === String(documentId));
       if (!doc) {
         showTemporaryInfo('Erreur: Document source introuvable', 'error');
         return;
@@ -1443,7 +1443,7 @@
       // Correction: Ne pas rouvrir la modal de liste des documents
     }
     async function editDocument(documentId) {
-      const doc = state.documents.find(d => d.id == documentId);
+      const doc = state.documents.find(d => String(d.id) === String(documentId));
       if (!doc) return;
       // ROULEMENT VERS MODAL SIMPLE SI C'EST UNE NOTE MEMBRE/MARIAGE
       const isTempNote = doc.id.toString().startsWith('temp_');
@@ -1749,7 +1749,7 @@
     }
 
     function viewDocument(documentId) {
-      const doc = state.documents.find(d => d.id == documentId); // == au lieu de === pour gérer string/number
+      const doc = state.documents.find(d => String(d.id) === String(documentId)); // comparaison en texte : doc.id est un nombre ou « temp_… »
       if (!doc) {
         console.error('Document not found:', documentId, 'Available docs:', state.documents.map(d => d.id));
         return;
@@ -1802,7 +1802,7 @@
     }
 
     function viewNoteSimpleById(documentId) {
-      const doc = state.documents.find(d => d.id == documentId);
+      const doc = state.documents.find(d => String(d.id) === String(documentId));
       if (!doc) {
         console.error('Document not found:', documentId);
         return;

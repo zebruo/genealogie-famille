@@ -466,7 +466,7 @@
             const id = marriage.marriageId || marriage.mariageId;
             if (!id || seen.has(id)) return;
             seen.add(id);
-            const spouse = allData.find(p => p.id == spouseId);
+            const spouse = allData.find(p => p.id === Number(spouseId));
             callback(person, spouse, marriage);
           });
         });

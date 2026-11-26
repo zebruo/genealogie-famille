@@ -339,16 +339,16 @@ class FamilyTreeApp {
   }
   findPersonInTree(node, personId) {
     if (!node) return null;
-    if (node.id == personId) return node;
+    if (node.id === personId) return node;
     if (node.parents && node.parents.length > 0) {
-      for (var i = 0; i < node.parents.length; i++) {
+      for (let i = 0; i < node.parents.length; i++) {
         var found = this.findPersonInTree(node.parents[i], personId);
         if (found) return found;
       }
     }
     if (node.siblings && node.siblings.length > 0) {
-      for (var i = 0; i < node.siblings.length; i++) {
-        if (node.siblings[i].id == personId) return node.siblings[i];
+      for (let i = 0; i < node.siblings.length; i++) {
+        if (node.siblings[i].id === personId) return node.siblings[i];
       }
     }
     return null;
@@ -375,13 +375,13 @@ class FamilyTreeApp {
     var defaultPersonId = localStorage.getItem("defaultPersonId");
     var referencePersonId = defaultPersonId ? Number.parseInt(defaultPersonId) : this.currentPersonId;
     var referencePerson = this.familyDatabase[referencePersonId];
-    if (person.id == referencePersonId) {
+    if (person.id === referencePersonId) {
       referencePersonId = this.currentPersonId;
       referencePerson = this.familyDatabase[referencePersonId];
     }
     var depth = 0;
     var relationType = "root";
-    if (person.id == referencePersonId) {
+    if (person.id === referencePersonId) {
       depth = 0;
       relationType = "root";
     } else {
@@ -405,8 +405,8 @@ class FamilyTreeApp {
           }
         }
         if (!isUncleAunt && person && person.parentIds) {
-          for (var i = 0; i < person.parentIds.length; i++) {
-            var personParent = this.familyDatabase[person.parentIds[i]];
+          for (let i = 0; i < person.parentIds.length; i++) {
+            const personParent = this.familyDatabase[person.parentIds[i]];
             if (personParent && refPerson && refPerson.siblingIds) {
               if (refPerson.siblingIds.includes(Number.parseInt(personParent.id))) {
                 relationType = "nephew-niece";
@@ -419,8 +419,8 @@ class FamilyTreeApp {
         if (!isUncleAunt) {
           var isCousin = false;
           if (person && person.parentIds) {
-            for (var i = 0; i < person.parentIds.length; i++) {
-              var personParent = this.familyDatabase[person.parentIds[i]];
+            for (let i = 0; i < person.parentIds.length; i++) {
+              const personParent = this.familyDatabase[person.parentIds[i]];
               if (personParent && refPerson && refPerson.parentIds) {
                 for (var j = 0; j < refPerson.parentIds.length; j++) {
                   var refParent = this.familyDatabase[refPerson.parentIds[j]];
@@ -447,7 +447,7 @@ class FamilyTreeApp {
             if (personInTempTree) {
               depth = personInTempTree.depth;
               relationType = "ascendant";
-              if (tempTree.siblings && tempTree.siblings.some(s => s.id == person.id)) {
+              if (tempTree.siblings && tempTree.siblings.some(s => s.id === person.id)) {
                 relationType = "sibling";
               }
             } else {
@@ -541,9 +541,9 @@ class FamilyTreeApp {
         return html;
       }
       if (relationType === "uncle-aunt") {
-        var uncleLabel = currentPerson.sex === "M" ? "oncle" :
+        const uncleLabel = currentPerson.sex === "M" ? "oncle" :
           currentPerson.sex === "F" ? "tante" : "oncle/tante";
-        var nephewLabel = referencePerson.sex === "M" ? "neveu" :
+        const nephewLabel = referencePerson.sex === "M" ? "neveu" :
           referencePerson.sex === "F" ? "nièce" : "neveu/nièce";
         html += currentFullName + ' est <strong>' + getArticleWithRelation(currentPerson.sex, uncleLabel) + uncleLabel + '</strong> ' +
           getPreposition(referenceFullName) + referenceFullName + '.<br>';
@@ -553,9 +553,9 @@ class FamilyTreeApp {
         return html;
       }
       if (relationType === "nephew-niece") {
-        var nephewLabel = currentPerson.sex === "M" ? "neveu" :
+        const nephewLabel = currentPerson.sex === "M" ? "neveu" :
           currentPerson.sex === "F" ? "nièce" : "neveu/nièce";
-        var uncleLabel = referencePerson.sex === "M" ? "oncle" :
+        const uncleLabel = referencePerson.sex === "M" ? "oncle" :
           referencePerson.sex === "F" ? "tante" : "oncle/tante";
         html += currentFullName + ' est <strong>' + getArticleWithRelation(currentPerson.sex, nephewLabel) + nephewLabel + '</strong> ' +
           getPreposition(referenceFullName) + referenceFullName + '.<br>';
@@ -582,16 +582,16 @@ class FamilyTreeApp {
         return html;
       }
       if (depth > 0) {
-        var relationToReference = getRelationship(depth, currentPerson.sex, true);
-        var relationFromReference = getRelationship(depth, referencePerson.sex, false);
+        const relationToReference = getRelationship(depth, currentPerson.sex, true);
+        const relationFromReference = getRelationship(depth, referencePerson.sex, false);
         html += referenceFullName + ' est <strong>' + getArticleWithRelation(referencePerson.sex, relationFromReference) + relationFromReference + '</strong> ' +
           getPreposition(currentFullName) + currentFullName + '.<br>';
         html += currentFullName + ' est <strong>' + getArticleWithRelation(currentPerson.sex, relationToReference) + relationToReference + '</strong> ' +
           getPreposition(referenceFullName) + referenceFullName + '.';
       } else {
         var absDepth = Math.abs(depth);
-        var relationToReference = getRelationship(absDepth, referencePerson.sex, true);
-        var relationFromReference = getRelationship(absDepth, currentPerson.sex, false);
+        const relationToReference = getRelationship(absDepth, referencePerson.sex, true);
+        const relationFromReference = getRelationship(absDepth, currentPerson.sex, false);
         html += currentFullName + ' est <strong>' + getArticleWithRelation(currentPerson.sex, relationFromReference) + relationFromReference + '</strong> ' +
           getPreposition(referenceFullName) + referenceFullName + '.<br>';
         html += referenceFullName + ' est <strong>' + getArticleWithRelation(referencePerson.sex, relationToReference) + relationToReference + '</strong> ' +
@@ -1000,7 +1000,7 @@ class FamilyTreeApp {
         var marriageYear = marriageData.marriageYear || null;
         var spouseConfidential = rootNode.data.isConfidential || spouseData.isConfidential;
         if (marriageYear && !spouseConfidential) {
-          var midX = (linkStartX + linkEndX) / 2;
+          const midX = (linkStartX + linkEndX) / 2;
           g.append("text")
             .attr("class", "marriage-date")
             .attr("x", midX)
@@ -1028,7 +1028,7 @@ class FamilyTreeApp {
       if (marriageChildren.length > 0) {
         var childY = rootNode.y + CONFIG.children.descent;
         // Centre entre le parent précédent et le conjoint actuel
-        var midX = (prevX + w / 2 + linkEndX) / 2;
+        const midX = (prevX + w / 2 + linkEndX) / 2;
         var topChildY = childY - h / 2;
         var horizontalY = topChildY - bendHeight;
 
