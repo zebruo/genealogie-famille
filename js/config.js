@@ -5,7 +5,7 @@
  * Structure basée sur test.html
  */
 const CONFIG = {
-  version: "1.2.0",
+  version: "1.2.1",
 
   // Dimensions des nœuds (rectangles)
   node: {

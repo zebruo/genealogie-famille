@@ -1,6 +1,6 @@
 # Arbre Généalogique Familial
 
-**Version 1.2.0**
+**Version 1.2.1**
 
 Application web professionnelle et interactive pour visualiser et gérer un arbre généalogique ascendant avec une interface moderne. Accès sécurisé par rôles (administrateur / visiteur).
 
@@ -71,6 +71,8 @@ genealogie-famille/
 ├── statistics.html                 # Page de statistiques
 ├── .htaccess                       # Configuration Apache
 ├── README.md                       # Documentation
+├── eslint.config.mjs               # Configuration ESLint (développement)
+├── package.json                    # Outils de développement (+ package-lock.json)
 │
 ├── admin/                          # Backend PHP
 │   ├── api3.php                    # API principale pour les données
@@ -206,7 +208,8 @@ genealogie-famille/
 
 - Credentials de base de données non versionnés (`.gitignore`)
 - Mots de passe hashés avec `password_hash()` (bcrypt)
-- Sessions PHP avec cookie HttpOnly/SameSite
+- Sessions PHP avec cookie HttpOnly/SameSite, et Secure en HTTPS
+- Bibliothèques chargées depuis cdnjs avec contrôle d'intégrité (`integrity`)
 - Requêtes préparées PDO contre les injections SQL
 - Dossier `admin/` protégé par `.htaccess`
 - Dossier `admin/backups/` protégé par `.htaccess` (accès direct aux dumps SQL bloqué)
@@ -224,8 +227,17 @@ genealogie-famille/
 - Ses documents et leurs fichiers sont effacés définitivement (les sauvegardes SQL ne contiennent pas les fichiers)
 - Un document partagé est conservé et passe à une autre personne liée
 
+## Développement
+
+Facultatif : l'application n'a besoin ni de Node.js ni d'étape de compilation.
+
+- `npm install` puis `npm run lint` : vérification du JavaScript avec ESLint, y compris celui des pages HTML
+- Un nom partagé entre plusieurs scripts doit être ajouté à la liste `partages` de `eslint.config.mjs`
+- `node_modules/`, `package.json`, `package-lock.json` et `eslint.config.mjs` ne sont pas à envoyer sur le serveur
+
 ## Historique des versions
 
+- **v1.2.1** - Corrections de sécurité et de fiabilité signalées par SonarQube et ESLint, sauvegarde et restauration (`api-backup.php`) incluses dans le dépôt, contenu de la sauvegarde mieux indiqué, libellés des formulaires, halo sur le résultat du convertisseur
 - **v1.2.0** - Documents et photos accessibles uniquement après connexion, règle de confidentialité unique, plus de fichiers orphelins ni de perte des documents partagés, correction du plantage de l'arbre quand les données arrivent avant le menu
 - **v1.1.0** - Typage PHP 8.4, refonte de l'installation guidée, générateur de mots de passe (double compte visiteur/admin), sécurisation du dossier backups
 - **v1.0.0** - Première version officielle : arbre D3.js, authentification admin/visiteur, permaliens ARK, backup, statistiques, aide
