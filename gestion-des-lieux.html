@@ -25,7 +25,7 @@
         </div>
         <div class="controls-actions">
           <div class="search-input-wrapper">
-            <input type="text" class="search-input" placeholder="Rechercher un lieu..." style="width: 100%;" />
+            <input type="text" class="search-input" aria-label="Rechercher un lieu" placeholder="Rechercher un lieu..." style="width: 100%;" />
             <i class="fas fa-search search-icon"></i>
             <i class="fas fa-times clear-search"></i>
             <div class="search-suggestions"></div>
@@ -104,11 +104,11 @@
       </div>
       <form id="editForm" onsubmit="return false;">
         <div class="form-group">
-          <label class="form-label">Lieu actuel</label>
+          <label class="form-label" for="ancienLieu">Lieu actuel</label>
           <input type="text" id="ancienLieu" class="form-control" readonly>
         </div>
         <div class="form-group">
-          <label class="form-label">Nouveau lieu</label>
+          <label class="form-label" for="nouveauLieu">Nouveau lieu</label>
           <input type="text" id="nouveauLieu" class="form-control" required>
         </div>
         <div style="display: flex; gap: 10px; margin-top: 20px;">

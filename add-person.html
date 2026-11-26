@@ -36,14 +36,14 @@
               <i class="fas fa-cross badge-note-deces"></i>Décédé
             </button>
           </div>
-          <select class="gender-select form-control admin-only" name="gender" required>
+          <select class="gender-select form-control admin-only" name="gender" aria-label="Genre" required>
             <option value="">Genre</option>
             <option value="M">Homme</option>
             <option value="F">Femme</option>
             <option value="U">Non spécifié</option>
           </select>
           <div class="search-input-wrapper header-search">
-            <input type="text" class="search-input" placeholder="Rechercher un membre de la famille (nom, prénom, lieu...)" />
+            <input type="text" class="search-input" aria-label="Rechercher un membre de la famille" placeholder="Rechercher un membre de la famille (nom, prénom, lieu...)" />
             <i class="fas fa-search search-icon"></i>
             <i class="fas fa-times clear-search"></i>
             <div class="search-suggestions"></div>
@@ -54,60 +54,60 @@
           <!-- Informations de base -->
           <div class="form-section" style="flex: 1">
             <div class="form-group">
-              <label>Nom</label>
-              <input type="text" class="form-control" name="lastName" required maxlength="100" />
+              <label for="lastName">Nom</label>
+              <input type="text" class="form-control" id="lastName" name="lastName" required maxlength="100" />
             </div>
             <div class="form-group">
-              <label>Prénom(s)</label>
-              <input type="text" class="form-control" name="firstName" required maxlength="150" />
+              <label for="firstName">Prénom(s)</label>
+              <input type="text" class="form-control" id="firstName" name="firstName" required maxlength="150" />
             </div>
             <div class="form-group">
-              <label>Surnom</label>
-              <input type="text" class="form-control" name="surnom" placeholder="Optionnel" maxlength="100" />
+              <label for="surnom">Surnom</label>
+              <input type="text" class="form-control" id="surnom" name="surnom" placeholder="Optionnel" maxlength="100" />
             </div>
           </div>
 
           <!-- Naissance -->
           <div class="form-section" style="flex: 1">
             <div class="form-group">
-              <label>Date de naissance</label>
-              <div class="date-qualifier-group"><select class="form-control" name="birthDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" class="form-control" name="birthDate" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
+              <label for="birthDate">Date de naissance</label>
+              <div class="date-qualifier-group"><select class="form-control" name="birthDateQualifier" aria-label="Date de naissance : précision"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" class="form-control" id="birthDate" name="birthDate" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
             </div>
             <div class="form-group">
-              <label>Lieu de naissance</label>
-              <input type="text" class="form-control" name="birthPlace" maxlength="200" />
+              <label for="birthPlace">Lieu de naissance</label>
+              <input type="text" class="form-control" id="birthPlace" name="birthPlace" maxlength="200" />
             </div>
             <div class="form-group">
-              <label>Doc. naissance</label>
-              <textarea class="form-control" name="doc_naissance" rows="4" placeholder="archives état civil, registres paroissiaux..." maxlength="3000"></textarea>
+              <label for="doc_naissance">Doc. naissance</label>
+              <textarea class="form-control" id="doc_naissance" name="doc_naissance" rows="4" placeholder="archives état civil, registres paroissiaux..." maxlength="3000"></textarea>
             </div>
           </div>
 
           <!-- Décès -->
           <div class="form-section death-info" style="display: none; flex: 1;">
             <div class="form-group">
-              <label>Date de décès</label>
-              <div class="date-qualifier-group"><select class="form-control" name="deathDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" class="form-control" name="deathDate" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
+              <label for="deathDate">Date de décès</label>
+              <div class="date-qualifier-group"><select class="form-control" name="deathDateQualifier" aria-label="Date de décès : précision"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" class="form-control" id="deathDate" name="deathDate" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
             </div>
             <div class="form-group">
-              <label>Lieu de décès</label>
-              <input type="text" class="form-control" name="deathPlace" maxlength="200" />
+              <label for="deathPlace">Lieu de décès</label>
+              <input type="text" class="form-control" id="deathPlace" name="deathPlace" maxlength="200" />
             </div>
             <div class="form-group">
-              <label>Doc. décès</label>
-              <textarea class="form-control" name="doc_deces" rows="4" placeholder="archives état civil, registres paroissiaux..." maxlength="3000"></textarea>
+              <label for="doc_deces">Doc. décès</label>
+              <textarea class="form-control" id="doc_deces" name="doc_deces" rows="4" placeholder="archives état civil, registres paroissiaux..." maxlength="3000"></textarea>
             </div>
           </div>
 
           <!-- Profession et notes -->
           <div class="form-section" style="flex: 1">
             <div class="form-group">
-              <label>Profession</label>
-              <input type="text" class="form-control" name="occupation" placeholder="Ex: Agriculteur, Médecin..." maxlength="200" />
+              <label for="occupation">Profession</label>
+              <input type="text" class="form-control" id="occupation" name="occupation" placeholder="Ex: Agriculteur, Médecin..." maxlength="200" />
             </div>
             <div class="form-group">
-              <label>Notes</label>
-              <textarea class="form-control" name="notes" rows="4" placeholder="Informations complémentaires..." maxlength="3000"></textarea>
+              <label for="notes">Notes</label>
+              <textarea class="form-control" id="notes" name="notes" rows="4" placeholder="Informations complémentaires..." maxlength="3000"></textarea>
             </div>
           </div>
 
@@ -130,7 +130,7 @@
         <div class="relation-section admin-only">
           <h3><i class="fas fa-link"></i> Relations Familiales</h3>
 
-          <select class="relation-select" name="relationType">
+          <select class="relation-select" name="relationType" aria-label="Type de relation">
             <option value="">Ajouter une relation...</option>
             <optgroup label="Relations Parent/Enfant">
               <option value="parent">Est le parent de</option>
@@ -141,7 +141,7 @@
           </select>
 
           <div class="relation-search-container">
-            <input type="text" class="relation-search-input" placeholder="Rechercher un membre..." autocomplete="off" style="display: none" />
+            <input type="text" class="relation-search-input" aria-label="Rechercher un membre à relier" placeholder="Rechercher un membre..." autocomplete="off" style="display: none" />
             <div class="relation-search-results"></div>
           </div>
 
@@ -200,29 +200,29 @@
           <input type="hidden" id="marriageSpouseId" value="" />
 
           <div class="form-group">
-            <label>Conjoint(e)</label>
+            <label for="marriageSpouseSelect">Conjoint(e)</label>
             <select id="marriageSpouseSelect" class="form-control" required>
               <option value="">Sélectionner...</option>
             </select>
           </div>
 
           <div class="form-group">
-            <label>Date de mariage</label>
-            <div class="date-qualifier-group"><select class="form-control" id="marriageDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" id="marriageDate" class="form-control" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
+            <label for="marriageDate">Date de mariage</label>
+            <div class="date-qualifier-group"><select class="form-control" id="marriageDateQualifier" aria-label="Date de mariage : précision"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" id="marriageDate" class="form-control" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
           </div>
 
           <div class="form-group">
-            <label>Lieu de mariage</label>
+            <label for="marriagePlace">Lieu de mariage</label>
             <input type="text" id="marriagePlace" class="form-control" maxlength="200" />
           </div>
 
           <div class="form-group">
-            <label>Date (divorce/décès)</label>
-            <div class="date-qualifier-group"><select class="form-control" id="marriageEndDateQualifier"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" id="marriageEndDate" class="form-control" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
+            <label for="marriageEndDate">Date (divorce/décès)</label>
+            <div class="date-qualifier-group"><select class="form-control" id="marriageEndDateQualifier" aria-label="Date (divorce/décès) : précision"><option value="Le">Le</option><option value="En">En</option><option value="Avant">Avant</option><option value="Apr&egrave;s">Apr&egrave;s</option><option value="Vers">Vers</option></select><input type="text" id="marriageEndDate" class="form-control" placeholder="JJ/MM/AAAA ou AAAA" maxlength="20" /></div>
           </div>
 
           <div class="form-group">
-            <label>Type</label>
+            <label for="marriageEndType">Type</label>
             <select id="marriageEndType" class="form-control">
               <option value="">Aucun</option>
               <option value="divorce">Divorce</option>
@@ -232,7 +232,7 @@
           </div>
 
           <div class="form-group">
-            <label>Notes</label>
+            <label for="marriageNotes">Notes</label>
             <textarea id="marriageNotes" class="form-control" rows="3" maxlength="2000"></textarea>
           </div>
 

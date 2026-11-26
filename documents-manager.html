@@ -26,7 +26,7 @@
     <div class="search-wrapper form-header">
       <div class="search-input-wrapper">
         <i class="fas fa-search search-icon"></i>
-        <input type="text" class="search-input" placeholder="Rechercher une personne par nom, prénom ou lieu..."
+        <input type="text" class="search-input" aria-label="Rechercher une personne" placeholder="Rechercher une personne par nom, prénom ou lieu..."
           id="mainSearch" />
         <div id="clearSearch">
           <i class="fas fa-times clear-search"></i>
@@ -151,7 +151,7 @@
           <input type="hidden" id="simpleDocumentId" />
           <input type="hidden" id="simplePersonId" />
           <div class="form-group">
-            <label id="simpleNoteLabel">Contenu de la note</label>
+            <label id="simpleNoteLabel" for="simpleNoteContent">Contenu de la note</label>
             <textarea class="form-control" id="simpleNoteContent" rows="15"></textarea>
           </div>
           <div class="form-buttons-container">
@@ -199,26 +199,26 @@
 
           <div id="noteFields">
             <div class="form-group">
-              <label>Titre (optionnel)</label>
+              <label for="noteTitle">Titre (optionnel)</label>
               <input type="text" class="form-control" id="noteTitle" />
             </div>
             <div class="form-group">
-              <label>Description (optionnel)</label>
+              <label for="noteDescription">Description (optionnel)</label>
               <input type="text" class="form-control" id="noteDescription" />
             </div>
             <div class="form-group">
-              <label>Contenu</label>
+              <label for="noteContent">Contenu</label>
               <textarea class="form-control" id="noteContent" rows="10"></textarea>
             </div>
           </div>
 
           <div id="pdfFields" style="display: none;">
             <div class="form-group">
-              <label>Titre du PDF (optionnel)</label>
+              <label for="pdfTitle">Titre du PDF (optionnel)</label>
               <input type="text" class="form-control" id="pdfTitle" />
             </div>
             <div class="form-group">
-              <label>Description (optionnel)</label>
+              <label for="pdfDescription">Description (optionnel)</label>
               <input type="text" class="form-control" id="pdfDescription" />
             </div>
             <div class="file-upload-zone" id="fileUploadZone">
@@ -226,7 +226,7 @@
               <p style="margin: 10px 0 5px 0; font-weight: 500;">Cliquez ou déposez un fichier PDF</p>
               <p style="margin: 0; font-size: 0.9em; color: var(--text-secondary);">Taille max: 10 Mo</p>
             </div>
-            <input type="file" id="pdfFile" accept="application/pdf" style="display: none;" />
+            <input type="file" id="pdfFile" aria-label="Fichier PDF" accept="application/pdf" style="display: none;" />
             <div class="file-info document-meta" id="fileInfo" style="display: none;">
               <div style="display: flex; align-items: center; justify-content: space-between;">
                 <div>
@@ -244,11 +244,11 @@
 
           <div id="photoFields" style="display: none;">
             <div class="form-group">
-              <label>Titre de la photo (optionnel)</label>
+              <label for="photoTitle">Titre de la photo (optionnel)</label>
               <input type="text" class="form-control" id="photoTitle" />
             </div>
             <div class="form-group">
-              <label>Description (optionnel)</label>
+              <label for="photoDescription">Description (optionnel)</label>
               <input type="text" class="form-control" id="photoDescription" />
             </div>
             <div class="file-upload-zone" id="photoUploadZone">
@@ -257,7 +257,7 @@
               <p style="margin: 0; font-size: 0.9em; color: var(--text-secondary);">Formats: JPG, PNG, GIF - Taille max:
                 5 Mo</p>
             </div>
-            <input type="file" id="photoFile" accept="image/jpeg,image/png,image/gif,image/webp"
+            <input type="file" id="photoFile" aria-label="Fichier photo" accept="image/jpeg,image/png,image/gif,image/webp"
               style="display: none;" />
             <div class="file-info document-meta" id="photoInfo" style="display: none;">
               <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
@@ -281,7 +281,7 @@
             <h4 style="margin-bottom:12px;"><i class="fas fa-users"></i> Personnes liées</h4>
             <div id="linkedMembersList" style="margin-bottom:12px;"></div>
             <div style="position:relative;">
-              <input type="text" id="linkedMemberSearch" class="form-control"
+              <input type="text" id="linkedMemberSearch" aria-label="Rechercher une personne à lier" class="form-control"
                 placeholder="Rechercher une personne à lier…" autocomplete="off" />
               <div id="linkedMemberSuggestions" style="display:none; position:absolute; top:100%; left:0; right:0;
                 background:var(--bg-primary); border:1px solid var(--input-border);
