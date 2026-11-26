@@ -61,7 +61,7 @@ class UIManager {
   }
 
   handleGenerationChange(e) {
-    var selectedValue = parseInt(e.target.value);
+    var selectedValue = Number.parseInt(e.target.value);
     this.app.maxGenerations = selectedValue;
     if (this.app.currentPersonId) {
       this.app.rebuildTree(this.app.currentPersonId);

@@ -281,7 +281,7 @@ class UniversalSearchEngine {
     // Ajouter les event listeners
     this.searchResults.querySelectorAll('.search-result-item').forEach((item) => {
       item.addEventListener('click', (e) => {
-        const personId = parseInt(e.currentTarget.getAttribute('data-person-id'));
+        const personId = Number.parseInt(e.currentTarget.getAttribute('data-person-id'));
         if (this.data.selectPerson) {
           this.data.selectPerson(personId);
         }

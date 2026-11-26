@@ -514,8 +514,8 @@
         // Gérer le changement de numéro d'ordre
         function handleOrderChange(input) {
             const marriageId = input.dataset.marriageId;
-            const originalValue = parseInt(input.dataset.originalValue);
-            const newValue = parseInt(input.value);
+            const originalValue = Number.parseInt(input.dataset.originalValue);
+            const newValue = Number.parseInt(input.value);
             
             const saveBtn = document.getElementById(`btn-save-${marriageId}`);
             
@@ -533,7 +533,7 @@
         // Enregistrer le nouveau numéro d'ordre
         async function saveMarriageOrder(marriageId) {
             const input = document.querySelector(`input[data-marriage-id="${marriageId}"]`);
-            const newOrder = parseInt(input.value);
+            const newOrder = Number.parseInt(input.value);
             
             if (newOrder < 1) {
                 showError('Le numéro d\'ordre doit être supérieur ou égal à 1');

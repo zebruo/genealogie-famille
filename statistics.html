@@ -585,14 +585,14 @@
         }
         allData.forEach(person => {
           if (person.isoBirthDate && !isInvalidDate(person.isoBirthDate)) {
-            const birthYear = parseInt(person.isoBirthDate.substring(0, 4));
+            const birthYear = Number.parseInt(person.isoBirthDate.substring(0, 4));
             const birthCentury = calculateCentury(birthYear);
             if (birthCentury && centuriesStats[birthCentury]) {
               centuriesStats[birthCentury].birthCount += 1;
             }
           }
           if (person.isoDeathDate && !isInvalidDate(person.isoDeathDate)) {
-            const deathYear = parseInt(person.isoDeathDate.substring(0, 4));
+            const deathYear = Number.parseInt(person.isoDeathDate.substring(0, 4));
             const deathCentury = calculateCentury(deathYear);
             if (deathCentury && centuriesStats[deathCentury]) {
               centuriesStats[deathCentury].deathCount += 1;
@@ -726,7 +726,7 @@
         marriages.sort((a, b) => {
           const parseDate = (dateStr) => {
             if (dateStr.length === 4) {
-              return new Date(parseInt(dateStr), 6, 1);
+              return new Date(Number.parseInt(dateStr), 6, 1);
             } else if (dateStr.match(/^\d{2}-\d{2}-\d{4}$/)) {
               const [day, month, year] = dateStr.split('-');
               return new Date(year, month - 1, day);

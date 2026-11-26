@@ -59,7 +59,7 @@ class FamilyTreeApp {
         self.visualizer = new TreeVisualizer(self);
         var startingId = self.getStartingId();
         if (startingId) {
-          self.rebuildTree(parseInt(startingId));
+          self.rebuildTree(Number.parseInt(startingId));
         } else {
           throw new Error("Aucun individu trouvé");
         }
@@ -303,10 +303,10 @@ class FamilyTreeApp {
   returnToDefault() {
     var defaultPersonId = localStorage.getItem("defaultPersonId");
     if (defaultPersonId && this.familyDatabase[defaultPersonId]) {
-      this.rebuildTree(parseInt(defaultPersonId));
-      var person = this.findPersonInTree(this.familyTree, parseInt(defaultPersonId));
+      this.rebuildTree(Number.parseInt(defaultPersonId));
+      var person = this.findPersonInTree(this.familyTree, Number.parseInt(defaultPersonId));
       if (!person) {
-        person = this.familyDatabase[parseInt(defaultPersonId)];
+        person = this.familyDatabase[Number.parseInt(defaultPersonId)];
       }
       if (person) {
         var rootTabName = document.getElementById("rootTabName");
@@ -373,7 +373,7 @@ class FamilyTreeApp {
     var panelContent = document.getElementById("panel-content");
     var panelHeader = document.querySelector(".person-panel .panel-header.fixed-header");
     var defaultPersonId = localStorage.getItem("defaultPersonId");
-    var referencePersonId = defaultPersonId ? parseInt(defaultPersonId) : this.currentPersonId;
+    var referencePersonId = defaultPersonId ? Number.parseInt(defaultPersonId) : this.currentPersonId;
     var referencePerson = this.familyDatabase[referencePersonId];
     if (person.id == referencePersonId) {
       referencePersonId = this.currentPersonId;
@@ -386,9 +386,9 @@ class FamilyTreeApp {
       relationType = "root";
     } else {
       var refPerson = this.familyDatabase[referencePersonId];
-      if (refPerson && refPerson.spouseIds && refPerson.spouseIds.includes(parseInt(person.id))) {
+      if (refPerson && refPerson.spouseIds && refPerson.spouseIds.includes(Number.parseInt(person.id))) {
         relationType = "spouse";
-      } else if (refPerson && refPerson.siblingIds && refPerson.siblingIds.includes(parseInt(person.id))) {
+      } else if (refPerson && refPerson.siblingIds && refPerson.siblingIds.includes(Number.parseInt(person.id))) {
         relationType = "sibling";
       } else {
         var isUncleAunt = false;
@@ -396,7 +396,7 @@ class FamilyTreeApp {
           for (var i = 0; i < refPerson.parentIds.length; i++) {
             var parent = this.familyDatabase[refPerson.parentIds[i]];
             if (parent && parent.siblingIds) {
-              if (parent.siblingIds.includes(parseInt(person.id))) {
+              if (parent.siblingIds.includes(Number.parseInt(person.id))) {
                 relationType = "uncle-aunt";
                 isUncleAunt = true;
                 break;
@@ -408,7 +408,7 @@ class FamilyTreeApp {
           for (var i = 0; i < person.parentIds.length; i++) {
             var personParent = this.familyDatabase[person.parentIds[i]];
             if (personParent && refPerson && refPerson.siblingIds) {
-              if (refPerson.siblingIds.includes(parseInt(personParent.id))) {
+              if (refPerson.siblingIds.includes(Number.parseInt(personParent.id))) {
                 relationType = "nephew-niece";
                 isUncleAunt = true;
                 break;
@@ -425,13 +425,13 @@ class FamilyTreeApp {
                 for (var j = 0; j < refPerson.parentIds.length; j++) {
                   var refParent = this.familyDatabase[refPerson.parentIds[j]];
                   if (refParent && refParent.siblingIds &&
-                    refParent.siblingIds.includes(parseInt(personParent.id))) {
+                    refParent.siblingIds.includes(Number.parseInt(personParent.id))) {
                     relationType = "cousin";
                     isCousin = true;
                     break;
                   }
                   if (personParent && personParent.siblingIds &&
-                    personParent.siblingIds.includes(parseInt(refParent.id))) {
+                    personParent.siblingIds.includes(Number.parseInt(refParent.id))) {
                     relationType = "cousin";
                     isCousin = true;
                     break;
@@ -735,13 +735,13 @@ class FamilyTreeApp {
         // Calcul de l'âge au mariage
         var marriageAgeText = "";
         if (marriageDate && person.birthDate) {
-          var birthYear = parseInt(person.birthDate.substring(0, 4));
+          var birthYear = Number.parseInt(person.birthDate.substring(0, 4));
           var marriageYear;
           var firstDashPos = marriageDate.indexOf('-');
           if (firstDashPos === 2) {
-            marriageYear = parseInt(marriageDate.substring(6, 10));
+            marriageYear = Number.parseInt(marriageDate.substring(6, 10));
           } else {
-            marriageYear = parseInt(marriageDate.substring(0, 4));
+            marriageYear = Number.parseInt(marriageDate.substring(0, 4));
           }
           if (marriageYear && birthYear && marriageYear >= birthYear) {
             var ageAtMarriage = marriageYear - birthYear;
@@ -774,14 +774,14 @@ class FamilyTreeApp {
       contentHtml += '<div class="panel-info-group">';
       var ageText = "";
       if (person.birthDate && person.deathDate) {
-        var birthYear = parseInt(person.birthDate.substring(0, 4));
-        var deathYear = parseInt(person.deathDate.substring(0, 4));
+        var birthYear = Number.parseInt(person.birthDate.substring(0, 4));
+        var deathYear = Number.parseInt(person.deathDate.substring(0, 4));
         var age = deathYear - birthYear;
         if (person.isoBirthDate && person.isoDeathDate) {
-          var bMonth = parseInt(person.isoBirthDate.substring(5, 7));
-          var bDay   = parseInt(person.isoBirthDate.substring(8, 10));
-          var dMonth = parseInt(person.isoDeathDate.substring(5, 7));
-          var dDay   = parseInt(person.isoDeathDate.substring(8, 10));
+          var bMonth = Number.parseInt(person.isoBirthDate.substring(5, 7));
+          var bDay   = Number.parseInt(person.isoBirthDate.substring(8, 10));
+          var dMonth = Number.parseInt(person.isoDeathDate.substring(5, 7));
+          var dDay   = Number.parseInt(person.isoDeathDate.substring(8, 10));
           if (dMonth < bMonth || (dMonth === bMonth && dDay < bDay)) age--;
         }
         ageText = " (" + age + " ans)";
@@ -970,8 +970,8 @@ class FamilyTreeApp {
       this.familyDatabase[rootNode.data.id].marriages : {};
 
     var sortedMarriages = Object.entries(marriages).sort(function(a, b) {
-      var yearA = parseInt(a[1].marriageYear) || 9999;
-      var yearB = parseInt(b[1].marriageYear) || 9999;
+      var yearA = Number.parseInt(a[1].marriageYear) || 9999;
+      var yearB = Number.parseInt(b[1].marriageYear) || 9999;
       return yearA - yearB;
     });
 
@@ -1072,8 +1072,8 @@ class FamilyTreeApp {
     });
   }
   getMarriageChildren(rootId, spouseId) {
-    var rootIdInt = parseInt(rootId);
-    var spouseIdInt = parseInt(spouseId);
+    var rootIdInt = Number.parseInt(rootId);
+    var spouseIdInt = Number.parseInt(spouseId);
     return Object.values(this.familyDatabase)
       .filter(function(p) {
         return (

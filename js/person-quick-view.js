@@ -310,7 +310,7 @@ function renderAllDocumentsList(documents, personId) {
 // Fonction wrapper pour viewNoteSimple utilisant data-attributes
 function viewNoteSimpleFromButton(button) {
   const docData = button.getAttribute('data-doc');
-  const personId = parseInt(button.getAttribute('data-person-id'));
+  const personId = Number.parseInt(button.getAttribute('data-person-id'));
   
   try {
     // Décoder les données

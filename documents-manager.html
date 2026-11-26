@@ -1836,14 +1836,14 @@
     }
 
     function renderLinkedMembers(members, documentId) {
-      const ownerId = parseInt(document.getElementById('personId').value);
+      const ownerId = Number.parseInt(document.getElementById('personId').value);
       const container = document.getElementById('linkedMembersList');
       if (!members.length) {
         container.innerHTML = '<span style="color:var(--text-secondary); font-size:0.85em;">Aucune personne liée</span>';
         return;
       }
       container.innerHTML = members.map(m => {
-        const isOwner = parseInt(m.id) === ownerId;
+        const isOwner = Number.parseInt(m.id) === ownerId;
         const name = `${m.prenom || ''} ${m.nom || ''}`.trim();
         return `
           <div style="display:flex; align-items:center; justify-content:space-between;
@@ -1924,7 +1924,7 @@
     }
 
     function selectLinkedMember(memberId) {
-      const documentId = parseInt(document.getElementById('documentId').value);
+      const documentId = Number.parseInt(document.getElementById('documentId').value);
       document.getElementById('linkedMemberSearch').value = '';
       document.getElementById('linkedMemberSuggestions').style.display = 'none';
       addMemberLink(documentId, memberId);

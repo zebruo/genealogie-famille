@@ -619,9 +619,9 @@
 
         // Mettre à jour les jours complémentaires selon l'année sélectionnée
         function updateJoursComplementaires() {
-            const annee = parseInt(document.getElementById('annee2').value);
+            const annee = Number.parseInt(document.getElementById('annee2').value);
             const selectJour = document.getElementById('jour2');
-            const jourActuel = parseInt(selectJour.value);
+            const jourActuel = Number.parseInt(selectJour.value);
 
             // Vider la liste
             selectJour.innerHTML = '<option value="-1">Sélectionner le jour</option>';
@@ -670,10 +670,10 @@
 
         // Mettre à jour les jours grégoriens selon le mois et l'année sélectionnés
         function updateJoursGregoriens() {
-            const mois = parseInt(document.getElementById('mois3').value);
-            const annee = parseInt(document.getElementById('annee3').value);
+            const mois = Number.parseInt(document.getElementById('mois3').value);
+            const annee = Number.parseInt(document.getElementById('annee3').value);
             const selectJour = document.getElementById('jour3');
-            const jourActuel = parseInt(selectJour.value);
+            const jourActuel = Number.parseInt(selectJour.value);
 
             // Vider la liste
             selectJour.innerHTML = '<option value="-1">Jour</option>';
@@ -736,9 +736,9 @@
 
         // Calcul automatique pour Républicain -> Grégorien
         function calculerRepublicainVersGregorien() {
-            const jour = parseInt(document.getElementById('jour1').value);
-            const mois = parseInt(document.getElementById('mois1').value);
-            const annee = parseInt(document.getElementById('annee1').value);
+            const jour = Number.parseInt(document.getElementById('jour1').value);
+            const mois = Number.parseInt(document.getElementById('mois1').value);
+            const annee = Number.parseInt(document.getElementById('annee1').value);
 
             if (jour === -1 || mois === -1 || annee === -1) {
                 afficherResultat('Sélectionnez une date pour voir le résultat de la conversion');
@@ -751,8 +751,8 @@
 
         // Calcul automatique pour Jours Complémentaires
         function calculerJoursComplementaires() {
-            const jour = parseInt(document.getElementById('jour2').value);
-            const annee = parseInt(document.getElementById('annee2').value);
+            const jour = Number.parseInt(document.getElementById('jour2').value);
+            const annee = Number.parseInt(document.getElementById('annee2').value);
 
             if (jour === -1 || annee === -1) {
                 afficherResultat('Sélectionnez une date pour voir le résultat de la conversion');
@@ -786,9 +786,9 @@
 
         // Calcul automatique pour Grégorien -> Républicain
         function calculerGregorienVersRepublicain() {
-            const jour = parseInt(document.getElementById('jour3').value);
-            const mois = parseInt(document.getElementById('mois3').value);
-            const annee = parseInt(document.getElementById('annee3').value);
+            const jour = Number.parseInt(document.getElementById('jour3').value);
+            const mois = Number.parseInt(document.getElementById('mois3').value);
+            const annee = Number.parseInt(document.getElementById('annee3').value);
 
             if (jour === -1 || mois === -1 || annee === -1) {
                 afficherResultat('Sélectionnez une date pour voir le résultat de la conversion');

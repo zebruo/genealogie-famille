@@ -368,9 +368,9 @@
       }
 
       function getYearFromInput(qualifier, value) {
-        if (!value) return NaN;
-        if (qualifier === 'Le') { const m = value.match(/\d{4}/); return m ? parseInt(m[0]) : NaN; }
-        return parseInt(value) || NaN;
+        if (!value) return Number.NaN;
+        if (qualifier === 'Le') { const m = value.match(/\d{4}/); return m ? Number.parseInt(m[0]) : Number.NaN; }
+        return Number.parseInt(value) || Number.NaN;
       }
 
       function validateDateInput(qualifier, value, label) {
@@ -378,13 +378,13 @@
         if (qualifier === 'Le') {
           const m = value.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
           if (!m) return label + ' : format attendu JJ/MM/AAAA';
-          const d = parseInt(m[1]), mo = parseInt(m[2]), y = parseInt(m[3]);
+          const d = Number.parseInt(m[1]), mo = Number.parseInt(m[2]), y = Number.parseInt(m[3]);
           if (mo < 1 || mo > 12) return label + ' : mois invalide';
           if (d < 1 || d > new Date(y, mo, 0).getDate()) return label + ' : jour invalide';
           if (y < 1 || y > new Date().getFullYear() + 1) return label + ' : annee invalide';
         } else {
           if (!/^\d{4}$/.test(value)) return label + ' : format attendu AAAA';
-          const y = parseInt(value);
+          const y = Number.parseInt(value);
           if (y < 1 || y > new Date().getFullYear() + 1) return label + ' : annee invalide';
         }
         return null;
@@ -1347,7 +1347,7 @@
         document.getElementById('marriageForm').addEventListener('submit', async (e) => {
           e.preventDefault();
           const marriageId = document.getElementById('marriageId').value;
-          const spouseId = parseInt(document.getElementById('marriageSpouseSelect').value);
+          const spouseId = Number.parseInt(document.getElementById('marriageSpouseSelect').value);
           const spouse = state.members.find(m => m.id === spouseId);
           
           if (!spouse) {
