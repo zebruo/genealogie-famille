@@ -1,0 +1,13 @@
+{
+  "name": "genealogie-famille",
+  "private": true,
+  "scripts": {
+    "lint": "eslint js \"*.html\""
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "eslint": "^9.39.5",
+    "eslint-plugin-html": "^8.2.1",
+    "globals": "^17.14.0"
+  }
+}
