@@ -557,11 +557,6 @@ class UniversalSearchEngine {
   }
 }
 
-// Export pour utilisation dans d'autres modules
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = UniversalSearchEngine;
-}
-
 // Rétrocompatibilité avec les anciens noms
 if (typeof window !== 'undefined') {
   window.SearchEngine = UniversalSearchEngine;
