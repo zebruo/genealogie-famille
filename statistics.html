@@ -564,7 +564,7 @@
           return `${roman}<span class="ordinal">${suffix}</span> siècle`;
         };
         const calculateCentury = (year) => {
-          if (!year || isNaN(year)) return null;
+          if (!year || Number.isNaN(year)) return null;
           const centuryNumber = Math.floor((year - 1) / 100) + 1;
           if (centuryNumber < minCentury || centuryNumber > maxCentury) {
             return null;
