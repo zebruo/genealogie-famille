@@ -730,8 +730,16 @@
         }
 
         // Afficher le résultat dans la zone centralisée
-        function afficherResultat(texte) {
-            document.getElementById('resultText').textContent = texte;
+        // Une conversion réussie commence par le jour (un chiffre), un message d'erreur par une lettre
+        function estUneDate(resultat) {
+            return /^\d/.test(resultat);
+        }
+
+        // estUneConversion : entoure le résultat d'un halo (pas pour les messages d'attente ou d'erreur)
+        function afficherResultat(texte, estUneConversion = false) {
+            const resultText = document.getElementById('resultText');
+            resultText.textContent = texte;
+            resultText.classList.toggle('result-halo', estUneConversion);
         }
 
         // Calcul automatique pour Républicain -> Grégorien
@@ -746,7 +754,7 @@
             }
 
             const resultat = convertirRepublicainVersGregorien(jour, mois, annee);
-            afficherResultat(`${jour} ${moisRepublicains[mois]} An ${romanize(annee + 1)} → ${resultat}`);
+            afficherResultat(`${jour} ${moisRepublicains[mois]} An ${romanize(annee + 1)} → ${resultat}`, estUneDate(resultat));
         }
 
         // Calcul automatique pour Jours Complémentaires
@@ -781,7 +789,7 @@
             // Les jours complémentaires sont les jours 31-36 de Fructidor
             const jourFructidor = 30 + jour;
 
-            afficherResultat(`${jourFructidor} Fructidor An ${romanize(annee + 1)} (${joursComplementairesNomsAffichage[jour - 1]}) → ${jourGreg} ${moisGregoriens[jc.m - 1]} ${jc.a}`);
+            afficherResultat(`${jourFructidor} Fructidor An ${romanize(annee + 1)} (${joursComplementairesNomsAffichage[jour - 1]}) → ${jourGreg} ${moisGregoriens[jc.m - 1]} ${jc.a}`, true);
         }
 
         // Calcul automatique pour Grégorien -> Républicain
@@ -796,7 +804,7 @@
             }
 
             const resultat = convertirGregorienVersRepublicain(jour, mois, annee);
-            afficherResultat(`${jour} ${moisGregoriens[mois - 1]} ${annee} → ${resultat}`);
+            afficherResultat(`${jour} ${moisGregoriens[mois - 1]} ${annee} → ${resultat}`, estUneDate(resultat));
         }
 
         // Gestion des événements - Calcul automatique
