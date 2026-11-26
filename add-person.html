@@ -458,7 +458,7 @@
         if (birthValue && deathValue) {
           const by = getYearFromInput(birthQualifier, birthValue);
           const dy = getYearFromInput(deathQualifier, deathValue);
-          if (!isNaN(by) && !isNaN(dy) && by > dy) {
+          if (!Number.isNaN(by) && !Number.isNaN(dy) && by > dy) {
             showTemporaryInfo('La date de naissance ne peut pas être postérieure à la date de décès', 'error');
             return;
           }
