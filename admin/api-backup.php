@@ -8,6 +8,9 @@ header('Content-Type: application/json');
 require_once 'config.php';
 define('BACKUP_DIR', __DIR__ . '/backups/');
 
+// Formats de sauvegarde acceptés => extension du fichier créé
+const EXTENSIONS_PAR_FORMAT = ['sql' => 'sql', 'json' => 'json', 'csv' => 'csv', 'gedcom' => 'ged'];
+
 // Les noms de tables entrent dans les requêtes : seuls ceux-ci sont acceptés
 const TABLES_AUTORISEES = ['membres', 'mariages', 'relations', 'documents', 'document_members', 'liens_verification'];
 
@@ -111,7 +114,12 @@ function getBackupHistory() {
 function createBackup() {
     $tables = json_decode($_POST['tables'] ?? '[]', true);
     $format = $_POST['format'] ?? 'sql';
-    
+
+    if (!is_string($format) || !isset(EXTENSIONS_PAR_FORMAT[$format])) {
+        echo json_encode(['success' => false, 'message' => 'Format non supporté']);
+        return;
+    }
+
     if ($format !== 'gedcom' && empty($tables)) {
         echo json_encode(['success' => false, 'message' => 'Aucune table sélectionnée']);
         return;
@@ -122,7 +130,9 @@ function createBackup() {
         return;
     }
 
-    $ext = ($format === 'gedcom') ? 'ged' : $format;
+    // L'extension et les noms de tables utilisés ensuite viennent des listes du code, pas de la requête
+    $tables = ($format !== 'gedcom') ? array_values(array_intersect(TABLES_AUTORISEES, $tables)) : [];
+    $ext = EXTENSIONS_PAR_FORMAT[$format];
     $filename = 'backup_' . date('Y-m-d_H-i-s') . '.' . $ext;
     $filepath = BACKUP_DIR . $filename;
     
